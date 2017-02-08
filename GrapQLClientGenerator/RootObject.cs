@@ -24,7 +24,13 @@ namespace GrapQLClientGenerator
         public string Name { get; set; }
         public string Kind { get; set; }
         public string Description { get; set; }
+        public List<EnumValue> EnumValues { get; set; }
         public List<Field> Fields { get; set; }
+    }
+
+    public class EnumValue
+    {
+        public string Name { get; set; }
     }
 
     public class Field
