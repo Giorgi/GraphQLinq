@@ -29,6 +29,7 @@ namespace GrapQLClientGenerator
         public string Description { get; set; }
         public List<EnumValue> EnumValues { get; set; }
         public List<Field> Fields { get; set; }
+        public List<Type> Interfaces { get; set; }
     }
 
     [JsonConverter(typeof(StringEnumConverter))]

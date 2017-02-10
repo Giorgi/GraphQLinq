@@ -30,8 +30,7 @@ namespace GrapQLClientGenerator
 
         private static readonly List<string> ExceptionTypes = new List<string>
         {
-            "Query",
-            "Node"
+            "Query"
         };
 
         private AdhocWorkspace workspace = new AdhocWorkspace();
@@ -44,23 +43,24 @@ namespace GrapQLClientGenerator
 
             var enums = types.Where(type => type.Kind == TypeKind.Enum);
             var classes = types.Where(type => type.Kind == TypeKind.Object);
+            var interfaces = types.Where(type => type.Kind == TypeKind.Interface);
 
             foreach (var enumInfo in enums)
             {
-                var enumSyntax = GenerateEnum(enumInfo);
-                using (var streamWriter = File.CreateText(enumInfo.Name + ".cs"))
-                {
-                    enumSyntax.WriteTo(streamWriter);
-                }
+                var syntax = GenerateEnum(enumInfo);
+                WriteToFile(syntax, enumInfo.Name);
             }
 
             foreach (var classInfo in classes)
             {
-                var enumSyntax = GenerateClass(classInfo);
-                using (var streamWriter = File.CreateText(classInfo.Name + ".cs"))
-                {
-                    enumSyntax.WriteTo(streamWriter);
-                }
+                var syntax = GenerateClass(classInfo);
+                WriteToFile(syntax, classInfo.Name);
+            }
+
+            foreach (var interfaceInfo in interfaces)
+            {
+                var syntax = GenerateInterface(interfaceInfo);
+                WriteToFile(syntax, interfaceInfo.Name);
             }
         }
 
@@ -87,6 +87,11 @@ namespace GrapQLClientGenerator
                                             .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
                                             .AddModifiers(SyntaxFactory.Token(SyntaxKind.PartialKeyword));
 
+            foreach (var @interface in classInfo.Interfaces)
+            {
+                declaration = declaration.AddBaseListTypes(SyntaxFactory.SimpleBaseType(SyntaxFactory.ParseTypeName(@interface.Name)));
+            }
+
             foreach (var field in classInfo.Fields)
             {
                 var typeInfo = GetSharpTypeName(field);
@@ -112,6 +117,39 @@ namespace GrapQLClientGenerator
             compilationUnit = compilationUnit.AddMembers(declaration);
 
             return Formatter.Format(compilationUnit, workspace);
+        }
+
+        private SyntaxNode GenerateInterface(Type interfaceInfo)
+        {
+            var semicolonToken = SyntaxFactory.Token(SyntaxKind.SemicolonToken);
+
+            var declaration = SyntaxFactory.InterfaceDeclaration(interfaceInfo.Name)
+                                            .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword));
+
+            foreach (var field in interfaceInfo.Fields)
+            {
+                var typeInfo = GetSharpTypeName(field);
+
+                var property = SyntaxFactory.PropertyDeclaration(SyntaxFactory.ParseTypeName(typeInfo.Item1), field.Name);
+
+                property = property.AddAccessorListAccessors(SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
+                                   .WithSemicolonToken(semicolonToken));
+
+                property = property.AddAccessorListAccessors(SyntaxFactory.AccessorDeclaration(SyntaxKind.SetAccessorDeclaration)
+                                   .WithSemicolonToken(semicolonToken));
+
+                declaration = declaration.AddMembers(property);
+            }
+
+            return Formatter.Format(declaration, workspace);
+        }
+
+        private static void WriteToFile(SyntaxNode syntax, string name)
+        {
+            using (var streamWriter = File.CreateText(name + ".cs"))
+            {
+                syntax.WriteTo(streamWriter);
+            }
         }
 
         private static Tuple<string, string> GetSharpTypeName(Field field)
