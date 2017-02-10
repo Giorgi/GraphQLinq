@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.CodeAnalysis;
@@ -10,6 +11,14 @@ namespace GrapQLClientGenerator
 {
     class GraphQLClassesGenerator
     {
+        private static readonly Dictionary<string, string> TypeMapping = new Dictionary<string, string>()
+        {
+            { "Int", "int"},
+            { "Float", "float"},
+            { "String", "string"},
+            { "Boolean", "bool"},
+        };
+
         private static readonly List<string> BuiltInTypes = new List<string>
         {
             "ID",
@@ -69,6 +78,9 @@ namespace GrapQLClientGenerator
 
         private SyntaxNode GenerateClass(Type classInfo)
         {
+            var usings = new HashSet<string>();
+            var compilationUnit = SyntaxFactory.CompilationUnit();
+
             var semicolonToken = SyntaxFactory.Token(SyntaxKind.SemicolonToken);
 
             var declaration = SyntaxFactory.ClassDeclaration(classInfo.Name)
@@ -77,22 +89,10 @@ namespace GrapQLClientGenerator
 
             foreach (var field in classInfo.Fields)
             {
-                var typeName = field.Type.Name;
+                var typeInfo = GetSharpTypeName(field);
+                usings.Add(typeInfo.Item2);
 
-                if (typeName == null)
-                {
-                    if (field.Type.Kind == TypeKind.List)
-                    {
-                        typeName = $"List<{field.Type.OfType.Name}>";
-                    }
-
-                    if (field.Type.Kind == TypeKind.NonNull)
-                    {
-                        typeName = "int";
-                    }
-                }
-
-                var property = SyntaxFactory.PropertyDeclaration(SyntaxFactory.ParseTypeName(typeName.ToLower()), field.Name)
+                var property = SyntaxFactory.PropertyDeclaration(SyntaxFactory.ParseTypeName(typeInfo.Item1), field.Name)
                                             .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword));
 
                 property = property.AddAccessorListAccessors(SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
@@ -104,7 +104,44 @@ namespace GrapQLClientGenerator
                 declaration = declaration.AddMembers(property);
             }
 
-            return Formatter.Format(declaration, workspace);
+            foreach (var @using in usings.Where(s => !string.IsNullOrEmpty(s)))
+            {
+                compilationUnit = compilationUnit.AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName(@using)));
+            }
+
+            compilationUnit = compilationUnit.AddMembers(declaration);
+
+            return Formatter.Format(compilationUnit, workspace);
+        }
+
+        private static Tuple<string, string> GetSharpTypeName(Field field)
+        {
+            var typeName = field.Type.Name;
+
+            if (typeName == null)
+            {
+                if (field.Type.Kind == TypeKind.List)
+                {
+                    typeName = $"List<{GetMappedType(field.Type.OfType.Name)}>";
+                    return Tuple.Create(typeName, "System.Collections.Generic");
+                }
+
+                if (field.Type.Kind == TypeKind.NonNull)
+                {
+                    typeName = "string";
+                }
+            }
+            else
+            {
+                typeName = GetMappedType(field.Type.Name);
+            }
+
+            return Tuple.Create(typeName, "");
+        }
+
+        private static string GetMappedType(string name)
+        {
+            return TypeMapping.ContainsKey(name) ? TypeMapping[name] : name;
         }
     }
 }
