@@ -34,7 +34,7 @@ namespace GrapQLClientGenerator
             "Query"
         };
 
-        private AdhocWorkspace workspace = new AdhocWorkspace();
+        private static readonly AdhocWorkspace Workspace = new AdhocWorkspace();
 
         public void GenerateClasses(RootObject rootObject)
         {
@@ -49,19 +49,19 @@ namespace GrapQLClientGenerator
             foreach (var enumInfo in enums)
             {
                 var syntax = GenerateEnum(enumInfo);
-                WriteToFile(syntax, enumInfo.Name);
+                FormatAndWriteToFile(syntax, enumInfo.Name);
             }
 
             foreach (var classInfo in classes)
             {
                 var syntax = GenerateClass(classInfo);
-                WriteToFile(syntax, classInfo.Name);
+                FormatAndWriteToFile(syntax, classInfo.Name);
             }
 
             foreach (var interfaceInfo in interfaces)
             {
                 var syntax = GenerateInterface(interfaceInfo);
-                WriteToFile(syntax, interfaceInfo.Name);
+                FormatAndWriteToFile(syntax, interfaceInfo.Name);
             }
         }
 
@@ -74,7 +74,7 @@ namespace GrapQLClientGenerator
                 declaration = declaration.AddMembers(SyntaxFactory.EnumMemberDeclaration(SyntaxFactory.Identifier(enumValue.Name)));
             }
 
-            return Formatter.Format(declaration, workspace);
+            return declaration;
         }
 
         private SyntaxNode GenerateClass(Type classInfo)
@@ -117,7 +117,7 @@ namespace GrapQLClientGenerator
 
             compilationUnit = compilationUnit.AddMembers(declaration);
 
-            return Formatter.Format(compilationUnit, workspace);
+            return compilationUnit;
         }
 
         private SyntaxNode GenerateInterface(Type interfaceInfo)
@@ -142,14 +142,14 @@ namespace GrapQLClientGenerator
                 declaration = declaration.AddMembers(property);
             }
 
-            return Formatter.Format(declaration, workspace);
+            return declaration;
         }
 
-        private static void WriteToFile(SyntaxNode syntax, string name)
+        private static void FormatAndWriteToFile(SyntaxNode syntax, string name)
         {
             using (var streamWriter = File.CreateText(name + ".cs"))
             {
-                syntax.WriteTo(streamWriter);
+                Formatter.Format(syntax, Workspace).WriteTo(streamWriter);
             }
         }
 
