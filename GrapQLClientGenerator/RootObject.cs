@@ -43,6 +43,7 @@ namespace GrapQLClientGenerator
         Interface,
         Union,
         Enum,
+        [EnumMember(Value = "INPUT_OBJECT")]
         InputObject
     }
 
@@ -62,12 +63,6 @@ namespace GrapQLClientGenerator
     {
         public TypeKind Kind { get; set; }
         public string Name { get; set; }
-        public OfType OfType { get; set; }
-    }
-
-    public class OfType
-    {
-        public TypeKind Kind { get; set; }
-        public string Name { get; set; }
+        public FieldType OfType { get; set; }
     }
 }

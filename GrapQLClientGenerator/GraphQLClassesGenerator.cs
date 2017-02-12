@@ -17,6 +17,7 @@ namespace GrapQLClientGenerator
             { "Float", "float"},
             { "String", "string"},
             { "Boolean", "bool"},
+            { "Long", "long"}
         };
 
         private static readonly List<string> BuiltInTypes = new List<string>
@@ -94,7 +95,7 @@ namespace GrapQLClientGenerator
 
             foreach (var field in classInfo.Fields)
             {
-                var typeInfo = GetSharpTypeName(field);
+                var typeInfo = GetSharpTypeName(field.Type);
                 usings.Add(typeInfo.Item2);
 
                 var property = SyntaxFactory.PropertyDeclaration(SyntaxFactory.ParseTypeName(typeInfo.Item1), field.Name)
@@ -128,7 +129,7 @@ namespace GrapQLClientGenerator
 
             foreach (var field in interfaceInfo.Fields)
             {
-                var typeInfo = GetSharpTypeName(field);
+                var typeInfo = GetSharpTypeName(field.Type);
 
                 var property = SyntaxFactory.PropertyDeclaration(SyntaxFactory.ParseTypeName(typeInfo.Item1), field.Name);
 
@@ -152,26 +153,35 @@ namespace GrapQLClientGenerator
             }
         }
 
-        private static Tuple<string, string> GetSharpTypeName(Field field)
+        private static Tuple<string, string> GetSharpTypeName(FieldType fieldType)
         {
-            var typeName = field.Type.Name;
+            if (fieldType == null)
+            {
+                throw new NotImplementedException("ofType nested more than three levels not implemented");
+            }
+
+            var typeName = fieldType.Name;
 
             if (typeName == null)
             {
-                if (field.Type.Kind == TypeKind.List)
+                if (fieldType.Kind == TypeKind.List)
                 {
-                    typeName = $"List<{GetMappedType(field.Type.OfType.Name)}>";
+                    typeName = $"List<{GetSharpTypeName(fieldType.OfType).Item1}>";
                     return Tuple.Create(typeName, "System.Collections.Generic");
                 }
 
-                if (field.Type.Kind == TypeKind.NonNull)
+                if (fieldType.Kind == TypeKind.NonNull && fieldType.OfType?.Name == "ID")
                 {
                     typeName = "string";
+                }
+                else
+                {
+                    return GetSharpTypeName(fieldType.OfType);
                 }
             }
             else
             {
-                typeName = GetMappedType(field.Type.Name);
+                typeName = GetMappedType(fieldType.Name);
             }
 
             return Tuple.Create(typeName, "");
