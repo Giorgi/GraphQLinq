@@ -32,6 +32,8 @@ namespace GraphQLinq
         private readonly string queryName;
         private LambdaExpression selector;
 
+        private static readonly MethodInfo SelectMethodInfo = GetMethodByExpression<string, string>(q => q.Select(x => x.ToString())).GetGenericMethodDefinition();
+
         internal GraphQuery(GraphContext graphContext, string queryName)
         {
             originalType = typeof(T);
@@ -71,14 +73,14 @@ namespace GraphQLinq
 
                 if (body.NodeType == ExpressionType.MemberAccess)
                 {
-                    var expression = (MemberExpression) body;
+                    var expression = (MemberExpression)body;
                     var selectClause = expression.Member.Name;
                     query = String.Format(queryTemplate, queryName.ToLower(), selectClause);
                 }
 
                 if (body.NodeType == ExpressionType.New)
                 {
-                    var newExpression = (NewExpression) body;
+                    var newExpression = (NewExpression)body;
 
                     var selectClause = string.Join(" ", newExpression.Arguments.Cast<MemberExpression>().Select(e => e.Member.Name));
                     query = String.Format(queryTemplate, queryName.ToLower(), selectClause);
@@ -91,19 +93,19 @@ namespace GraphQLinq
 
             var webClient = new WebClient();
             webClient.Headers.Add("Content-Type", "application/graphql");
+
             var downloadString = webClient.UploadString(graphContext.BaseUrl, query);
 
-            var type = typeof(RootObject<>);
-            var genericRootType = type.MakeGenericType(originalType);
-
+            var rootObjectType = typeof(RootObject<>);
+            var genericRootType = rootObjectType.MakeGenericType(originalType);
+            
             var rootObject = JsonConvert.DeserializeObject(downloadString, genericRootType);
             var data = genericRootType.GetProperty("Data").GetValue(rootObject);
             var array = data.GetType().GetProperty("Result").GetValue(data);
 
             if (selector != null)
             {
-                var selectMethod = typeof(Enumerable).GetMethods(BindingFlags.Public | BindingFlags.Static).First(info => info.Name == "Select");
-                var genericSelect = selectMethod.MakeGenericMethod(originalType, typeof(T));
+                var genericSelect = SelectMethodInfo.MakeGenericMethod(originalType, typeof(T));
 
                 array = genericSelect.Invoke(null, new[] { array, selector.Compile() });
             }
@@ -114,6 +116,11 @@ namespace GraphQLinq
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        private static MethodInfo GetMethodByExpression<TIn, TOut>(Expression<Func<IEnumerable<TIn>, IEnumerable<TOut>>> expr)
+        {
+            return ((MethodCallExpression) expr.Body).Method;
         }
     }
 
