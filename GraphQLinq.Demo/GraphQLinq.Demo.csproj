@@ -7,8 +7,8 @@
     <ProjectGuid>{D7CE01EE-342B-4836-BD9E-9BBF09A25263}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>GraphQLinq</RootNamespace>
-    <AssemblyName>GraphQLinq</AssemblyName>
+    <RootNamespace>GraphQLinq.Demo</RootNamespace>
+    <AssemblyName>GraphQLinq.Demo</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
