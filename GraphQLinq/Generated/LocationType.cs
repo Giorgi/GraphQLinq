@@ -1,0 +1,8 @@
+public enum LocationType
+{
+    SUPERCHARGER,
+    STANDARD_CHARGER,
+    DESTINATION_CHARGER,
+    STORE,
+    SERVICE
+}
