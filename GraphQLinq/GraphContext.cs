@@ -32,6 +32,7 @@ namespace GraphQLinq
         private readonly string queryName;
         private LambdaExpression selector;
 
+        private const string QueryTemplate = @"{{ result: {0} {{ {1} }}}}";
         private static readonly MethodInfo SelectMethodInfo = GetMethodByExpression<string, string>(q => q.Select(x => x.ToString())).GetGenericMethodDefinition();
 
         internal GraphQuery(GraphContext graphContext, string queryName)
@@ -63,9 +64,7 @@ namespace GraphQLinq
 
         public IEnumerator<T> GetEnumerator()
         {
-            var query = "";
-
-            var queryTemplate = @"{{ result: {0} {{ {1} }}}}";
+            var selectClause = "";
 
             if (selector != null)
             {
@@ -73,23 +72,21 @@ namespace GraphQLinq
 
                 if (body.NodeType == ExpressionType.MemberAccess)
                 {
-                    var expression = (MemberExpression)body;
-                    var selectClause = expression.Member.Name;
-                    query = String.Format(queryTemplate, queryName.ToLower(), selectClause);
+                    selectClause = ((MemberExpression)body).Member.Name;
                 }
 
                 if (body.NodeType == ExpressionType.New)
                 {
                     var newExpression = (NewExpression)body;
-
-                    var selectClause = string.Join(" ", newExpression.Arguments.Cast<MemberExpression>().Select(e => e.Member.Name));
-                    query = String.Format(queryTemplate, queryName.ToLower(), selectClause);
+                    selectClause = string.Join(" ", newExpression.Arguments.Cast<MemberExpression>().Select(e => e.Member.Name));
                 }
             }
             else
             {
-                query = String.Format(queryTemplate, queryName.ToLower(), "id city title");
+                selectClause = BuildSelectClauseForType(typeof(T));
             }
+
+            var query = String.Format(QueryTemplate, queryName.ToLower(), selectClause);
 
             var webClient = new WebClient();
             webClient.Headers.Add("Content-Type", "application/graphql");
@@ -98,7 +95,7 @@ namespace GraphQLinq
 
             var rootObjectType = typeof(RootObject<>);
             var genericRootType = rootObjectType.MakeGenericType(originalType);
-            
+
             var rootObject = JsonConvert.DeserializeObject(downloadString, genericRootType);
             var data = genericRootType.GetProperty("Data").GetValue(rootObject);
             var array = data.GetType().GetProperty("Result").GetValue(data);
@@ -118,9 +115,46 @@ namespace GraphQLinq
             return GetEnumerator();
         }
 
+        private static string BuildSelectClauseForType(Type targetType)
+        {
+            var propertyInfos = targetType.GetProperties();
+
+            Func<Type, bool> isPrimitiveOrString = type => type.IsPrimitive || type == typeof(string);
+
+            Func<Type, bool> includeDirectly = type =>
+            {
+                if (type.IsGenericType &&
+                    type.GetGenericTypeDefinition() == typeof(List<>))
+                {
+                    var genericArguments = type.GetGenericArguments();
+
+                    return isPrimitiveOrString(genericArguments[0]);
+                }
+
+                return isPrimitiveOrString(type);
+            };
+
+            var propertiesToInclude = propertyInfos.Where(info => includeDirectly(info.PropertyType));
+            var propertiesToRecurse = propertyInfos.Where(info => !includeDirectly(info.PropertyType));
+
+            var selectClause = string.Join(Environment.NewLine, propertiesToInclude.Select(info => info.Name));
+
+            var recursiveSelectClause = propertiesToRecurse.Select(info =>
+            {
+                if (info.PropertyType.IsGenericType)
+                {
+                    return String.Format("{0}{1}{{{1}{2}}} ", info.Name, Environment.NewLine, BuildSelectClauseForType(info.PropertyType.GetGenericArguments()[0]));
+                }
+
+                return BuildSelectClauseForType(info.PropertyType);
+            });
+
+            return $"{selectClause}{Environment.NewLine}{string.Join(Environment.NewLine, recursiveSelectClause)}";
+        }
+
         private static MethodInfo GetMethodByExpression<TIn, TOut>(Expression<Func<IEnumerable<TIn>, IEnumerable<TOut>>> expr)
         {
-            return ((MethodCallExpression) expr.Body).Method;
+            return ((MethodCallExpression)expr.Body).Method;
         }
     }
 
