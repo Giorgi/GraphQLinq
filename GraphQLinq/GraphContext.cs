@@ -5,6 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Newtonsoft.Json;
 
 namespace GraphQLinq
@@ -18,12 +19,23 @@ namespace GraphQLinq
             BaseUrl = baseUrl;
         }
 
-        public GraphQuery<Location> Locations()
+        public GraphQuery<Location> Locations(string before = null, string after = null, bool? openSoon = null, bool? isGallery = null, float? boundingBox = null,
+                                              int? first = null, int? last = null, LocationType? type = null, Region? region = null, Country? country = null)
         {
-            var queryName = nameof(Locations);
-            return new GraphQuery<Location>(this, queryName);
+            var parameters = MethodBase.GetCurrentMethod().GetParameters();
+            var parameterValues = new object[] { before, after, openSoon, isGallery, boundingBox, first, last, type, region, country };
+
+            var dictionary = parameters.Zip(parameterValues, (info, value) => new { info.Name, Value = value }).ToDictionary(arg => arg.Name, arg => arg.Value);
+
+            return BuildQuery(dictionary);
+        }
+
+        private GraphQuery<Location> BuildQuery(Dictionary<string, object> parameters, [CallerMemberName] string queryName = null)
+        {
+            return new GraphQuery<Location>(this, queryName) { Arguments = parameters };
         }
     }
+
 
     public class GraphQuery<T> : IEnumerable<T>
     {
@@ -32,7 +44,7 @@ namespace GraphQLinq
         private readonly string queryName;
         private LambdaExpression selector;
 
-        private const string QueryTemplate = @"{{ result: {0} {{ {1} }}}}";
+        private const string QueryTemplate = @"{{ result: {0} {1} {{ {2} }}}}";
         private static readonly MethodInfo SelectMethodInfo = GetMethodByExpression<string, string>(q => q.Select(x => x.ToString())).GetGenericMethodDefinition();
 
         internal GraphQuery(GraphContext graphContext, string queryName)
@@ -41,6 +53,8 @@ namespace GraphQLinq
             this.graphContext = graphContext;
             this.queryName = queryName;
         }
+
+        internal Dictionary<string, object> Arguments { get; set; }
 
         private GraphQuery<TR> Clone<TR>()
         {
@@ -65,6 +79,7 @@ namespace GraphQLinq
         public IEnumerator<T> GetEnumerator()
         {
             var selectClause = "";
+            var args = "";
 
             if (selector != null)
             {
@@ -86,7 +101,27 @@ namespace GraphQLinq
                 selectClause = BuildSelectClauseForType(typeof(T));
             }
 
-            var query = String.Format(QueryTemplate, queryName.ToLower(), selectClause);
+            var argsWithValues = Arguments.Where(pair => pair.Value != null);
+
+            if (argsWithValues.Any())
+            {
+                //(type: STANDARD_CHARGER, openSoon: true)
+                var argList = argsWithValues.Select(pair =>
+                {
+                    var value = pair.Value.ToString();
+
+                    if (pair.Value is bool)
+                    {
+                        value = value.ToLowerInvariant();
+                    }
+
+                    return $"{pair.Key}: {value}";
+                });
+
+                args = $"({string.Join(", ", argList)})";
+            }
+
+            var query = string.Format(QueryTemplate, queryName.ToLower(), args, selectClause);
 
             var webClient = new WebClient();
             webClient.Headers.Add("Content-Type", "application/graphql");
@@ -143,7 +178,7 @@ namespace GraphQLinq
             {
                 if (info.PropertyType.IsGenericType)
                 {
-                    return String.Format("{0}{1}{{{1}{2}}} ", info.Name, Environment.NewLine, BuildSelectClauseForType(info.PropertyType.GetGenericArguments()[0]));
+                    return string.Format("{0}{1}{{{1}{2}}} ", info.Name, Environment.NewLine, BuildSelectClauseForType(info.PropertyType.GetGenericArguments()[0]));
                 }
 
                 return BuildSelectClauseForType(info.PropertyType);

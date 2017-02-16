@@ -6,13 +6,13 @@ namespace GraphQLinq.Demo
     {
         static void Main(string[] args)
         {
-            var graphQuery = new GraphContext("https://www.superchargers.io/graphql").Locations();
+            var graphQuery = new GraphContext("https://www.superchargers.io/graphql").Locations(type: LocationType.STANDARD_CHARGER, openSoon: true);
 
             //var q = graphQuery.Select(location => new { c = location.city, t = location.emails.Select(email => email.email) });
             var t = graphQuery.Select(l => l.city);
 
             //var locations = q.ToList();
-            var list = t.ToList();
+            var list = graphQuery.ToList();
         }
     }
 }
