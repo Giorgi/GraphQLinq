@@ -134,6 +134,7 @@ namespace GraphQLinq
         private static RootObject<T> dummyRootObject;
         private static readonly string DataPathPropertyName = nameof(dummyRootObject.Data).ToLowerInvariant();
         private static readonly string ResultPathPropertyName = nameof(dummyRootObject.Data.Result).ToLowerInvariant();
+        private static readonly bool HasNestedProperties = typeof(T).HasNestedProperties();
 
         public GraphQueryEnumerator(string query, string baseUrl)
         {
@@ -169,9 +170,7 @@ namespace GraphQLinq
 
             var jArray = JObject.Parse(downloadString);
 
-            var hasNestedProperties = typeof(T).HasNestedProperties();
-
-            var jToken = jArray[DataPathPropertyName][ResultPathPropertyName].Select(token => hasNestedProperties ? token : token["item"]);
+            var jToken = jArray[DataPathPropertyName][ResultPathPropertyName].Select(token => HasNestedProperties ? token : token["item"]);
 
             return jToken.Select(token => (T)token.ToObject(typeof(T)));
         }
@@ -207,12 +206,12 @@ namespace GraphQLinq
         }
     }
 
-    public class RootObject<T>
+    class RootObject<T>
     {
         public ResultData<T> Data { get; set; }
     }
 
-    public class ResultData<T>
+    class ResultData<T>
     {
         public List<T> Result { get; set; }
     }
