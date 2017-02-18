@@ -131,9 +131,8 @@ namespace GraphQLinq
         private readonly string query;
         private readonly string baseUrl;
 
-        private static RootObject<T> dummyRootObject;
-        private static readonly string DataPathPropertyName = nameof(dummyRootObject.Data).ToLowerInvariant();
-        private static readonly string ResultPathPropertyName = nameof(dummyRootObject.Data.Result).ToLowerInvariant();
+        private const string DataPathPropertyName = "data";
+        private const string ResultPathPropertyName = "result";
         private static readonly bool HasNestedProperties = typeof(T).HasNestedProperties();
 
         public GraphQueryEnumerator(string query, string baseUrl)
@@ -204,15 +203,5 @@ namespace GraphQLinq
 
             return !IsPrimitiveOrString(type);
         }
-    }
-
-    class RootObject<T>
-    {
-        public ResultData<T> Data { get; set; }
-    }
-
-    class ResultData<T>
-    {
-        public List<T> Result { get; set; }
     }
 }
