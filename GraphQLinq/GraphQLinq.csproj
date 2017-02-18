@@ -45,6 +45,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="GraphContext.cs" />
+    <Compile Include="GraphQuery.cs" />
     <Compile Include="Generated\Country.cs" />
     <Compile Include="Generated\Email.cs" />
     <Compile Include="Generated\Location.cs" />
