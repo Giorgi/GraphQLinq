@@ -45,7 +45,6 @@ namespace GraphQLinq
         private LambdaExpression selector;
 
         private const string QueryTemplate = @"{{ result: {0} {1} {{ {2} }}}}";
-        private static readonly MethodInfo SelectMethodInfo = GetMethodByExpression<string, string>(q => q.Select(x => x.ToString())).GetGenericMethodDefinition();
 
         internal GraphQuery(GraphContext graphContext, string queryName)
         {
@@ -54,7 +53,7 @@ namespace GraphQLinq
             this.queryName = queryName;
         }
 
-        internal Dictionary<string, object> Arguments { get; set; }
+        internal Dictionary<string, object> Arguments { get; set; } = new Dictionary<string, object>();
 
         private GraphQuery<TR> Clone<TR>()
         {
@@ -123,26 +122,7 @@ namespace GraphQLinq
 
             var query = string.Format(QueryTemplate, queryName.ToLower(), args, selectClause);
 
-            var webClient = new WebClient();
-            webClient.Headers.Add("Content-Type", "application/graphql");
-
-            var downloadString = webClient.UploadString(graphContext.BaseUrl, query);
-
-            var rootObjectType = typeof(RootObject<>);
-            var genericRootType = rootObjectType.MakeGenericType(originalType);
-
-            var rootObject = JsonConvert.DeserializeObject(downloadString, genericRootType);
-            var data = genericRootType.GetProperty("Data").GetValue(rootObject);
-            var array = data.GetType().GetProperty("Result").GetValue(data);
-
-            if (selector != null)
-            {
-                var genericSelect = SelectMethodInfo.MakeGenericMethod(originalType, typeof(T));
-
-                array = genericSelect.Invoke(null, new[] { array, selector.Compile() });
-            }
-
-            return (array as IEnumerable<T>).GetEnumerator();
+            return new GraphQueryEnumerator<T>(query, selector, originalType, graphContext.BaseUrl);
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -186,14 +166,90 @@ namespace GraphQLinq
 
             return $"{selectClause}{Environment.NewLine}{string.Join(Environment.NewLine, recursiveSelectClause)}";
         }
+    }
+
+    class GraphQueryEnumerator<T> : IEnumerator<T>
+    {
+        private IEnumerator<T> listEnumerator;
+
+        private readonly string query;
+        private readonly string baseUrl;
+        private readonly LambdaExpression selector;
+        private readonly Type originalType;
+
+        private static readonly MethodInfo SelectMethodInfo = GetMethodByExpression<string, string>(q => q.Select(x => x.ToString())).GetGenericMethodDefinition();
+
+        public GraphQueryEnumerator(string query, LambdaExpression selector, Type originalType, string baseUrl)
+        {
+            this.query = query;
+            this.selector = selector;
+            this.originalType = originalType;
+            this.baseUrl = baseUrl;
+        }
+
+        public void Dispose()
+        {
+            listEnumerator.Dispose();
+        }
+
+        public bool MoveNext()
+        {
+            if (listEnumerator == null)
+            {
+                var array = DownloadData();
+
+                listEnumerator = array.GetEnumerator();
+            }
+
+            var hasNext = listEnumerator.MoveNext();
+
+            Current = listEnumerator.Current;
+
+            return hasNext;
+        }
+
+        private IEnumerable<T> DownloadData()
+        {
+            var webClient = new WebClient();
+            webClient.Headers.Add("Content-Type", "application/graphql");
+
+            var downloadString = webClient.UploadString(baseUrl, query);
+
+            var rootObjectType = typeof(RootObject<>);
+            var genericRootType = rootObjectType.MakeGenericType(originalType);
+
+            var rootObject = JsonConvert.DeserializeObject(downloadString, genericRootType);
+            var data = genericRootType.GetProperty("Data").GetValue(rootObject);
+            var list = data.GetType().GetProperty("Result").GetValue(data);
+
+            if (selector != null)
+            {
+                var genericSelect = SelectMethodInfo.MakeGenericMethod(originalType, typeof(T));
+
+                list = genericSelect.Invoke(null, new[] {list, selector.Compile()});
+            }
+
+            return (IEnumerable<T>) list;
+        }
+
+        public void Reset()
+        {
+            throw new NotImplementedException();
+        }
+
+        public T Current { get; set; }
+
+        object IEnumerator.Current
+        {
+            get { return Current; }
+        }
 
         private static MethodInfo GetMethodByExpression<TIn, TOut>(Expression<Func<IEnumerable<TIn>, IEnumerable<TOut>>> expr)
         {
             return ((MethodCallExpression)expr.Body).Method;
         }
     }
-
-
+    
     public class RootObject<T>
     {
         public ResultData<T> Data { get; set; }
