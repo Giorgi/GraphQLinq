@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 using System.Net;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace GraphQLinq
 {
@@ -39,7 +39,6 @@ namespace GraphQLinq
 
     public class GraphQuery<T> : IEnumerable<T>
     {
-        private Type originalType;
         private readonly GraphContext graphContext;
         private readonly string queryName;
         private LambdaExpression selector;
@@ -48,7 +47,6 @@ namespace GraphQLinq
 
         internal GraphQuery(GraphContext graphContext, string queryName)
         {
-            originalType = typeof(T);
             this.graphContext = graphContext;
             this.queryName = queryName;
         }
@@ -57,9 +55,7 @@ namespace GraphQLinq
 
         private GraphQuery<TR> Clone<TR>()
         {
-            var graphQuery = new GraphQuery<TR>(graphContext, queryName) { originalType = originalType };
-
-            return graphQuery;
+            return new GraphQuery<TR>(graphContext, queryName);
         }
 
         public GraphQuery<TResult> Select<TResult>(Expression<Func<T, TResult>> resultSelector)
@@ -77,8 +73,8 @@ namespace GraphQLinq
 
         public IEnumerator<T> GetEnumerator()
         {
-            var selectClause = "";
             var args = "";
+            var selectClause = "";
 
             if (selector != null)
             {
@@ -86,13 +82,17 @@ namespace GraphQLinq
 
                 if (body.NodeType == ExpressionType.MemberAccess)
                 {
-                    selectClause = ((MemberExpression)body).Member.Name;
+                    selectClause = "item: " + ((MemberExpression)body).Member.Name;
                 }
 
                 if (body.NodeType == ExpressionType.New)
                 {
                     var newExpression = (NewExpression)body;
-                    selectClause = string.Join(" ", newExpression.Arguments.Cast<MemberExpression>().Select(e => e.Member.Name));
+
+                    var queryFields = newExpression.Members.Zip(newExpression.Arguments,
+                        (memberInfo, expression) => new { Alias = memberInfo.Name, ((MemberExpression)expression).Member.Name });
+
+                    selectClause = string.Join(" ", queryFields.Select(arg => arg.Alias + ": " + arg.Name));
                 }
             }
             else
@@ -122,7 +122,7 @@ namespace GraphQLinq
 
             var query = string.Format(QueryTemplate, queryName.ToLower(), args, selectClause);
 
-            return new GraphQueryEnumerator<T>(query, selector, originalType, graphContext.BaseUrl);
+            return new GraphQueryEnumerator<T>(query, graphContext.BaseUrl);
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -134,23 +134,8 @@ namespace GraphQLinq
         {
             var propertyInfos = targetType.GetProperties();
 
-            Func<Type, bool> isPrimitiveOrString = type => type.IsPrimitive || type == typeof(string);
-
-            Func<Type, bool> includeDirectly = type =>
-            {
-                if (type.IsGenericType &&
-                    type.GetGenericTypeDefinition() == typeof(List<>))
-                {
-                    var genericArguments = type.GetGenericArguments();
-
-                    return isPrimitiveOrString(genericArguments[0]);
-                }
-
-                return isPrimitiveOrString(type);
-            };
-
-            var propertiesToInclude = propertyInfos.Where(info => includeDirectly(info.PropertyType));
-            var propertiesToRecurse = propertyInfos.Where(info => !includeDirectly(info.PropertyType));
+            var propertiesToInclude = propertyInfos.Where(info => info.PropertyType.DoesNotHaveNestedProperties());
+            var propertiesToRecurse = propertyInfos.Where(info => !info.PropertyType.DoesNotHaveNestedProperties());
 
             var selectClause = string.Join(Environment.NewLine, propertiesToInclude.Select(info => info.Name));
 
@@ -174,16 +159,14 @@ namespace GraphQLinq
 
         private readonly string query;
         private readonly string baseUrl;
-        private readonly LambdaExpression selector;
-        private readonly Type originalType;
 
-        private static readonly MethodInfo SelectMethodInfo = GetMethodByExpression<string, string>(q => q.Select(x => x.ToString())).GetGenericMethodDefinition();
+        private static RootObject<T> dummyRootObject;
+        private static readonly string DataPathPropertyName = nameof(dummyRootObject.Data).ToLowerInvariant();
+        private static readonly string ResultPathPropertyName = nameof(dummyRootObject.Data.Result).ToLowerInvariant();
 
-        public GraphQueryEnumerator(string query, LambdaExpression selector, Type originalType, string baseUrl)
+        public GraphQueryEnumerator(string query, string baseUrl)
         {
             this.query = query;
-            this.selector = selector;
-            this.originalType = originalType;
             this.baseUrl = baseUrl;
         }
 
@@ -196,9 +179,7 @@ namespace GraphQLinq
         {
             if (listEnumerator == null)
             {
-                var array = DownloadData();
-
-                listEnumerator = array.GetEnumerator();
+                listEnumerator = DownloadData().GetEnumerator();
             }
 
             var hasNext = listEnumerator.MoveNext();
@@ -215,21 +196,16 @@ namespace GraphQLinq
 
             var downloadString = webClient.UploadString(baseUrl, query);
 
-            var rootObjectType = typeof(RootObject<>);
-            var genericRootType = rootObjectType.MakeGenericType(originalType);
+            var jArray = JObject.Parse(downloadString);
 
-            var rootObject = JsonConvert.DeserializeObject(downloadString, genericRootType);
-            var data = genericRootType.GetProperty("Data").GetValue(rootObject);
-            var list = data.GetType().GetProperty("Result").GetValue(data);
+            var jToken = jArray[DataPathPropertyName][ResultPathPropertyName].Select(token => token);
 
-            if (selector != null)
+            if (typeof(T).DoesNotHaveNestedProperties())
             {
-                var genericSelect = SelectMethodInfo.MakeGenericMethod(originalType, typeof(T));
-
-                list = genericSelect.Invoke(null, new[] {list, selector.Compile()});
+                jToken = jToken.Select(token => token["item"]);
             }
 
-            return (IEnumerable<T>) list;
+            return jToken.Select(token => (T)token.ToObject(typeof(T)));
         }
 
         public void Reset()
@@ -239,17 +215,30 @@ namespace GraphQLinq
 
         public T Current { get; set; }
 
-        object IEnumerator.Current
+        object IEnumerator.Current => Current;
+    }
+
+    static class TypeExtensions
+    {
+        internal static bool IsPrimitiveOrString(this Type type)
         {
-            get { return Current; }
+            return type.IsPrimitive || type == typeof(string);
         }
 
-        private static MethodInfo GetMethodByExpression<TIn, TOut>(Expression<Func<IEnumerable<TIn>, IEnumerable<TOut>>> expr)
+        internal static bool DoesNotHaveNestedProperties(this Type type)
         {
-            return ((MethodCallExpression)expr.Body).Method;
+            if (type.IsGenericType &&
+                type.GetGenericTypeDefinition() == typeof(List<>))
+            {
+                var genericArguments = type.GetGenericArguments();
+
+                return IsPrimitiveOrString(genericArguments[0]);
+            }
+
+            return IsPrimitiveOrString(type);
         }
     }
-    
+
     public class RootObject<T>
     {
         public ResultData<T> Data { get; set; }
