@@ -134,8 +134,8 @@ namespace GraphQLinq
         {
             var propertyInfos = targetType.GetProperties();
 
-            var propertiesToInclude = propertyInfos.Where(info => info.PropertyType.DoesNotHaveNestedProperties());
-            var propertiesToRecurse = propertyInfos.Where(info => !info.PropertyType.DoesNotHaveNestedProperties());
+            var propertiesToInclude = propertyInfos.Where(info => !info.PropertyType.HasNestedProperties());
+            var propertiesToRecurse = propertyInfos.Where(info => info.PropertyType.HasNestedProperties());
 
             var selectClause = string.Join(Environment.NewLine, propertiesToInclude.Select(info => info.Name));
 
@@ -198,12 +198,9 @@ namespace GraphQLinq
 
             var jArray = JObject.Parse(downloadString);
 
-            var jToken = jArray[DataPathPropertyName][ResultPathPropertyName].Select(token => token);
+            var hasNestedProperties = typeof(T).HasNestedProperties();
 
-            if (typeof(T).DoesNotHaveNestedProperties())
-            {
-                jToken = jToken.Select(token => token["item"]);
-            }
+            var jToken = jArray[DataPathPropertyName][ResultPathPropertyName].Select(token => hasNestedProperties ? token : token["item"]);
 
             return jToken.Select(token => (T)token.ToObject(typeof(T)));
         }
@@ -225,17 +222,17 @@ namespace GraphQLinq
             return type.IsPrimitive || type == typeof(string);
         }
 
-        internal static bool DoesNotHaveNestedProperties(this Type type)
+        internal static bool HasNestedProperties(this Type type)
         {
             if (type.IsGenericType &&
                 type.GetGenericTypeDefinition() == typeof(List<>))
             {
                 var genericArguments = type.GetGenericArguments();
 
-                return IsPrimitiveOrString(genericArguments[0]);
+                return !IsPrimitiveOrString(genericArguments[0]);
             }
 
-            return IsPrimitiveOrString(type);
+            return !IsPrimitiveOrString(type);
         }
     }
 
