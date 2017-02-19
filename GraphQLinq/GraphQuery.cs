@@ -70,7 +70,6 @@ namespace GraphQLinq
 
         public string BuildQuery(GraphQuery<T> graphQuery)
         {
-            var args = "";
             var selectClause = "";
 
             if (graphQuery.Selector != null)
@@ -97,33 +96,29 @@ namespace GraphQLinq
                 selectClause = BuildSelectClauseForType(typeof(T));
             }
 
-            var argsWithValues = graphQuery.Arguments.Where(pair => pair.Value != null);
-
-            if (argsWithValues.Any())
+            //(type: [STANDARD_CHARGER, STORE], openSoon: true)
+            var argList = graphQuery.Arguments.Where(pair => pair.Value != null).Select(pair =>
             {
-                //(type: [STANDARD_CHARGER, STORE], openSoon: true)
-                var argList = argsWithValues.Select(pair =>
+                var value = pair.Value.ToString();
+
+                if (pair.Value is bool)
                 {
-                    var value = pair.Value.ToString();
+                    value = value.ToLowerInvariant();
+                }
 
-                    if (pair.Value is bool)
-                    {
-                        value = value.ToLowerInvariant();
-                    }
+                var enumerable = pair.Value as IEnumerable;
+                if (enumerable != null)
+                {
+                    value = $"[{string.Join(", ", enumerable.Cast<object>())}]";
+                }
 
-                    var enumerable = pair.Value as IEnumerable;
-                    if (enumerable != null)
-                    {
-                        value = $"[{string.Join(", ", enumerable.Cast<object>())}]";
-                    }
+                return $"{pair.Key}: {value}";
+            });
 
-                    return $"{pair.Key}: {value}";
-                });
+            var args = string.Join(", ", argList);
+            var argsWithParentheses = string.IsNullOrEmpty(args) ? "" : $"({args})";
 
-                args = $"({string.Join(", ", argList)})";
-            }
-
-            return string.Format(QueryTemplate, graphQuery.QueryName.ToLower(), args, selectClause);
+            return string.Format(QueryTemplate, graphQuery.QueryName.ToLower(), argsWithParentheses, selectClause);
         }
 
         private static string BuildSelectClauseForType(Type targetType)
