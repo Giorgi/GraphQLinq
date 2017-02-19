@@ -17,17 +17,24 @@ namespace GraphQLinq
         public GraphQuery<Location> Locations(string before = null, string after = null, bool? openSoon = null, bool? isGallery = null, float? boundingBox = null,
             int? first = null, int? last = null, List<LocationType> type = null, Region? region = null, Country? country = null)
         {
-            var parameters = MethodBase.GetCurrentMethod().GetParameters();
             var parameterValues = new object[] { before, after, openSoon, isGallery, boundingBox, first, last, type, region, country };
 
-            var dictionary = parameters.Zip(parameterValues, (info, value) => new { info.Name, Value = value }).ToDictionary(arg => arg.Name, arg => arg.Value);
-
-            return BuildQuery(dictionary);
+            return BuildQuery<Location>(parameterValues);
         }
 
-        private GraphQuery<Location> BuildQuery(Dictionary<string, object> parameters, [CallerMemberName] string queryName = null)
+        public GraphQuery<Location> Near(float latitude, float longitude, int? first = null, int? last = null, List<LocationType> type = null, string before = null, string after = null)
         {
-            return new GraphQuery<Location>(this, queryName) { Arguments = parameters };
+            var parameterValues = new object[] { latitude, longitude, first, last, type, before, after };
+
+            return BuildQuery<Location>(parameterValues);
+        }
+
+        private GraphQuery<T> BuildQuery<T>(object[] parameterValues, [CallerMemberName] string queryName = null)
+        {
+            var parameters = GetType().GetMethod(queryName).GetParameters();
+            var arguments = parameters.Zip(parameterValues, (info, value) => new { info.Name, Value = value }).ToDictionary(arg => arg.Name, arg => arg.Value);
+
+            return new GraphQuery<T>(this, queryName) { Arguments = arguments };
         }
     }
 }
