@@ -177,10 +177,16 @@ namespace GraphQLinq
 
             var jObject = JObject.Parse(json);
 
+            if (jObject["errors"].HasValues)
+            {
+                var errors = jObject["errors"].ToObject<List<GraphQueryError>>();
+                throw new GraphQueryExecutionException(errors, query);
+            }
+
             var enumerable = jObject[DataPathPropertyName][ResultPathPropertyName].Select(token =>
             {
                 token = HasNestedProperties ? token : token["item"];
-                
+
                 return (T)token.ToObject(typeof(T));
             });
 
@@ -216,5 +222,30 @@ namespace GraphQLinq
 
             return !IsPrimitiveOrString(type);
         }
+    }
+
+    public class GraphQueryError
+    {
+        public string Message { get; set; }
+        public ErrorLocation[] Locations { get; set; }
+    }
+
+    public class ErrorLocation
+    {
+        public int Line { get; set; }
+        public int Column { get; set; }
+    }
+
+    public class GraphQueryExecutionException : Exception
+    {
+        public GraphQueryExecutionException(IEnumerable<GraphQueryError> errors, string query)
+            : base($"One or more errors occured during query execution. Check {nameof(Errors)} property for details")
+        {
+            Errors = errors;
+            GraphQLQuery = query;
+        }
+
+        public string GraphQLQuery { get; private set; }
+        public IEnumerable<GraphQueryError> Errors { get; private set; }
     }
 }
