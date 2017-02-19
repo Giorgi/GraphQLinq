@@ -66,7 +66,9 @@ namespace GraphQLinq
 
     class GraphQueryBuilder<T>
     {
-        private const string QueryTemplate = @"{{ result: {0} {1} {{ {2} }}}}";
+        private const string QueryTemplate = @"{{ {0}: {1} {2} {{ {3} }}}}";
+        internal const string ItemAlias = "item";
+        internal const string ResultAlias = "result";
 
         public string BuildQuery(GraphQuery<T> graphQuery)
         {
@@ -78,7 +80,7 @@ namespace GraphQLinq
 
                 if (body.NodeType == ExpressionType.MemberAccess)
                 {
-                    selectClause = "item: " + ((MemberExpression)body).Member.Name;
+                    selectClause = $"{ItemAlias}: {((MemberExpression)body).Member.Name}";
                 }
 
                 if (body.NodeType == ExpressionType.New)
@@ -118,7 +120,7 @@ namespace GraphQLinq
             var args = string.Join(", ", argList);
             var argsWithParentheses = string.IsNullOrEmpty(args) ? "" : $"({args})";
 
-            return string.Format(QueryTemplate, graphQuery.QueryName.ToLower(), argsWithParentheses, selectClause);
+            return string.Format(QueryTemplate, ResultAlias, graphQuery.QueryName.ToLower(), argsWithParentheses, selectClause);
         }
 
         private static string BuildSelectClauseForType(Type targetType)
@@ -152,7 +154,8 @@ namespace GraphQLinq
         private readonly string baseUrl;
 
         private const string DataPathPropertyName = "data";
-        private const string ResultPathPropertyName = "result";
+        private const string ErrorPathPropertyName = "errors";
+
         private static readonly bool HasNestedProperties = typeof(T).HasNestedProperties();
 
         public GraphQueryEnumerator(string query, string baseUrl)
@@ -189,15 +192,15 @@ namespace GraphQLinq
 
             var jObject = JObject.Parse(json);
 
-            if (jObject["errors"].HasValues)
+            if (jObject.SelectToken(ErrorPathPropertyName) != null)
             {
-                var errors = jObject["errors"].ToObject<List<GraphQueryError>>();
+                var errors = jObject[ErrorPathPropertyName].ToObject<List<GraphQueryError>>();
                 throw new GraphQueryExecutionException(errors, query);
             }
 
-            var enumerable = jObject[DataPathPropertyName][ResultPathPropertyName].Select(token =>
+            var enumerable = jObject[DataPathPropertyName][GraphQueryBuilder<T>.ResultAlias].Select(token =>
             {
-                token = HasNestedProperties ? token : token["item"];
+                token = HasNestedProperties ? token : token[GraphQueryBuilder<T>.ItemAlias];
 
                 return (T)token.ToObject(typeof(T));
             });
