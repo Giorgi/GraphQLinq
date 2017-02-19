@@ -10,8 +10,10 @@ namespace GraphQLinq
 {
     public class GraphQuery<T> : IEnumerable<T>
     {
-        private readonly GraphContext graphContext;
+        private readonly Lazy<string> lazyQuery;
         private readonly string queryName;
+        private readonly GraphContext graphContext;
+
         private LambdaExpression selector;
 
         private const string QueryTemplate = @"{{ result: {0} {1} {{ {2} }}}}";
@@ -20,14 +22,11 @@ namespace GraphQLinq
         {
             this.graphContext = graphContext;
             this.queryName = queryName;
+
+            lazyQuery = new Lazy<string>(() => BuildQuery());
         }
 
         internal Dictionary<string, object> Arguments { get; set; } = new Dictionary<string, object>();
-
-        private GraphQuery<TR> Clone<TR>()
-        {
-            return new GraphQuery<TR>(graphContext, queryName);
-        }
 
         public GraphQuery<TResult> Select<TResult>(Expression<Func<T, TResult>> resultSelector)
         {
@@ -39,12 +38,33 @@ namespace GraphQLinq
             var graphQuery = Clone<TResult>();
 
             graphQuery.selector = resultSelector;
-            graphQuery.Arguments = Arguments;
 
             return graphQuery;
         }
 
         public IEnumerator<T> GetEnumerator()
+        {
+            var query = lazyQuery.Value;
+
+            return new GraphQueryEnumerator<T>(query, graphContext.BaseUrl);
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+        public override string ToString()
+        {
+            return lazyQuery.Value;
+        }
+
+        private GraphQuery<TR> Clone<TR>()
+        {
+            return new GraphQuery<TR>(graphContext, queryName) {Arguments = Arguments};
+        }
+
+        private string BuildQuery()
         {
             var args = "";
             var selectClause = "";
@@ -99,14 +119,7 @@ namespace GraphQLinq
                 args = $"({string.Join(", ", argList)})";
             }
 
-            var query = string.Format(QueryTemplate, queryName.ToLower(), args, selectClause);
-
-            return new GraphQueryEnumerator<T>(query, graphContext.BaseUrl);
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
+            return string.Format(QueryTemplate, queryName.ToLower(), args, selectClause);
         }
 
         private static string BuildSelectClauseForType(Type targetType)
