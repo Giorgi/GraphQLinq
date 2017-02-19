@@ -39,6 +39,8 @@ namespace GraphQLinq
             var graphQuery = Clone<TResult>();
 
             graphQuery.selector = resultSelector;
+            graphQuery.Arguments = Arguments;
+
             return graphQuery;
         }
 
