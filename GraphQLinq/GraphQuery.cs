@@ -173,13 +173,18 @@ namespace GraphQLinq
             var webClient = new WebClient();
             webClient.Headers.Add("Content-Type", "application/graphql");
 
-            var downloadString = webClient.UploadString(baseUrl, query);
+            var json = webClient.UploadString(baseUrl, query);
 
-            var jArray = JObject.Parse(downloadString);
+            var jObject = JObject.Parse(json);
 
-            var jToken = jArray[DataPathPropertyName][ResultPathPropertyName].Select(token => HasNestedProperties ? token : token["item"]);
+            var enumerable = jObject[DataPathPropertyName][ResultPathPropertyName].Select(token =>
+            {
+                token = HasNestedProperties ? token : token["item"];
+                
+                return (T)token.ToObject(typeof(T));
+            });
 
-            return jToken.Select(token => (T)token.ToObject(typeof(T)));
+            return enumerable;
         }
 
         public void Reset()
