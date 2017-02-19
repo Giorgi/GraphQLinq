@@ -15,7 +15,7 @@ namespace GraphQLinq
         }
 
         public GraphQuery<Location> Locations(string before = null, string after = null, bool? openSoon = null, bool? isGallery = null, float? boundingBox = null,
-            int? first = null, int? last = null, LocationType? type = null, Region? region = null, Country? country = null)
+            int? first = null, int? last = null, List<LocationType> type = null, Region? region = null, Country? country = null)
         {
             var parameters = MethodBase.GetCurrentMethod().GetParameters();
             var parameterValues = new object[] { before, after, openSoon, isGallery, boundingBox, first, last, type, region, country };

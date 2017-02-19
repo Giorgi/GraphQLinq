@@ -75,7 +75,7 @@ namespace GraphQLinq
 
             if (argsWithValues.Any())
             {
-                //(type: STANDARD_CHARGER, openSoon: true)
+                //(type: [STANDARD_CHARGER, STORE], openSoon: true)
                 var argList = argsWithValues.Select(pair =>
                 {
                     var value = pair.Value.ToString();
@@ -83,6 +83,12 @@ namespace GraphQLinq
                     if (pair.Value is bool)
                     {
                         value = value.ToLowerInvariant();
+                    }
+
+                    var enumerable = pair.Value as IEnumerable;
+                    if (enumerable != null)
+                    {
+                        value = $"[{string.Join(", ", enumerable.Cast<object>())}]";
                     }
 
                     return $"{pair.Key}: {value}";
