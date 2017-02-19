@@ -10,36 +10,21 @@ namespace GraphQLinq
 {
     public class GraphQuery<T> : IEnumerable<T>
     {
-        private readonly Lazy<string> lazyQuery;
-        private readonly string queryName;
         private readonly GraphContext graphContext;
+        private readonly GraphQueryBuilder<T> queryBuilder = new GraphQueryBuilder<T>();
 
-        private LambdaExpression selector;
+        private readonly Lazy<string> lazyQuery;
 
-        private const string QueryTemplate = @"{{ result: {0} {1} {{ {2} }}}}";
+        internal string QueryName { get; }
+        internal LambdaExpression Selector { get; private set; }
+        internal Dictionary<string, object> Arguments { get; set; } = new Dictionary<string, object>();
 
         internal GraphQuery(GraphContext graphContext, string queryName)
         {
+            QueryName = queryName;
             this.graphContext = graphContext;
-            this.queryName = queryName;
 
-            lazyQuery = new Lazy<string>(() => BuildQuery());
-        }
-
-        internal Dictionary<string, object> Arguments { get; set; } = new Dictionary<string, object>();
-
-        public GraphQuery<TResult> Select<TResult>(Expression<Func<T, TResult>> resultSelector)
-        {
-            if (resultSelector.NodeType != ExpressionType.Lambda)
-            {
-                throw new ArgumentException($"{resultSelector} must be lambda expression", nameof(resultSelector));
-            }
-
-            var graphQuery = Clone<TResult>();
-
-            graphQuery.selector = resultSelector;
-
-            return graphQuery;
+            lazyQuery = new Lazy<string>(() => queryBuilder.BuildQuery(this));
         }
 
         public IEnumerator<T> GetEnumerator()
@@ -54,6 +39,20 @@ namespace GraphQLinq
             return GetEnumerator();
         }
 
+        public GraphQuery<TResult> Select<TResult>(Expression<Func<T, TResult>> resultSelector)
+        {
+            if (resultSelector.NodeType != ExpressionType.Lambda)
+            {
+                throw new ArgumentException($"{resultSelector} must be lambda expression", nameof(resultSelector));
+            }
+
+            var graphQuery = Clone<TResult>();
+
+            graphQuery.Selector = resultSelector;
+
+            return graphQuery;
+        }
+
         public override string ToString()
         {
             return lazyQuery.Value;
@@ -61,17 +60,22 @@ namespace GraphQLinq
 
         private GraphQuery<TR> Clone<TR>()
         {
-            return new GraphQuery<TR>(graphContext, queryName) {Arguments = Arguments};
+            return new GraphQuery<TR>(graphContext, QueryName) { Arguments = Arguments };
         }
+    }
 
-        private string BuildQuery()
+    class GraphQueryBuilder<T>
+    {
+        private const string QueryTemplate = @"{{ result: {0} {1} {{ {2} }}}}";
+
+        public string BuildQuery(GraphQuery<T> graphQuery)
         {
             var args = "";
             var selectClause = "";
 
-            if (selector != null)
+            if (graphQuery.Selector != null)
             {
-                var body = selector.Body;
+                var body = graphQuery.Selector.Body;
 
                 if (body.NodeType == ExpressionType.MemberAccess)
                 {
@@ -93,7 +97,7 @@ namespace GraphQLinq
                 selectClause = BuildSelectClauseForType(typeof(T));
             }
 
-            var argsWithValues = Arguments.Where(pair => pair.Value != null);
+            var argsWithValues = graphQuery.Arguments.Where(pair => pair.Value != null);
 
             if (argsWithValues.Any())
             {
@@ -119,7 +123,7 @@ namespace GraphQLinq
                 args = $"({string.Join(", ", argList)})";
             }
 
-            return string.Format(QueryTemplate, queryName.ToLower(), args, selectClause);
+            return string.Format(QueryTemplate, graphQuery.QueryName.ToLower(), args, selectClause);
         }
 
         private static string BuildSelectClauseForType(Type targetType)
@@ -215,6 +219,7 @@ namespace GraphQLinq
 
         object IEnumerator.Current => Current;
     }
+
 
     static class TypeExtensions
     {
