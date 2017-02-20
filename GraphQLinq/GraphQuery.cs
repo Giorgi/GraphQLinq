@@ -176,36 +176,30 @@ namespace GraphQLinq
                 listEnumerator = DownloadData().GetEnumerator();
             }
 
-            var hasNext = listEnumerator.MoveNext();
-
-            Current = listEnumerator.Current;
-
-            return hasNext;
+            return listEnumerator.MoveNext();
         }
 
         private IEnumerable<T> DownloadData()
         {
-            var webClient = new WebClient();
-            webClient.Headers.Add("Content-Type", "application/graphql");
-
-            var json = webClient.UploadString(baseUrl, query);
-
-            var jObject = JObject.Parse(json);
-
-            if (jObject.SelectToken(ErrorPathPropertyName) != null)
+            using (var webClient = new WebClient())
             {
-                var errors = jObject[ErrorPathPropertyName].ToObject<List<GraphQueryError>>();
-                throw new GraphQueryExecutionException(errors, query);
+                webClient.Headers.Add("Content-Type", "application/graphql");
+
+                var json = webClient.UploadString(baseUrl, query);
+
+                var jObject = JObject.Parse(json);
+
+                if (jObject.SelectToken(ErrorPathPropertyName) != null)
+                {
+                    var errors = jObject[ErrorPathPropertyName].ToObject<List<GraphQueryError>>();
+                    throw new GraphQueryExecutionException(errors, query);
+                }
+
+                var enumerable = jObject[DataPathPropertyName][GraphQueryBuilder<T>.ResultAlias]
+                                .Select(token => (HasNestedProperties ? token : token[GraphQueryBuilder<T>.ItemAlias]).ToObject<T>());
+
+                return enumerable;
             }
-
-            var enumerable = jObject[DataPathPropertyName][GraphQueryBuilder<T>.ResultAlias].Select(token =>
-            {
-                token = HasNestedProperties ? token : token[GraphQueryBuilder<T>.ItemAlias];
-
-                return (T)token.ToObject(typeof(T));
-            });
-
-            return enumerable;
         }
 
         public void Reset()
@@ -213,11 +207,10 @@ namespace GraphQLinq
             throw new NotImplementedException();
         }
 
-        public T Current { get; set; }
+        public T Current => listEnumerator.Current;
 
         object IEnumerator.Current => Current;
     }
-
 
     static class TypeExtensions
     {
