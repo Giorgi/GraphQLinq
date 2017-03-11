@@ -128,21 +128,10 @@ namespace GraphQLinq
             var propertyInfos = targetType.GetProperties();
 
             var propertiesToInclude = propertyInfos.Where(info => !info.PropertyType.HasNestedProperties());
-            var propertiesToRecurse = propertyInfos.Where(info => info.PropertyType.HasNestedProperties());
 
             var selectClause = string.Join(Environment.NewLine, propertiesToInclude.Select(info => info.Name));
 
-            var recursiveSelectClause = propertiesToRecurse.Select(info =>
-            {
-                if (info.PropertyType.IsGenericType)
-                {
-                    return string.Format("{0}{1}{{{1}{2}}} ", info.Name, Environment.NewLine, BuildSelectClauseForType(info.PropertyType.GetGenericArguments()[0]));
-                }
-
-                return BuildSelectClauseForType(info.PropertyType);
-            });
-
-            return $"{selectClause}{Environment.NewLine}{string.Join(Environment.NewLine, recursiveSelectClause)}";
+            return selectClause;
         }
     }
 
