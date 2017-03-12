@@ -17,6 +17,7 @@ namespace GraphQLinq
 
         internal string QueryName { get; }
         internal LambdaExpression Selector { get; private set; }
+        internal List<string> Includes { get; private set; } = new List<string>();
         internal Dictionary<string, object> Arguments { get; set; } = new Dictionary<string, object>();
 
         internal GraphQuery(GraphContext graphContext, string queryName)
@@ -24,7 +25,7 @@ namespace GraphQLinq
             QueryName = queryName;
             this.graphContext = graphContext;
 
-            lazyQuery = new Lazy<string>(() => queryBuilder.BuildQuery(this));
+            lazyQuery = new Lazy<string>(() => queryBuilder.BuildQuery(this, Includes));
         }
 
         public IEnumerator<T> GetEnumerator()
@@ -37,6 +38,20 @@ namespace GraphQLinq
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        public GraphQuery<T> Include<TProperty>(Expression<Func<T, TProperty>> path)
+        {
+            string include;
+            if (!TryParsePath(path.Body, out include) || include == null)
+            {
+                throw new ArgumentException("Invalid Include Path Expression", nameof(path));
+            }
+
+            var graphQuery = Clone<T>();
+            graphQuery.Includes.Add(include);
+
+            return graphQuery;
         }
 
         public GraphQuery<TResult> Select<TResult>(Expression<Func<T, TResult>> resultSelector)
@@ -60,7 +75,58 @@ namespace GraphQLinq
 
         private GraphQuery<TR> Clone<TR>()
         {
-            return new GraphQuery<TR>(graphContext, QueryName) { Arguments = Arguments };
+            return new GraphQuery<TR>(graphContext, QueryName) { Arguments = Arguments, Selector = Selector, Includes = Includes };
+        }
+
+        private static bool TryParsePath(Expression expression, out string path)
+        {
+            path = null;
+            var withoutConvert = expression.RemoveConvert(); // Removes boxing
+            var memberExpression = withoutConvert as MemberExpression;
+            var callExpression = withoutConvert as MethodCallExpression;
+
+            if (memberExpression != null)
+            {
+                var thisPart = memberExpression.Member.Name;
+                string parentPart;
+                if (!TryParsePath(memberExpression.Expression, out parentPart))
+                {
+                    return false;
+                }
+                path = parentPart == null ? thisPart : (parentPart + "." + thisPart);
+            }
+            else if (callExpression != null)
+            {
+                if (callExpression.Method.Name == "Select"
+                    && callExpression.Arguments.Count == 2)
+                {
+                    string parentPart;
+                    if (!TryParsePath(callExpression.Arguments[0], out parentPart))
+                    {
+                        return false;
+                    }
+                    if (parentPart != null)
+                    {
+                        var subExpression = callExpression.Arguments[1] as LambdaExpression;
+                        if (subExpression != null)
+                        {
+                            string thisPart;
+                            if (!TryParsePath(subExpression.Body, out thisPart))
+                            {
+                                return false;
+                            }
+                            if (thisPart != null)
+                            {
+                                path = parentPart + "." + thisPart;
+                                return true;
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+
+            return true;
         }
     }
 
@@ -70,7 +136,7 @@ namespace GraphQLinq
         internal const string ItemAlias = "item";
         internal const string ResultAlias = "result";
 
-        public string BuildQuery(GraphQuery<T> graphQuery)
+        public string BuildQuery(GraphQuery<T> graphQuery, List<string> includes)
         {
             var selectClause = "";
 
@@ -95,7 +161,7 @@ namespace GraphQLinq
             }
             else
             {
-                selectClause = BuildSelectClauseForType(typeof(T));
+                selectClause = BuildSelectClauseForType(typeof(T), includes);
             }
 
             //(type: [STANDARD_CHARGER, STORE], openSoon: true)
@@ -123,15 +189,53 @@ namespace GraphQLinq
             return string.Format(QueryTemplate, ResultAlias, graphQuery.QueryName.ToLower(), argsWithParentheses, selectClause);
         }
 
-        private static string BuildSelectClauseForType(Type targetType)
+        private static string BuildSelectClauseForType(Type targetType, int depth = 1)
         {
             var propertyInfos = targetType.GetProperties();
 
             var propertiesToInclude = propertyInfos.Where(info => !info.PropertyType.HasNestedProperties());
 
-            var selectClause = string.Join(Environment.NewLine, propertiesToInclude.Select(info => info.Name));
+            var selectClause = string.Join(Environment.NewLine, propertiesToInclude.Select(info => new string(' ', depth * 2) + info.Name));
 
             return selectClause;
+        }
+
+        private static string BuildSelectClauseForType(Type targetType, IEnumerable<string> includes)
+        {
+            var selectClause = BuildSelectClauseForType(targetType);
+
+            foreach (var include in includes)
+            {
+                var fieldsFromInclude = BuildSelectClauseForInclude(targetType, include);
+                selectClause = selectClause + Environment.NewLine + fieldsFromInclude;
+            }
+
+            return Environment.NewLine + selectClause + Environment.NewLine;
+        }
+
+        private static string BuildSelectClauseForInclude(Type targetType, string include, int depth = 1)
+        {
+            if (string.IsNullOrEmpty(include))
+            {
+                return BuildSelectClauseForType(targetType, depth);
+            }
+            var leftPadding = new string(' ', depth * 2);
+
+            var dotIndex = include.IndexOf(".", StringComparison.InvariantCultureIgnoreCase);
+
+            var restOfTheIncludePath = dotIndex >= 0 ? include.Substring(dotIndex + 1) : "";
+            var currentPropertyName = dotIndex >= 0 ? include.Substring(0, dotIndex) : include;
+
+            var propertyType = targetType.GetProperty(currentPropertyName).PropertyType.GetTypeOrListType();
+
+            if (propertyType.IsPrimitiveOrString())
+            {
+                return leftPadding + currentPropertyName;
+            }
+
+            var fieldsFromInclude = BuildSelectClauseForInclude(propertyType, restOfTheIncludePath, depth + 1);
+            fieldsFromInclude = $"{leftPadding}{currentPropertyName} {{{Environment.NewLine}{fieldsFromInclude}{Environment.NewLine}{leftPadding}}}";
+            return fieldsFromInclude;
         }
     }
 
@@ -210,15 +314,34 @@ namespace GraphQLinq
 
         internal static bool HasNestedProperties(this Type type)
         {
+            var trueType = GetTypeOrListType(type);
+
+            return !IsPrimitiveOrString(trueType);
+        }
+
+        internal static Type GetTypeOrListType(this Type type)
+        {
             if (type.IsGenericType &&
                 type.GetGenericTypeDefinition() == typeof(List<>))
             {
                 var genericArguments = type.GetGenericArguments();
 
-                return !IsPrimitiveOrString(genericArguments[0]);
+                return genericArguments[0];
             }
 
-            return !IsPrimitiveOrString(type);
+            return type;
+        }
+
+        internal static Expression RemoveConvert(this Expression expression)
+        {
+            while ((expression != null)
+                   && (expression.NodeType == ExpressionType.Convert
+                       || expression.NodeType == ExpressionType.ConvertChecked))
+            {
+                expression = RemoveConvert(((UnaryExpression)expression).Operand);
+            }
+
+            return expression;
         }
     }
 
