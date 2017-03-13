@@ -75,7 +75,7 @@ namespace GraphQLinq
 
         private GraphQuery<TR> Clone<TR>()
         {
-            return new GraphQuery<TR>(graphContext, QueryName) { Arguments = Arguments, Selector = Selector, Includes = Includes };
+            return new GraphQuery<TR>(graphContext, QueryName) { Arguments = Arguments, Selector = Selector, Includes = Includes.ToList() };
         }
 
         private static bool TryParsePath(Expression expression, out string path)
@@ -151,7 +151,7 @@ namespace GraphQLinq
 
                 if (body.NodeType == ExpressionType.New)
                 {
-                    var newExpression = (NewExpression)body;
+                    var newExpression = (NewExpression)body;    
 
                     var queryFields = newExpression.Members.Zip(newExpression.Arguments,
                         (memberInfo, expression) => new { Alias = memberInfo.Name, ((MemberExpression)expression).Member.Name });
