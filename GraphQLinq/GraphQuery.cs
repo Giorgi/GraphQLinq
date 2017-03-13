@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
+using System.Reflection;
 using Newtonsoft.Json.Linq;
 
 namespace GraphQLinq
@@ -151,18 +152,39 @@ namespace GraphQLinq
 
                 if (body.NodeType == ExpressionType.New)
                 {
-                    var newExpression = (NewExpression)body;    
+                    var newExpression = (NewExpression)body;
 
-                    var queryFields = newExpression.Members.Zip(newExpression.Arguments,
-                        (memberInfo, expression) => new { Alias = memberInfo.Name, ((MemberExpression)expression).Member.Name });
+                    var fields = new List<string>();
 
-                    selectClause = string.Join(" ", queryFields.Select(arg => arg.Alias + ": " + arg.Name));
+                    for (var i = 0; i < newExpression.Members.Count; i++)
+                    {
+                        var member = newExpression.Members[i] as PropertyInfo;
+
+                        if (member == null) continue;
+
+                        var fieldName = ((MemberExpression)newExpression.Arguments[i]).Member.Name;
+
+                        var padding = new string(' ', 4);
+                        var selectField = padding + member.Name + ": " + fieldName;  //generate something like alias: field e.g. mailList: emails
+
+                        if (!member.PropertyType.IsPrimitiveOrString())
+                        {
+                            var fieldForProperty = BuildSelectClauseForType(member.PropertyType.GetTypeOrListType(), 3);
+                            selectField = $"{selectField} {{{Environment.NewLine}{fieldForProperty}{Environment.NewLine}{padding}}}";
+                        }
+
+                        fields.Add(selectField);
+                    }
+
+                    selectClause = string.Join(Environment.NewLine, fields);
                 }
             }
             else
             {
                 selectClause = BuildSelectClauseForType(typeof(T), includes);
             }
+
+            selectClause = Environment.NewLine + selectClause + Environment.NewLine;
 
             //(type: [STANDARD_CHARGER, STORE], openSoon: true)
             var argList = graphQuery.Arguments.Where(pair => pair.Value != null).Select(pair =>
@@ -210,7 +232,7 @@ namespace GraphQLinq
                 selectClause = selectClause + Environment.NewLine + fieldsFromInclude;
             }
 
-            return Environment.NewLine + selectClause + Environment.NewLine;
+            return selectClause;
         }
 
         private static string BuildSelectClauseForInclude(Type targetType, string include, int depth = 1)
