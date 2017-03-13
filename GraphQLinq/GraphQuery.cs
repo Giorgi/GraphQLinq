@@ -145,9 +145,21 @@ namespace GraphQLinq
             {
                 var body = graphQuery.Selector.Body;
 
+                var padding = new string(' ', 4);
+
                 if (body.NodeType == ExpressionType.MemberAccess)
                 {
-                    selectClause = $"{ItemAlias}: {((MemberExpression)body).Member.Name}";
+                    var member = ((MemberExpression)body).Member as PropertyInfo;
+                    if (member != null)
+                    {
+                        selectClause = $"{padding}{ItemAlias}: {member.Name}";
+
+                        if (!member.PropertyType.IsPrimitiveOrString())
+                        {
+                            var fieldForProperty = BuildSelectClauseForType(member.PropertyType.GetTypeOrListType(), 3);
+                            selectClause = $"{selectClause} {{{Environment.NewLine}{fieldForProperty}{Environment.NewLine}{padding}}}";
+                        }
+                    }
                 }
 
                 if (body.NodeType == ExpressionType.New)
@@ -164,7 +176,6 @@ namespace GraphQLinq
 
                         var fieldName = ((MemberExpression)newExpression.Arguments[i]).Member.Name;
 
-                        var padding = new string(' ', 4);
                         var selectField = padding + member.Name + ": " + fieldName;  //generate something like alias: field e.g. mailList: emails
 
                         if (!member.PropertyType.IsPrimitiveOrString())
@@ -271,7 +282,7 @@ namespace GraphQLinq
         private const string DataPathPropertyName = "data";
         private const string ErrorPathPropertyName = "errors";
 
-        private static readonly bool HasNestedProperties = typeof(T).HasNestedProperties();
+        private static readonly bool HasNestedProperties = !(typeof(T).IsPrimitiveOrString() || typeof(T).IsList());
 
         public GraphQueryEnumerator(string query, string baseUrl)
         {
@@ -334,6 +345,11 @@ namespace GraphQLinq
             return type.IsPrimitive || type == typeof(string);
         }
 
+        internal static bool IsList(this Type type)
+        {
+            return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>);
+        }
+
         internal static bool HasNestedProperties(this Type type)
         {
             var trueType = GetTypeOrListType(type);
@@ -343,8 +359,7 @@ namespace GraphQLinq
 
         internal static Type GetTypeOrListType(this Type type)
         {
-            if (type.IsGenericType &&
-                type.GetGenericTypeDefinition() == typeof(List<>))
+            if (type.IsList())
             {
                 var genericArguments = type.GetGenericArguments();
 
