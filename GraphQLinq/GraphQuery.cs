@@ -152,7 +152,7 @@ namespace GraphQLinq
                     var member = ((MemberExpression)body).Member as PropertyInfo;
                     if (member != null)
                     {
-                        selectClause = $"{padding}{ItemAlias}: {member.Name}";
+                        selectClause = $"{padding}{ItemAlias}: {member.Name.ToCamelCase()}";
 
                         if (!member.PropertyType.IsPrimitiveOrString())
                         {
@@ -176,7 +176,7 @@ namespace GraphQLinq
 
                         var fieldName = ((MemberExpression)newExpression.Arguments[i]).Member.Name;
 
-                        var selectField = padding + member.Name + ": " + fieldName;  //generate something like alias: field e.g. mailList: emails
+                        var selectField = padding + member.Name + ": " + fieldName.ToCamelCase();  //generate something like alias: field e.g. mailList: emails
 
                         if (!member.PropertyType.IsPrimitiveOrString())
                         {
@@ -228,7 +228,7 @@ namespace GraphQLinq
 
             var propertiesToInclude = propertyInfos.Where(info => !info.PropertyType.HasNestedProperties());
 
-            var selectClause = string.Join(Environment.NewLine, propertiesToInclude.Select(info => new string(' ', depth * 2) + info.Name));
+            var selectClause = string.Join(Environment.NewLine, propertiesToInclude.Select(info => new string(' ', depth * 2) + info.Name.ToCamelCase()));
 
             return selectClause;
         }
@@ -263,11 +263,11 @@ namespace GraphQLinq
 
             if (propertyType.IsPrimitiveOrString())
             {
-                return leftPadding + currentPropertyName;
+                return leftPadding + currentPropertyName.ToCamelCase();
             }
 
             var fieldsFromInclude = BuildSelectClauseForInclude(propertyType, restOfTheIncludePath, depth + 1);
-            fieldsFromInclude = $"{leftPadding}{currentPropertyName} {{{Environment.NewLine}{fieldsFromInclude}{Environment.NewLine}{leftPadding}}}";
+            fieldsFromInclude = $"{leftPadding}{currentPropertyName.ToCamelCase()} {{{Environment.NewLine}{fieldsFromInclude}{Environment.NewLine}{leftPadding}}}";
             return fieldsFromInclude;
         }
     }
@@ -338,7 +338,7 @@ namespace GraphQLinq
         object IEnumerator.Current => Current;
     }
 
-    static class TypeExtensions
+    static class ExtensionsUtils
     {
         internal static bool IsPrimitiveOrString(this Type type)
         {
@@ -379,6 +379,15 @@ namespace GraphQLinq
             }
 
             return expression;
+        }
+
+        internal static string ToCamelCase(this string input)
+        {
+            if (char.IsLower(input[0]))
+            {
+                return input;
+            }
+            return input.Substring(0, 1).ToLower() + input.Substring(1);
         }
     }
 
