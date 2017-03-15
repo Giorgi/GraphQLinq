@@ -33,7 +33,7 @@ namespace GraphQLinq
         {
             var query = lazyQuery.Value;
 
-            return new GraphQueryEnumerator<T>(query, graphContext.BaseUrl);
+            return new GraphQueryEnumerator<T>(query, graphContext.BaseUrl, graphContext.Authorization);
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -278,16 +278,18 @@ namespace GraphQLinq
 
         private readonly string query;
         private readonly string baseUrl;
+        private readonly string authorization;
 
         private const string DataPathPropertyName = "data";
         private const string ErrorPathPropertyName = "errors";
 
         private static readonly bool HasNestedProperties = !(typeof(T).IsPrimitiveOrString() || typeof(T).IsList());
 
-        public GraphQueryEnumerator(string query, string baseUrl)
+        public GraphQueryEnumerator(string query, string baseUrl, string authorization)
         {
             this.query = query;
             this.baseUrl = baseUrl;
+            this.authorization = authorization;
         }
 
         public void Dispose()
@@ -309,7 +311,12 @@ namespace GraphQLinq
         {
             using (var webClient = new WebClient())
             {
-                webClient.Headers.Add("Content-Type", "application/graphql");
+                webClient.Headers.Add(HttpRequestHeader.ContentType, "application/graphql");
+
+                if (!string.IsNullOrEmpty(authorization))
+                {
+                    webClient.Headers.Add(HttpRequestHeader.Authorization, authorization);
+                }
 
                 var json = webClient.UploadString(baseUrl, query);
 
