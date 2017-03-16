@@ -397,29 +397,4 @@ namespace GraphQLinq
             return input.Substring(0, 1).ToLower() + input.Substring(1);
         }
     }
-
-    public class GraphQueryError
-    {
-        public string Message { get; set; }
-        public ErrorLocation[] Locations { get; set; }
-    }
-
-    public class ErrorLocation
-    {
-        public int Line { get; set; }
-        public int Column { get; set; }
-    }
-
-    public class GraphQueryExecutionException : Exception
-    {
-        public GraphQueryExecutionException(IEnumerable<GraphQueryError> errors, string query)
-            : base($"One or more errors occured during query execution. Check {nameof(Errors)} property for details")
-        {
-            Errors = errors;
-            GraphQLQuery = query;
-        }
-
-        public string GraphQLQuery { get; private set; }
-        public IEnumerable<GraphQueryError> Errors { get; private set; }
-    }
 }
