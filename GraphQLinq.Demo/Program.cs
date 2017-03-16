@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace GraphQLinq.Demo
 {
@@ -6,12 +7,20 @@ namespace GraphQLinq.Demo
     {
         static void Main(string[] args)
         {
-            var graphQuery = new GraphContext("https://www.superchargers.io/graphql").Locations(type: LocationType.STANDARD_CHARGER, openSoon: true);
+            var locationTypes = new List<LocationType> { LocationType.STORE, LocationType.SERVICE };
+            var graphQuery = new SuperChargersGraphContext("https://www.superchargers.io/graphql").Locations(type: locationTypes);//Near(30, -90);
 
-            //var q = graphQuery.Select(location => new { c = location.city, t = location.emails.Select(email => email.email) });
-            var t = graphQuery.Select(l => l.city);
+            //var q = graphQuery.Select(location => new { c = location.locationType });
+            var t = graphQuery.Include(location => location.Details("na", "desc"));
+            //graphQuery.Select(location => new
+            //{
+            //    location.emails,
+            //    location.salesPhone
+            //}).Include(s => s.emails).ToList();
+            graphQuery = graphQuery.Include(location => location.salesPhone).Include(location => location.emails);
+            //var enumerator = q.ToList();
 
-            //var locations = q.ToList();
+            var locations = t.ToList();
             var list = graphQuery.ToList();
         }
     }
