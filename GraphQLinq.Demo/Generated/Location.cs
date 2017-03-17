@@ -37,4 +37,27 @@ public partial class Location : Node
     public List<Email> emails { get; set; }
     public string chargers { get; set; }
     public string directionsLink { get; set; }
+    public Info Info { get; set; }
+}
+
+
+public class Info
+{
+    public Address Address { get; set; }
+    public string Desc { get; set; }
+    public Phone Phone { get; set; }
+}
+
+public class Address
+{
+    public string Street { get; set; }
+    public string No { get; set; }
+}
+
+public static class QueryExtensions
+{
+    public static Location Details(this Location location, string name = "", string desc = "")
+    {
+        return null;
+    }
 }
