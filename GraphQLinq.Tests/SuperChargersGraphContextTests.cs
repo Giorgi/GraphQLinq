@@ -28,7 +28,7 @@ namespace GraphQLinq.Tests
             var locations = context.Locations().Select(l => new { l.city, l.region });
 
             var query = locations.ToString();
-            
+
             Assert.That(query, Does.Contain("city").And.Contains("region"));
         }
 
@@ -62,7 +62,40 @@ namespace GraphQLinq.Tests
             Assert.That(query, Does.Contain("country"));
         }
 
+        [Test]
+        public void SelectingAllPropertiesQueryDoesNotIncludeNavigationProperties()
+        {
+            var locations = context.Locations();
 
+            var query = locations.ToString();
+
+            Assert.That(query, Does.Not.Contain(nameof(Location.salesPhone)).And.Not.Contains(nameof(Location.emails)));
+        }
+
+        [Test]
+        public void IncludingNavigationPropertyQueryIncludesIncludedNavigationPropertyWithNestedProperties()
+        {
+            var locations = context.Locations().Include(l => l.salesPhone);
+
+            var query = locations.ToString();
+
+            Assert.That(query, Does.Contain(nameof(Location.salesPhone))
+                               .And.Contains(nameof(Phone.label))
+                               .And.Contains(nameof(Phone.number)));
+        }
+
+        [Test]
+        public void IncludingNavigationPropertyWithSpecificPropertyQueryIncludesIncludedNavigationPropertySpecifiedProperty()
+        {
+            var locations = context.Locations().Include(l => l.salesPhone.Select(p => p.number));
+
+            var query = locations.ToString();
+
+            Assert.That(query, Does.Contain(nameof(Location.salesPhone))
+                               .And.Not.Contains(nameof(Phone.label))
+                               .And.Contains(nameof(Phone.number)));
+        }
+                
         [Test]
         public void FilteringQueryWithScalarParameterGeneratedQueryIncludesPassedParameter()
         {
@@ -79,7 +112,7 @@ namespace GraphQLinq.Tests
             var locations = context.Locations(type: new List<LocationType> { LocationType.SERVICE, LocationType.STORE }).Select(l => l.city);
 
             var query = locations.ToString();
-            
+
             Assert.That(query, Does.Contain("type: [SERVICE, STORE]"));
         }
     }
