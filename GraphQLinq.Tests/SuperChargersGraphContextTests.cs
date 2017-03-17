@@ -25,11 +25,11 @@ namespace GraphQLinq.Tests
         [Test]
         public void SelectingMultiplePropertiesQueryIncludesSelectedProperties()
         {
-            var locations = context.Locations().Select(l => new { l.city, l.country });
+            var locations = context.Locations().Select(l => new { l.city, l.region });
 
             var query = locations.ToString();
-
-            Assert.That(query, Does.Contain("city").And.Contains("country"));
+            
+            Assert.That(query, Does.Contain("city").And.Contains("region"));
         }
 
         [Test]
@@ -51,6 +51,17 @@ namespace GraphQLinq.Tests
 
             Assert.That(query, Does.Contain("number").And.Contains("label").And.Contains("city"));
         }
+
+        [Test]
+        public void SelectingPropertyQueryIncludesPropertyInCamelCase()
+        {
+            var locations = context.Locations().Select(l => l.Country);
+
+            var query = locations.ToString();
+
+            Assert.That(query, Does.Contain("country"));
+        }
+
 
         [Test]
         public void FilteringQueryWithScalarParameterGeneratedQueryIncludesPassedParameter()
