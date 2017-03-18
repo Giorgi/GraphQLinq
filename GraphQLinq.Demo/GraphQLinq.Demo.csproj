@@ -43,13 +43,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Generated\Country.cs" />
-    <Compile Include="Generated\Email.cs" />
-    <Compile Include="Generated\Location.cs" />
-    <Compile Include="Generated\LocationType.cs" />
-    <Compile Include="Generated\Node.cs" />
-    <Compile Include="Generated\Phone.cs" />
-    <Compile Include="Generated\Region.cs" />
+    <Compile Include="SuperChargers\Country.cs" />
+    <Compile Include="SuperChargers\Email.cs" />
+    <Compile Include="SuperChargers\Location.cs" />
+    <Compile Include="SuperChargers\LocationType.cs" />
+    <Compile Include="SuperChargers\Node.cs" />
+    <Compile Include="SuperChargers\Phone.cs" />
+    <Compile Include="SuperChargers\Region.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SuperChargersGraphContext.cs" />

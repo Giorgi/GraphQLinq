@@ -44,25 +44,25 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\GraphQLinq.Demo\Generated\Country.cs">
+    <Compile Include="..\GraphQLinq.Demo\SuperChargers\Country.cs">
       <Link>SuperChargers\Country.cs</Link>
     </Compile>
-    <Compile Include="..\GraphQLinq.Demo\Generated\Email.cs">
+    <Compile Include="..\GraphQLinq.Demo\SuperChargers\Email.cs">
       <Link>SuperChargers\Email.cs</Link>
     </Compile>
-    <Compile Include="..\GraphQLinq.Demo\Generated\Location.cs">
+    <Compile Include="..\GraphQLinq.Demo\SuperChargers\Location.cs">
       <Link>SuperChargers\Location.cs</Link>
     </Compile>
-    <Compile Include="..\GraphQLinq.Demo\Generated\LocationType.cs">
+    <Compile Include="..\GraphQLinq.Demo\SuperChargers\LocationType.cs">
       <Link>SuperChargers\LocationType.cs</Link>
     </Compile>
-    <Compile Include="..\GraphQLinq.Demo\Generated\Node.cs">
+    <Compile Include="..\GraphQLinq.Demo\SuperChargers\Node.cs">
       <Link>SuperChargers\Node.cs</Link>
     </Compile>
-    <Compile Include="..\GraphQLinq.Demo\Generated\Phone.cs">
+    <Compile Include="..\GraphQLinq.Demo\SuperChargers\Phone.cs">
       <Link>SuperChargers\Phone.cs</Link>
     </Compile>
-    <Compile Include="..\GraphQLinq.Demo\Generated\Region.cs">
+    <Compile Include="..\GraphQLinq.Demo\SuperChargers\Region.cs">
       <Link>SuperChargers\Region.cs</Link>
     </Compile>
     <Compile Include="..\GraphQLinq.Demo\SuperChargersGraphContext.cs">
