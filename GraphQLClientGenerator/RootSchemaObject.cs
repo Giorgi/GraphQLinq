@@ -5,7 +5,7 @@ using Newtonsoft.Json.Converters;
 
 namespace GraphQLClientGenerator
 {
-    public class RootObject
+    public class RootSchemaObject
     {
         public Data Data { get; set; }
     }

@@ -47,10 +47,10 @@ namespace GraphQLClientGenerator
             var webClient = new WebClient();
             webClient.Headers.Add("Content-Type", "application/graphql");
             var downloadString = webClient.UploadString("https://api.digitransit.fi/routing/v1/routers/finland/index/graphql", query);
-            var rootObject = JsonConvert.DeserializeObject<RootObject>(downloadString);
+            var rootObject = JsonConvert.DeserializeObject<RootSchemaObject>(downloadString);
 
             var graphQLClassesGenerator = new GraphQLClassesGenerator();
-            graphQLClassesGenerator.GenerateClasses(rootObject);
+            graphQLClassesGenerator.GenerateClasses(rootObject.Data.Schema);
         }
     }
 }

@@ -35,9 +35,9 @@ namespace GraphQLClientGenerator
 
         private static readonly AdhocWorkspace Workspace = new AdhocWorkspace();
 
-        public void GenerateClasses(RootObject rootObject)
+        public void GenerateClasses(Schema schema)
         {
-            var types = rootObject.Data.Schema.Types.Where(type => !type.Name.StartsWith("__")
+            var types = schema.Types.Where(type => !type.Name.StartsWith("__")
                                                                 && !BuiltInTypes.Contains(type.Name)
                                                                 && !ExceptionTypes.Contains(type.Name)).ToList();
 
