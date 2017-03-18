@@ -7,8 +7,8 @@
     <ProjectGuid>{4951740C-9B59-43EB-AA52-44617069322B}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>GrapQLClientGenerator</RootNamespace>
-    <AssemblyName>GrapQLClientGenerator</AssemblyName>
+    <RootNamespace>GraphQLClientGenerator</RootNamespace>
+    <AssemblyName>GraphQLClientGenerator</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
