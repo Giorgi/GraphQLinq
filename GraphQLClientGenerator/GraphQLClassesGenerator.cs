@@ -35,7 +35,7 @@ namespace GraphQLClientGenerator
 
         private static readonly AdhocWorkspace Workspace = new AdhocWorkspace();
 
-        public void GenerateClasses(Schema schema)
+        public void GenerateClasses(Schema schema, CodeGenerationOptions options)
         {
             var types = schema.Types.Where(type => !type.Name.StartsWith("__")
                                                                 && !BuiltInTypes.Contains(type.Name)
@@ -47,39 +47,41 @@ namespace GraphQLClientGenerator
 
             foreach (var enumInfo in enums)
             {
-                var syntax = GenerateEnum(enumInfo);
-                FormatAndWriteToFile(syntax, enumInfo.Name);
+                var syntax = GenerateEnum(enumInfo, options.Namespace);
+                FormatAndWriteToFile(syntax, options.OutputDirectory, enumInfo.Name);
             }
 
             foreach (var classInfo in classes)
             {
-                var syntax = GenerateClass(classInfo);
-                FormatAndWriteToFile(syntax, classInfo.Name);
+                var syntax = GenerateClass(classInfo, options.Namespace);
+                FormatAndWriteToFile(syntax, options.OutputDirectory, classInfo.Name);
             }
 
             foreach (var interfaceInfo in interfaces)
             {
-                var syntax = GenerateInterface(interfaceInfo);
-                FormatAndWriteToFile(syntax, interfaceInfo.Name);
+                var syntax = GenerateInterface(interfaceInfo, options.Namespace);
+                FormatAndWriteToFile(syntax, options.OutputDirectory, interfaceInfo.Name);
             }
         }
 
-        private SyntaxNode GenerateEnum(Type enumInfo)
+        private SyntaxNode GenerateEnum(Type enumInfo, string @namespace)
         {
+            var namespaceDeclaration = SyntaxFactory.NamespaceDeclaration(SyntaxFactory.IdentifierName(@namespace));
             var declaration = SyntaxFactory.EnumDeclaration(enumInfo.Name).AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword));
-
+            
             foreach (var enumValue in enumInfo.EnumValues)
             {
                 declaration = declaration.AddMembers(SyntaxFactory.EnumMemberDeclaration(SyntaxFactory.Identifier(enumValue.Name)));
             }
 
-            return declaration;
+            return namespaceDeclaration.AddMembers(declaration);
         }
 
-        private SyntaxNode GenerateClass(Type classInfo)
+        private SyntaxNode GenerateClass(Type classInfo, string @namespace)
         {
+            var namespaceDeclaration = SyntaxFactory.NamespaceDeclaration(SyntaxFactory.IdentifierName(@namespace));
+
             var usings = new HashSet<string>();
-            var compilationUnit = SyntaxFactory.CompilationUnit();
 
             var semicolonToken = SyntaxFactory.Token(SyntaxKind.SemicolonToken);
 
@@ -111,16 +113,17 @@ namespace GraphQLClientGenerator
 
             foreach (var @using in usings.Where(s => !string.IsNullOrEmpty(s)))
             {
-                compilationUnit = compilationUnit.AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName(@using)));
+                namespaceDeclaration = namespaceDeclaration.AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName(@using)));
             }
 
-            compilationUnit = compilationUnit.AddMembers(declaration);
+            namespaceDeclaration = namespaceDeclaration.AddMembers(declaration);
 
-            return compilationUnit;
+            return namespaceDeclaration;
         }
 
-        private SyntaxNode GenerateInterface(Type interfaceInfo)
+        private SyntaxNode GenerateInterface(Type interfaceInfo, string @namespace)
         {
+            var namespaceDeclaration = SyntaxFactory.NamespaceDeclaration(SyntaxFactory.IdentifierName(@namespace));
             var semicolonToken = SyntaxFactory.Token(SyntaxKind.SemicolonToken);
 
             var declaration = SyntaxFactory.InterfaceDeclaration(interfaceInfo.Name)
@@ -141,12 +144,13 @@ namespace GraphQLClientGenerator
                 declaration = declaration.AddMembers(property);
             }
 
-            return declaration;
+            return namespaceDeclaration.AddMembers(declaration);
         }
 
-        private static void FormatAndWriteToFile(SyntaxNode syntax, string name)
+        private static void FormatAndWriteToFile(SyntaxNode syntax, string directory, string name)
         {
-            using (var streamWriter = File.CreateText(name + ".cs"))
+            var fileName = Path.Combine(directory, name + ".cs");
+            using (var streamWriter = File.CreateText(fileName))
             {
                 Formatter.Format(syntax, Workspace).WriteTo(streamWriter);
             }

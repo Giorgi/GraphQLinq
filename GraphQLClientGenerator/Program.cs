@@ -49,8 +49,19 @@ namespace GraphQLClientGenerator
             var downloadString = webClient.UploadString("https://api.digitransit.fi/routing/v1/routers/finland/index/graphql", query);
             var rootObject = JsonConvert.DeserializeObject<RootSchemaObject>(downloadString);
 
+            var codeGenerationOptions = new CodeGenerationOptions
+            {
+                Namespace = "HSL",
+                OutputDirectory = @"E:\src\GraphQLinq\GraphQLinq.Demo\HSL"
+            };
             var graphQLClassesGenerator = new GraphQLClassesGenerator();
-            graphQLClassesGenerator.GenerateClasses(rootObject.Data.Schema);
+            graphQLClassesGenerator.GenerateClasses(rootObject.Data.Schema, codeGenerationOptions);
         }
+    }
+
+    class CodeGenerationOptions
+    {
+        public string OutputDirectory { get; set; }
+        public string Namespace { get; set; }
     }
 }
