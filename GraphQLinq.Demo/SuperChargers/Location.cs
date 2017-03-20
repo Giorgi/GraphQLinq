@@ -10,7 +10,7 @@ public partial class Location : Node
     public string provinceState { get; set; }
     public string addressLine2 { get; set; }
     public string address { get; set; }
-    public string country { get; set; }
+    public string Country { get; set; }
     public float latitude { get; set; }
     public string locationId { get; set; }
     public List<Phone> salesPhone { get; set; }
