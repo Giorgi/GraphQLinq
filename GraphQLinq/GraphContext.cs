@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -14,12 +15,23 @@ namespace GraphQLinq
         public string BaseUrl { get; private set; }
         public string Authorization { get; private set; }
 
-        protected GraphQuery<T> BuildQuery<T>(object[] parameterValues, [CallerMemberName] string queryName = null)
+        protected GraphCollectionQuery<T> BuildCollectionQuery<T>(object[] parameterValues, [CallerMemberName] string queryName = null)
+        {
+            var arguments = Dictionary(parameterValues, queryName);
+            return new GraphCollectionQuery<T>(this, queryName) { Arguments = arguments };
+        }
+
+        protected GraphItemQuery<T> BuildItemQuery<T>(object[] parameterValues, [CallerMemberName] string queryName = null)
+        {
+            var arguments = Dictionary(parameterValues, queryName);
+            return new GraphItemQuery<T>(this, queryName) { Arguments = arguments };
+        }
+
+        private Dictionary<string, object> Dictionary(object[] parameterValues, string queryName)
         {
             var parameters = GetType().GetMethod(queryName).GetParameters();
             var arguments = parameters.Zip(parameterValues, (info, value) => new { info.Name, Value = value }).ToDictionary(arg => arg.Name, arg => arg.Value);
-
-            return new GraphQuery<T>(this, queryName) { Arguments = arguments };
+            return arguments;
         }
     }
 }

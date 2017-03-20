@@ -15,17 +15,19 @@ namespace GraphQLinq
         private readonly string query;
         private readonly string baseUrl;
         private readonly string authorization;
+        private readonly QueryType queryType;
 
         private const string DataPathPropertyName = "data";
         private const string ErrorPathPropertyName = "errors";
 
         private static readonly bool HasNestedProperties = !(typeof(T).IsPrimitiveOrString() || typeof(T).IsList());
 
-        public GraphQueryEnumerator(string query, string baseUrl, string authorization)
+        internal GraphQueryEnumerator(string query, string baseUrl, string authorization, QueryType queryType)
         {
             this.query = query;
             this.baseUrl = baseUrl;
             this.authorization = authorization;
+            this.queryType = queryType;
         }
 
         public void Dispose()
@@ -45,6 +47,38 @@ namespace GraphQLinq
 
         private IEnumerable<T> DownloadData()
         {
+            var json = DownloadJson();
+
+            var jObject = JObject.Parse(json);
+
+            if (jObject.SelectToken(ErrorPathPropertyName) != null)
+            {
+                var errors = jObject[ErrorPathPropertyName].ToObject<List<GraphQueryError>>();
+                throw new GraphQueryExecutionException(errors, query);
+            }
+
+            var enumerable = jObject[DataPathPropertyName][GraphQueryBuilder<T>.ResultAlias]
+                        .Select(token =>
+                        {
+                            JToken jToken;
+
+                            if (queryType == QueryType.Collection)
+                            {
+                                jToken = HasNestedProperties ? token : token[GraphQueryBuilder<T>.ItemAlias];
+                            }
+                            else
+                            {
+                                jToken = token.First;
+                            }
+
+                            return jToken.ToObject<T>();
+                        });
+
+            return enumerable;
+        }
+
+        private string DownloadJson()
+        {
             var defaultWebProxy = WebRequest.DefaultWebProxy;
             defaultWebProxy.Credentials = CredentialCache.DefaultCredentials;
 
@@ -57,10 +91,9 @@ namespace GraphQLinq
                     webClient.Headers.Add(HttpRequestHeader.Authorization, authorization);
                 }
 
-                var json = "";
                 try
                 {
-                    json = webClient.UploadString(baseUrl, query);
+                    return webClient.UploadString(baseUrl, query);
                 }
                 catch (WebException exception)
                 {
@@ -68,23 +101,10 @@ namespace GraphQLinq
                     {
                         using (var streamReader = new StreamReader(responseStream))
                         {
-                            json = streamReader.ReadToEnd();
+                            return streamReader.ReadToEnd();
                         }
                     }
                 }
-
-                var jObject = JObject.Parse(json);
-
-                if (jObject.SelectToken(ErrorPathPropertyName) != null)
-                {
-                    var errors = jObject[ErrorPathPropertyName].ToObject<List<GraphQueryError>>();
-                    throw new GraphQueryExecutionException(errors, query);
-                }
-
-                var enumerable = jObject[DataPathPropertyName][GraphQueryBuilder<T>.ResultAlias]
-                    .Select(token => (HasNestedProperties ? token : token[GraphQueryBuilder<T>.ItemAlias]).ToObject<T>());
-
-                return enumerable;
             }
         }
 

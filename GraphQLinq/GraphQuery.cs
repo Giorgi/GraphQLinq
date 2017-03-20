@@ -6,77 +6,45 @@ using System.Linq.Expressions;
 
 namespace GraphQLinq
 {
-    public class GraphQuery<T> : IEnumerable<T>
+    public class GraphQuery<T>
     {
-        private readonly GraphContext graphContext;
         private readonly GraphQueryBuilder<T> queryBuilder = new GraphQueryBuilder<T>();
-
-        private readonly Lazy<string> lazyQuery;
+        protected GraphContext Context { get; }
+        protected Lazy<string> LazyQuery { get; }
 
         internal string QueryName { get; }
-        internal LambdaExpression Selector { get; private set; }
+        internal LambdaExpression Selector { get; set; }
         internal List<string> Includes { get; private set; } = new List<string>();
         internal Dictionary<string, object> Arguments { get; set; } = new Dictionary<string, object>();
 
         internal GraphQuery(GraphContext graphContext, string queryName)
         {
             QueryName = queryName;
-            this.graphContext = graphContext;
+            Context = graphContext;
 
-            lazyQuery = new Lazy<string>(() => queryBuilder.BuildQuery(this, Includes));
-        }
-
-        public IEnumerator<T> GetEnumerator()
-        {
-            var query = lazyQuery.Value;
-
-            return new GraphQueryEnumerator<T>(query, graphContext.BaseUrl, graphContext.Authorization);
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
-        public GraphQuery<T> Include<TProperty>(Expression<Func<T, TProperty>> path)
-        {
-            string include;
-            if (!TryParsePath(path.Body, out include) || include == null)
-            {
-                throw new ArgumentException("Invalid Include Path Expression", nameof(path));
-            }
-
-            var graphQuery = Clone<T>();
-            graphQuery.Includes.Add(include);
-
-            return graphQuery;
-        }
-
-        public GraphQuery<TResult> Select<TResult>(Expression<Func<T, TResult>> resultSelector)
-        {
-            if (resultSelector.NodeType != ExpressionType.Lambda)
-            {
-                throw new ArgumentException($"{resultSelector} must be lambda expression", nameof(resultSelector));
-            }
-
-            var graphQuery = Clone<TResult>();
-
-            graphQuery.Selector = resultSelector;
-
-            return graphQuery;
+            LazyQuery = new Lazy<string>(() => queryBuilder.BuildQuery(this, Includes));
         }
 
         public override string ToString()
         {
-            return lazyQuery.Value;
+            return LazyQuery.Value;
         }
 
-        private GraphQuery<TR> Clone<TR>()
+        protected GraphQuery<TR> Clone<TR>()
         {
-            return new GraphQuery<TR>(graphContext, QueryName) { Arguments = Arguments, Selector = Selector, Includes = Includes.ToList() };
+            var genericQueryType = GetType().GetGenericTypeDefinition();
+            var cloneType = genericQueryType.MakeGenericType(typeof(TR));
+
+            var instance = (GraphQuery<TR>)Activator.CreateInstance(cloneType, Context, QueryName);
+
+            instance.Arguments = Arguments;
+            instance.Selector = Selector;
+            instance.Includes = Includes.ToList();
+
+            return instance;
         }
 
-        private static bool TryParsePath(Expression expression, out string path)
+        protected static bool TryParsePath(Expression expression, out string path)
         {
             path = null;
             var withoutConvert = expression.RemoveConvert(); // Removes boxing
@@ -126,6 +94,92 @@ namespace GraphQLinq
 
             return true;
         }
+
+        protected GraphQuery<T> BuildInclude<TProperty>(Expression<Func<T, TProperty>> path)
+        {
+            string include;
+            if (!TryParsePath(path.Body, out include) || include == null)
+            {
+                throw new ArgumentException("Invalid Include Path Expression", nameof(path));
+            }
+
+            var graphQuery = Clone<T>();
+            graphQuery.Includes.Add(include);
+
+            return graphQuery;
+        }
+
+        protected GraphQuery<TResult> BuildSelect<TResult>(Expression<Func<T, TResult>> resultSelector)
+        {
+            if (resultSelector.NodeType != ExpressionType.Lambda)
+            {
+                throw new ArgumentException($"{resultSelector} must be lambda expression", nameof(resultSelector));
+            }
+
+            var graphQuery = Clone<TResult>();
+            graphQuery.Selector = resultSelector;
+
+            return graphQuery;
+        }
+    }
+
+    public class GraphItemQuery<T> : GraphQuery<T>
+    {
+        public GraphItemQuery(GraphContext graphContext, string queryName) : base(graphContext, queryName) { }
+
+        public GraphItemQuery<T> Include<TProperty>(Expression<Func<T, TProperty>> path)
+        {
+            return (GraphItemQuery<T>)BuildInclude(path);
+        }
+
+        public GraphItemQuery<TResult> Select<TResult>(Expression<Func<T, TResult>> resultSelector)
+        {
+            return (GraphItemQuery<TResult>)BuildSelect(resultSelector);
+        }
+
+        public T ToItem()
+        {
+            var query = LazyQuery.Value;
+
+            using (var graphQueryEnumerator = new GraphQueryEnumerator<T>(query, Context.BaseUrl, Context.Authorization, QueryType.Item))
+            {
+                graphQueryEnumerator.MoveNext();
+                return graphQueryEnumerator.Current;
+            }
+        }
+    }
+
+    public class GraphCollectionQuery<T> : GraphQuery<T>, IEnumerable<T>
+    {
+        public GraphCollectionQuery(GraphContext graphContext, string queryName) : base(graphContext, queryName) { }
+
+        public IEnumerator<T> GetEnumerator()
+        {
+            var query = LazyQuery.Value;
+
+            return new GraphQueryEnumerator<T>(query, Context.BaseUrl, Context.Authorization, QueryType.Collection);
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+        public GraphCollectionQuery<T> Include<TProperty>(Expression<Func<T, TProperty>> path)
+        {
+            return (GraphCollectionQuery<T>)BuildInclude(path);
+        }
+
+        public GraphCollectionQuery<TResult> Select<TResult>(Expression<Func<T, TResult>> resultSelector)
+        {
+            return (GraphCollectionQuery<TResult>)BuildSelect(resultSelector);
+        }
+    }
+
+    internal enum QueryType
+    {
+        Item,
+        Collection
     }
 
     static class ExtensionsUtils
@@ -194,7 +248,7 @@ namespace GraphQLinq
 
             if (type == typeof(string))
             {
-                return "String";
+                return "String!";
             }
 
             if (type == typeof(float))
