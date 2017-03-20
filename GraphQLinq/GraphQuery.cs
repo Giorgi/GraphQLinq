@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
@@ -203,7 +204,7 @@ namespace GraphQLinq
             var passedArguments = graphQuery.Arguments.Where(pair => pair.Value != null).ToList();
 
             var queryParameters = passedArguments.Any() ? $"({string.Join(", ", passedArguments.Select(pair => $"{pair.Key}: ${pair.Key}"))})" : "";
-            var queryParameterTypes = passedArguments.Any() ?  $"({string.Join(", ", passedArguments.Select(pair => $"${pair.Key}: {pair.Value.GetType().ToGraphQlType()}"))})" : "";
+            var queryParameterTypes = passedArguments.Any() ? $"({string.Join(", ", passedArguments.Select(pair => $"${pair.Key}: {pair.Value.GetType().ToGraphQlType()}"))})" : "";
 
             var queryVariables = passedArguments.ToDictionary(pair => pair.Key, pair => pair.Value);
             var graphQLQuery = string.Format(QueryTemplate, queryParameterTypes, ResultAlias, graphQuery.QueryName.ToLower(), queryParameters, selectClause);
@@ -313,7 +314,21 @@ namespace GraphQLinq
                     webClient.Headers.Add(HttpRequestHeader.Authorization, authorization);
                 }
 
-                var json = webClient.UploadString(baseUrl, query);
+                var json = "";
+                try
+                {
+                    json = webClient.UploadString(baseUrl, query);
+                }
+                catch (WebException exception)
+                {
+                    using (var responseStream = exception.Response.GetResponseStream())
+                    {
+                        using (var streamReader = new StreamReader(responseStream))
+                        {
+                            json = streamReader.ReadToEnd();
+                        }
+                    }
+                }
 
                 var jObject = JObject.Parse(json);
 
