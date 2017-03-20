@@ -309,7 +309,10 @@ namespace GraphQLinq
 
         private IEnumerable<T> DownloadData()
         {
-            using (var webClient = new WebClient())
+            var defaultWebProxy = WebRequest.DefaultWebProxy;
+            defaultWebProxy.Credentials = CredentialCache.DefaultCredentials;
+
+            using (var webClient = new WebClient { Proxy = defaultWebProxy })
             {
                 webClient.Headers.Add(HttpRequestHeader.ContentType, "application/graphql");
 
