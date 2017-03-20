@@ -103,7 +103,7 @@ namespace GraphQLinq.Tests
 
             var query = locations.ToString();
 
-            Assert.That(query, Does.Contain("openSoon: true"));
+            Assert.That(query, Does.Contain("openSoon\":true"));
         }
 
         [Test]
@@ -113,7 +113,27 @@ namespace GraphQLinq.Tests
 
             var query = locations.ToString();
 
-            Assert.That(query, Does.Contain("type: [SERVICE, STORE]"));
+            Assert.That(query, Does.Contain("type\":[\"SERVICE\",\"STORE\"]"));
+        }
+
+        [Test]
+        public void FilteringQueryWithCollectionParameterGeneratedQueryIncludesPassedParameterTypeInformation()
+        {
+            var locations = context.Locations(type: new List<LocationType> { LocationType.SERVICE, LocationType.STORE }).Select(l => l.city);
+
+            var query = locations.ToString();
+
+            Assert.That(query, Does.Contain("$type: [LocationType]"));
+        }
+
+        [Test]
+        public void FilteringQueryWithCollectionParameterGeneratedQueryFiltersLocationsByType()
+        {
+            var locations = context.Locations(type: new List<LocationType> { LocationType.SERVICE, LocationType.STORE }).Select(l => l.city);
+
+            var query = locations.ToString();
+
+            Assert.That(query, Does.Contain("type: $type"));
         }
     }
 }
