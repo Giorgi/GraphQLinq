@@ -5,6 +5,9 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
 using System.Reflection;
+
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 
 namespace GraphQLinq
@@ -133,7 +136,7 @@ namespace GraphQLinq
 
     class GraphQueryBuilder<T>
     {
-        private const string QueryTemplate = @"{{ {0}: {1} {2} {{ {3} }}}}";
+        private const string QueryTemplate = @"query {0} {{ {1}: {2} {3} {{ {4} }}}}";
         internal const string ItemAlias = "item";
         internal const string ResultAlias = "result";
 
@@ -197,29 +200,18 @@ namespace GraphQLinq
 
             selectClause = Environment.NewLine + selectClause + Environment.NewLine;
 
-            //(type: [STANDARD_CHARGER, STORE], openSoon: true)
-            var argList = graphQuery.Arguments.Where(pair => pair.Value != null).Select(pair =>
-            {
-                var value = pair.Value.ToString();
+            var passedArguments = graphQuery.Arguments.Where(pair => pair.Value != null).ToList();
 
-                if (pair.Value is bool)
-                {
-                    value = value.ToLowerInvariant();
-                }
+            var queryParameters = passedArguments.Any() ? $"({string.Join(", ", passedArguments.Select(pair => $"{pair.Key}: ${pair.Key}"))})" : "";
+            var queryParameterTypes = passedArguments.Any() ?  $"({string.Join(", ", passedArguments.Select(pair => $"${pair.Key}: {pair.Value.GetType().ToGraphQlType()}"))})" : "";
 
-                var enumerable = pair.Value as IEnumerable;
-                if (enumerable != null)
-                {
-                    value = $"[{string.Join(", ", enumerable.Cast<object>())}]";
-                }
+            var queryVariables = passedArguments.ToDictionary(pair => pair.Key, pair => pair.Value);
+            var graphQLQuery = string.Format(QueryTemplate, queryParameterTypes, ResultAlias, graphQuery.QueryName.ToLower(), queryParameters, selectClause);
 
-                return $"{pair.Key}: {value}";
-            });
+            var dictionary = new Dictionary<string, object> { { "query", graphQLQuery }, { "variables", queryVariables } };
 
-            var args = string.Join(", ", argList);
-            var argsWithParentheses = string.IsNullOrEmpty(args) ? "" : $"({args})";
-
-            return string.Format(QueryTemplate, ResultAlias, graphQuery.QueryName.ToLower(), argsWithParentheses, selectClause);
+            var json = JsonConvert.SerializeObject(dictionary, new StringEnumConverter());
+            return json;
         }
 
         private static string BuildSelectClauseForType(Type targetType, int depth = 1)
@@ -314,7 +306,7 @@ namespace GraphQLinq
 
             using (var webClient = new WebClient { Proxy = defaultWebProxy })
             {
-                webClient.Headers.Add(HttpRequestHeader.ContentType, "application/graphql");
+                webClient.Headers.Add(HttpRequestHeader.ContentType, "application/json");
 
                 if (!string.IsNullOrEmpty(authorization))
                 {
@@ -398,6 +390,37 @@ namespace GraphQLinq
                 return input;
             }
             return input.Substring(0, 1).ToLower() + input.Substring(1);
+        }
+
+        internal static string ToGraphQlType(this Type type)
+        {
+            if (type == typeof(bool))
+            {
+                return "Boolean";
+            }
+
+            if (type == typeof(int))
+            {
+                return "Int";
+            }
+
+            if (type == typeof(string))
+            {
+                return "String";
+            }
+
+            if (type == typeof(float))
+            {
+                return "Float";
+            }
+
+            if (type.IsList())
+            {
+                var listType = type.GetTypeOrListType();
+                return "[" + ToGraphQlType(listType) + "]";
+            }
+
+            return type.Name;
         }
     }
 }
