@@ -46,6 +46,8 @@
   <ItemGroup>
     <Compile Include="GraphContext.cs" />
     <Compile Include="GraphQuery.cs" />
+    <Compile Include="GraphQueryBuilder.cs" />
+    <Compile Include="GraphQueryEnumerator.cs" />
     <Compile Include="GraphQueryExecutionException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
