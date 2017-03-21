@@ -8,26 +8,26 @@ namespace GraphQLinq
 {
     public class GraphQuery<T>
     {
+        private readonly GraphContext context;
+        private readonly Lazy<string> lazyQuery;
         private readonly GraphQueryBuilder<T> queryBuilder = new GraphQueryBuilder<T>();
-        protected GraphContext Context { get; }
-        protected Lazy<string> LazyQuery { get; }
 
         internal string QueryName { get; }
-        internal LambdaExpression Selector { get; set; }
+        internal LambdaExpression Selector { get; private set; }
         internal List<string> Includes { get; private set; } = new List<string>();
         internal Dictionary<string, object> Arguments { get; set; } = new Dictionary<string, object>();
 
         internal GraphQuery(GraphContext graphContext, string queryName)
         {
             QueryName = queryName;
-            Context = graphContext;
+            context = graphContext;
 
-            LazyQuery = new Lazy<string>(() => queryBuilder.BuildQuery(this, Includes));
+            lazyQuery = new Lazy<string>(() => queryBuilder.BuildQuery(this, Includes));
         }
 
         public override string ToString()
         {
-            return LazyQuery.Value;
+            return lazyQuery.Value;
         }
 
         protected GraphQuery<TR> Clone<TR>()
@@ -35,7 +35,7 @@ namespace GraphQLinq
             var genericQueryType = GetType().GetGenericTypeDefinition();
             var cloneType = genericQueryType.MakeGenericType(typeof(TR));
 
-            var instance = (GraphQuery<TR>)Activator.CreateInstance(cloneType, Context, QueryName);
+            var instance = (GraphQuery<TR>)Activator.CreateInstance(cloneType, context, QueryName);
 
             instance.Arguments = Arguments;
             instance.Selector = Selector;
@@ -121,6 +121,13 @@ namespace GraphQLinq
 
             return graphQuery;
         }
+
+        protected IEnumerator<T> BuildEnumerator()
+        {
+            var query = lazyQuery.Value;
+
+            return new GraphQueryEnumerator<T>(query, context.BaseUrl, context.Authorization, QueryType.Collection);
+        }
     }
 
     public class GraphItemQuery<T> : GraphQuery<T>
@@ -139,12 +146,10 @@ namespace GraphQLinq
 
         public T ToItem()
         {
-            var query = LazyQuery.Value;
-
-            using (var graphQueryEnumerator = new GraphQueryEnumerator<T>(query, Context.BaseUrl, Context.Authorization, QueryType.Item))
+            using (var enumerator = BuildEnumerator())
             {
-                graphQueryEnumerator.MoveNext();
-                return graphQueryEnumerator.Current;
+                enumerator.MoveNext();
+                return enumerator.Current;
             }
         }
     }
@@ -155,9 +160,7 @@ namespace GraphQLinq
 
         public IEnumerator<T> GetEnumerator()
         {
-            var query = LazyQuery.Value;
-
-            return new GraphQueryEnumerator<T>(query, Context.BaseUrl, Context.Authorization, QueryType.Collection);
+            return BuildEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()

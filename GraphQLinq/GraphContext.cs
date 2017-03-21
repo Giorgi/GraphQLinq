@@ -17,17 +17,17 @@ namespace GraphQLinq
 
         protected GraphCollectionQuery<T> BuildCollectionQuery<T>(object[] parameterValues, [CallerMemberName] string queryName = null)
         {
-            var arguments = Dictionary(parameterValues, queryName);
+            var arguments = BuildDictionary(parameterValues, queryName);
             return new GraphCollectionQuery<T>(this, queryName) { Arguments = arguments };
         }
 
         protected GraphItemQuery<T> BuildItemQuery<T>(object[] parameterValues, [CallerMemberName] string queryName = null)
         {
-            var arguments = Dictionary(parameterValues, queryName);
+            var arguments = BuildDictionary(parameterValues, queryName);
             return new GraphItemQuery<T>(this, queryName) { Arguments = arguments };
         }
 
-        private Dictionary<string, object> Dictionary(object[] parameterValues, string queryName)
+        private Dictionary<string, object> BuildDictionary(object[] parameterValues, string queryName)
         {
             var parameters = GetType().GetMethod(queryName).GetParameters();
             var arguments = parameters.Zip(parameterValues, (info, value) => new { info.Name, Value = value }).ToDictionary(arg => arg.Name, arg => arg.Value);

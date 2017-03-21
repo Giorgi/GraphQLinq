@@ -79,10 +79,9 @@ namespace GraphQLinq
 
         private string DownloadJson()
         {
-            var defaultWebProxy = WebRequest.DefaultWebProxy;
-            defaultWebProxy.Credentials = CredentialCache.DefaultCredentials;
+            WebRequest.DefaultWebProxy.Credentials = CredentialCache.DefaultCredentials;
 
-            using (var webClient = new WebClient { Proxy = defaultWebProxy })
+            using (var webClient = new WebClient { Proxy = WebRequest.DefaultWebProxy })
             {
                 webClient.Headers.Add(HttpRequestHeader.ContentType, "application/json");
 
@@ -97,7 +96,7 @@ namespace GraphQLinq
                 }
                 catch (WebException exception)
                 {
-                    using (var responseStream = exception.Response.GetResponseStream())
+                    using (var responseStream = exception.Response?.GetResponseStream())
                     {
                         using (var streamReader = new StreamReader(responseStream))
                         {
