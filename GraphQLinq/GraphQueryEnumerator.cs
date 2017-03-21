@@ -68,7 +68,15 @@ namespace GraphQLinq
                             }
                             else
                             {
-                                jToken = token.First;
+                                jToken = token.Parent;
+
+                                var itemToken = jToken.SelectToken(GraphQueryBuilder<T>.ItemAlias);
+                                while (itemToken == null)
+                                {
+                                    jToken = jToken.First;
+                                    itemToken = jToken.SelectToken(GraphQueryBuilder<T>.ItemAlias);
+                                }
+                                jToken = itemToken;
                             }
 
                             return jToken.ToObject<T>();

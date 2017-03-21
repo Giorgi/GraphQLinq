@@ -26,17 +26,7 @@ namespace GraphQLinq
 
                 if (body.NodeType == ExpressionType.MemberAccess)
                 {
-                    var member = ((MemberExpression)body).Member as PropertyInfo;
-                    if (member != null)
-                    {
-                        selectClause = $"{padding}{ItemAlias}: {member.Name.ToCamelCase()}";
-
-                        if (!member.PropertyType.IsPrimitiveOrString())
-                        {
-                            var fieldForProperty = BuildSelectClauseForType(member.PropertyType.GetTypeOrListType(), 3);
-                            selectClause = $"{selectClause} {{{Environment.NewLine}{fieldForProperty}{Environment.NewLine}{padding}}}";
-                        }
-                    }
+                    selectClause = BuildMemberAccessSelectClause(body, selectClause, padding);
                 }
 
                 if (body.NodeType == ExpressionType.New)
@@ -86,6 +76,35 @@ namespace GraphQLinq
 
             var json = JsonConvert.SerializeObject(dictionary, new StringEnumConverter());
             return json;
+        }
+
+        private static string BuildMemberAccessSelectClause(Expression body, string selectClause, string padding)
+        {
+            if (body.NodeType == ExpressionType.MemberAccess)
+            {
+                var member = ((MemberExpression)body).Member as PropertyInfo;
+
+                if (member != null)
+                {
+                    if (!string.IsNullOrEmpty(selectClause))
+                    {
+                        selectClause = $"{member.Name.ToCamelCase()} {{ {Environment.NewLine}{selectClause}}}";
+                    }
+                    else
+                    {
+                        selectClause = $"{padding}{ItemAlias}: {member.Name.ToCamelCase()}";
+
+                        if (!member.PropertyType.IsPrimitiveOrString())
+                        {
+                            var fieldForProperty = BuildSelectClauseForType(member.PropertyType.GetTypeOrListType(), 3);
+                            selectClause = $"{selectClause} {{{Environment.NewLine}{fieldForProperty}{Environment.NewLine}{padding}}}";
+                        }
+                    }
+                    return BuildMemberAccessSelectClause(((MemberExpression)body).Expression, selectClause, padding);
+                }
+                return selectClause;
+            }
+            return selectClause;
         }
 
         private static string BuildSelectClauseForType(Type targetType, int depth = 1)
