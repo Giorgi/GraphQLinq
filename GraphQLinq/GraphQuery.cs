@@ -122,11 +122,11 @@ namespace GraphQLinq
             return graphQuery;
         }
 
-        protected IEnumerator<T> BuildEnumerator()
+        internal IEnumerator<T> BuildEnumerator(QueryType queryType)
         {
             var query = lazyQuery.Value;
 
-            return new GraphQueryEnumerator<T>(query, context.BaseUrl, context.Authorization, QueryType.Collection);
+            return new GraphQueryEnumerator<T>(query, context.BaseUrl, context.Authorization, queryType);
         }
     }
 
@@ -146,7 +146,7 @@ namespace GraphQLinq
 
         public T ToItem()
         {
-            using (var enumerator = BuildEnumerator())
+            using (var enumerator = BuildEnumerator(QueryType.Item))
             {
                 enumerator.MoveNext();
                 return enumerator.Current;
@@ -160,7 +160,7 @@ namespace GraphQLinq
 
         public IEnumerator<T> GetEnumerator()
         {
-            return BuildEnumerator();
+            return BuildEnumerator(QueryType.Collection);
         }
 
         IEnumerator IEnumerable.GetEnumerator()
