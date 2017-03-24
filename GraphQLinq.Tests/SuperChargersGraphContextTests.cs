@@ -43,6 +43,16 @@ namespace GraphQLinq.Tests
         }
 
         [Test]
+        public void SelectingListOfStringNavigationPropertyQueryDoesNotIncludesPropertiesOfNavigationProperty()
+        {
+            var locations = context.Locations().Select(l => l.locationType);
+
+            var query = locations.ToString();
+
+            Assert.That(query, Does.Not.Contain("length").And.Not.Contains("chars"));
+        }
+
+        [Test]
         public void SelectingPrimitiveAndNavigationPropertyQueryIncludesPropertiesOfNavigationProperty()
         {
             var locations = context.Locations().Select(l => new { l.salesPhone, l.city });
