@@ -68,21 +68,41 @@ namespace GraphQLinq
                             }
                             else
                             {
-                                jToken = token.Parent;
+                                jToken = FlattenJson(token.Parent);
 
-                                var itemToken = jToken.SelectToken(GraphQueryBuilder<T>.ItemAlias);
-                                while (itemToken == null)
+                                if (!HasNestedProperties)
                                 {
-                                    jToken = jToken.First;
-                                    itemToken = jToken.SelectToken(GraphQueryBuilder<T>.ItemAlias);
+                                    jToken = jToken[GraphQueryBuilder<T>.ItemAlias];
                                 }
-                                jToken = itemToken;
                             }
 
                             return jToken.ToObject<T>();
                         });
 
             return enumerable;
+        }
+
+        private static JObject FlattenJson(JToken jToken)
+        {
+            var jObject = new JObject();
+
+            var jsonObject = jToken as JObject;
+            var keys = jsonObject.Properties().Select(property => property.Name);
+
+            foreach (var key in keys)
+            {
+                var token = jsonObject[key];
+                if (token.Type == JTokenType.Object)
+                {
+                    jObject.Merge(FlattenJson(token));
+                }
+                else
+                {
+                    jObject.Add(new JProperty(key, token));
+                }
+            }
+
+            return jObject;
         }
 
         private string DownloadJson()

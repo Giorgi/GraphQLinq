@@ -26,7 +26,7 @@ namespace GraphQLinq
 
                 if (body.NodeType == ExpressionType.MemberAccess)
                 {
-                    selectClause = BuildMemberAccessSelectClause(body, selectClause, padding);
+                    selectClause = BuildMemberAccessSelectClause(body, selectClause, padding, ItemAlias);
                 }
 
                 if (body.NodeType == ExpressionType.New)
@@ -41,15 +41,8 @@ namespace GraphQLinq
 
                         if (member == null) continue;
 
-                        var fieldName = ((MemberExpression)newExpression.Arguments[i]).Member.Name;
-
-                        var selectField = padding + member.Name + ": " + fieldName.ToCamelCase();  //generate something like alias: field e.g. mailList: emails
-
-                        if (!member.PropertyType.IsPrimitiveOrString())
-                        {
-                            var fieldForProperty = BuildSelectClauseForType(member.PropertyType.GetTypeOrListType(), 3);
-                            selectField = $"{selectField} {{{Environment.NewLine}{fieldForProperty}{Environment.NewLine}{padding}}}";
-                        }
+                        //generate something like alias: field e.g. mailList: emails
+                        var selectField = BuildMemberAccessSelectClause((MemberExpression)newExpression.Arguments[i], selectClause, padding, member.Name);
 
                         fields.Add(selectField);
                     }
@@ -78,7 +71,7 @@ namespace GraphQLinq
             return json;
         }
 
-        private static string BuildMemberAccessSelectClause(Expression body, string selectClause, string padding)
+        private static string BuildMemberAccessSelectClause(Expression body, string selectClause, string padding, string alias)
         {
             if (body.NodeType == ExpressionType.MemberAccess)
             {
@@ -92,15 +85,15 @@ namespace GraphQLinq
                     }
                     else
                     {
-                        selectClause = $"{padding}{ItemAlias}: {member.Name.ToCamelCase()}";
+                        selectClause = $"{padding}{alias}: {member.Name.ToCamelCase()}";
 
-                        if (!member.PropertyType.IsPrimitiveOrString())
+                        if (!member.PropertyType.GetTypeOrListType().IsPrimitiveOrString())
                         {
                             var fieldForProperty = BuildSelectClauseForType(member.PropertyType.GetTypeOrListType(), 3);
                             selectClause = $"{selectClause} {{{Environment.NewLine}{fieldForProperty}{Environment.NewLine}{padding}}}";
                         }
                     }
-                    return BuildMemberAccessSelectClause(((MemberExpression)body).Expression, selectClause, padding);
+                    return BuildMemberAccessSelectClause(((MemberExpression)body).Expression, selectClause, padding, ItemAlias);
                 }
                 return selectClause;
             }
