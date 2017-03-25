@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 
 namespace GraphQLinq
 {
-    public class GraphQuery<T>
+    public abstract class GraphQuery<T>
     {
         private readonly GraphContext context;
         private readonly Lazy<string> lazyQuery;
@@ -133,9 +133,9 @@ namespace GraphQLinq
         }
     }
 
-    public class GraphItemQuery<T> : GraphQuery<T>
+    public abstract class GraphItemQuery<T> : GraphQuery<T>
     {
-        public GraphItemQuery(GraphContext graphContext, string queryName) : base(graphContext, queryName) { }
+        protected GraphItemQuery(GraphContext graphContext, string queryName) : base(graphContext, queryName) { }
 
         public GraphItemQuery<T> Include<TProperty>(Expression<Func<T, TProperty>> path)
         {
@@ -147,9 +147,28 @@ namespace GraphQLinq
             return (GraphItemQuery<TResult>)BuildSelect(resultSelector);
         }
 
-        public virtual T ToItem()
+        public abstract T ToItem();
+    }
+
+    public abstract class GraphCollectionQuery<T> : GraphQuery<T>, IEnumerable<T>
+    {
+        protected GraphCollectionQuery(GraphContext graphContext, string queryName) : base(graphContext, queryName) { }
+
+        public abstract IEnumerator<T> GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator()
         {
-            throw new NotImplementedException();
+            return GetEnumerator();
+        }
+
+        public GraphCollectionQuery<T> Include<TProperty>(Expression<Func<T, TProperty>> path)
+        {
+            return (GraphCollectionQuery<T>)BuildInclude(path);
+        }
+
+        public GraphCollectionQuery<TResult> Select<TResult>(Expression<Func<T, TResult>> resultSelector)
+        {
+            return (GraphCollectionQuery<TResult>)BuildSelect(resultSelector);
         }
     }
 
@@ -178,31 +197,6 @@ namespace GraphQLinq
         public override IEnumerator<T> GetEnumerator()
         {
             return BuildEnumerator<TSource>(QueryType.Collection);
-        }
-    }
-
-    public class GraphCollectionQuery<T> : GraphQuery<T>, IEnumerable<T>
-    {
-        public GraphCollectionQuery(GraphContext graphContext, string queryName) : base(graphContext, queryName) { }
-
-        public virtual IEnumerator<T> GetEnumerator()
-        {
-            throw new NotImplementedException();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
-        public GraphCollectionQuery<T> Include<TProperty>(Expression<Func<T, TProperty>> path)
-        {
-            return (GraphCollectionQuery<T>)BuildInclude(path);
-        }
-
-        public GraphCollectionQuery<TResult> Select<TResult>(Expression<Func<T, TResult>> resultSelector)
-        {
-            return (GraphCollectionQuery<TResult>)BuildSelect(resultSelector);
         }
     }
 
