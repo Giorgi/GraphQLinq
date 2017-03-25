@@ -61,6 +61,23 @@ namespace GraphQLinq.Tests
         }
 
         [Test]
+        public void SelectingCitiesWithAliasAndPhonesReturnsPhonesAndCities()
+        {
+            var query = superChargersContext.Locations(type: locationTypes).Select(location => new { CityName = location.city, location.salesPhone });
+
+            var locations = query.ToList();
+
+            var locationsWithNullPhones = locations.Where(location => location.salesPhone == null).ToList();
+            var locationsWithNullCity = locations.Where(location => location.CityName == null).ToList();
+
+            Assert.Multiple(() =>
+            {
+                CollectionAssert.IsEmpty(locationsWithNullPhones);
+                CollectionAssert.IsEmpty(locationsWithNullCity);
+            });
+        }
+
+        [Test]
         public void SelectingSingleTripIdIsNotNull()
         {
             var tripId = hslGraphContext.Trip(TripId).Select(t => t.gtfsId).ToItem();
@@ -106,6 +123,14 @@ namespace GraphQLinq.Tests
             var pattern = hslGraphContext.Trip(TripId).ToItem();
 
             Assert.That(pattern.pattern, Is.Null);
+        }
+
+        [Test]
+        public void SelectingAndIncludingNestedPropertySingleTripNestedPropertyIsNotNull()
+        {
+            var pattern = hslGraphContext.Trip(TripId).Include(trip => trip.route).ToItem();
+
+            Assert.That(pattern.route, Is.Not.Null);
         }
     }
 }
