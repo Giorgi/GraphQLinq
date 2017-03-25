@@ -231,7 +231,7 @@ namespace GraphQLinq
             {
                 var genericArguments = type.GetGenericArguments();
 
-                return genericArguments[0];
+                return genericArguments[0].GetTypeOrListType();
             }
 
             return type;

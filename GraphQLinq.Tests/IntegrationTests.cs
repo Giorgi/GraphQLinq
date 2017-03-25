@@ -143,6 +143,19 @@ namespace GraphQLinq.Tests
 
             Assert.That(pattern.route, Is.Not.Null);
         }
+
+        [Test]
+        public void SelectingListOfListNestedPropertyShouldCheckListTypeRecursively()
+        {
+            Agency agency = null;
+
+            Assert.Multiple(() =>
+            {
+                Assert.DoesNotThrow(() => agency = hslGraphContext.Agency("232919").Include(a => a.routes.Select(route => route.trips.Select(trip => trip.geometry))).ToItem());
+                CollectionAssert.IsNotEmpty(agency.routes[0].trips[0].geometry);
+                CollectionAssert.IsNotEmpty(agency.routes[1].trips[0].geometry);
+            });
+        }
     }
 
     class TripDetails

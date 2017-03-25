@@ -11,17 +11,23 @@ namespace GraphQLinq
 
         public GraphItemQuery<Trip> Trip(string id)
         {
-
             var parameterValues = new object[] { id };
 
             return BuildItemQuery<Trip>(parameterValues);
         }
 
-        public GraphCollectionQuery<Trip> Trips()
+        public GraphCollectionQuery<Agency> Agencies()
         {
-            var parameterValues = new object[] {};
+            var parameterValues = new object[] { };
 
-            return BuildCollectionQuery<Trip>(parameterValues);
+            return BuildCollectionQuery<Agency>(parameterValues);
+        }
+
+        public GraphItemQuery<Agency> Agency(string id)
+        {
+            var parameterValues = new object[] { id };
+
+            return BuildItemQuery<Agency>(parameterValues);
         }
 
 

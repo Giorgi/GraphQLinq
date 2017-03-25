@@ -8,6 +8,7 @@ namespace GraphQLinq.Tests
     public class QueryGenerationTests
     {
         SuperChargersGraphContext context = new SuperChargersGraphContext("");
+        HslGraphContext hslGraphContext = new HslGraphContext("");
 
         [Test]
         public void SelectingSinglePropertyQueryIncludesSelectedProperty()
@@ -141,6 +142,16 @@ namespace GraphQLinq.Tests
             var query = locations.ToString();
 
             Assert.That(query, Does.Contain("type: $type"));
+        }
+
+        [Test]
+        public void SelectingListOfListNestedPropertyQueryShouldNotIncludeListProperties()
+        {
+            var agency = hslGraphContext.Agency("232919").Include(a => a.routes.Select(route => route.trips.Select(trip => trip.geometry)));
+
+            var query = agency.ToString();
+
+            Assert.That(query, Does.Not.Contain("capacity").And.Not.Contain("count").And.Not.Contain("item"));
         }
     }
 }
