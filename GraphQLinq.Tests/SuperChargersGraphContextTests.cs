@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace GraphQLinq.Tests
 {
-    [TestFixture]
+    [TestFixture(Category = "Query generation tests")]
     public class SuperChargersGraphContextTests
     {
         SuperChargersGraphContext context = new SuperChargersGraphContext("");

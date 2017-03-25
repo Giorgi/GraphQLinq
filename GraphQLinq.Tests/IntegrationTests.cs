@@ -7,7 +7,7 @@ using NUnit.Framework;
 
 namespace GraphQLinq.Tests
 {
-    [TestFixture]
+    [TestFixture(Category = "Integration tests")]
     class IntegrationTests
     {
         List<LocationType> locationTypes = new List<LocationType> { LocationType.STORE, LocationType.SERVICE };
@@ -84,6 +84,7 @@ namespace GraphQLinq.Tests
 
             Assert.Multiple(() =>
             {
+                Assert.That(item.tg, Is.Not.Null);
                 Assert.That(item.aatrg, Is.Not.Null);
                 Assert.That(item.geometry, Is.Not.Null);
                 Assert.That(item.n, Is.Not.Null);
