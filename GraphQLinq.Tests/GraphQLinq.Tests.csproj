@@ -44,30 +44,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\GraphQLinq.Demo\SuperChargers\Country.cs">
-      <Link>SuperChargers\Country.cs</Link>
-    </Compile>
-    <Compile Include="..\GraphQLinq.Demo\SuperChargers\Email.cs">
-      <Link>SuperChargers\Email.cs</Link>
-    </Compile>
-    <Compile Include="..\GraphQLinq.Demo\SuperChargers\Location.cs">
-      <Link>SuperChargers\Location.cs</Link>
-    </Compile>
-    <Compile Include="..\GraphQLinq.Demo\SuperChargers\LocationType.cs">
-      <Link>SuperChargers\LocationType.cs</Link>
-    </Compile>
-    <Compile Include="..\GraphQLinq.Demo\SuperChargers\Node.cs">
-      <Link>SuperChargers\Node.cs</Link>
-    </Compile>
-    <Compile Include="..\GraphQLinq.Demo\SuperChargers\Phone.cs">
-      <Link>SuperChargers\Phone.cs</Link>
-    </Compile>
-    <Compile Include="..\GraphQLinq.Demo\SuperChargers\Region.cs">
-      <Link>SuperChargers\Region.cs</Link>
-    </Compile>
-    <Compile Include="..\GraphQLinq.Demo\SuperChargersGraphContext.cs">
-      <Link>SuperChargers\SuperChargersGraphContext.cs</Link>
-    </Compile>
     <Compile Include="SuperChargersGraphContextTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -75,6 +51,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\GraphQLinq.Generated\GraphQLinq.Generated.csproj">
+      <Project>{3BD98755-AE1B-41DC-A680-DA39B2B1AC4A}</Project>
+      <Name>GraphQLinq.Generated</Name>
+    </ProjectReference>
     <ProjectReference Include="..\GraphQLinq\GraphQLinq.csproj">
       <Project>{ad9aa002-9ea5-4aa9-a5bd-2cb73e95f60b}</Project>
       <Name>GraphQLinq</Name>

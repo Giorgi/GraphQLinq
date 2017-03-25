@@ -1,0 +1,111 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{3BD98755-AE1B-41DC-A680-DA39B2B1AC4A}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>GraphQLinq.Generated</RootNamespace>
+    <AssemblyName>GraphQLinq.Generated</AssemblyName>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="HslGraphContext.cs" />
+    <Compile Include="HSL\Agency.cs" />
+    <Compile Include="HSL\Alert.cs" />
+    <Compile Include="HSL\BikePark.cs" />
+    <Compile Include="HSL\BikeRentalStation.cs" />
+    <Compile Include="HSL\BikesAllowed.cs" />
+    <Compile Include="HSL\CarPark.cs" />
+    <Compile Include="HSL\Cluster.cs" />
+    <Compile Include="HSL\Coordinates.cs" />
+    <Compile Include="HSL\debugOutput.cs" />
+    <Compile Include="HSL\DepartureRow.cs" />
+    <Compile Include="HSL\fare.cs" />
+    <Compile Include="HSL\fareComponent.cs" />
+    <Compile Include="HSL\FilterPlaceType.cs" />
+    <Compile Include="HSL\Itinerary.cs" />
+    <Compile Include="HSL\Leg.cs" />
+    <Compile Include="HSL\LegGeometry.cs" />
+    <Compile Include="HSL\LocationType.cs" />
+    <Compile Include="HSL\Mode.cs" />
+    <Compile Include="HSL\Node.cs" />
+    <Compile Include="HSL\OptimizeType.cs" />
+    <Compile Include="HSL\PageInfo.cs" />
+    <Compile Include="HSL\Pattern.cs" />
+    <Compile Include="HSL\PickupDropoffType.cs" />
+    <Compile Include="HSL\Place.cs" />
+    <Compile Include="HSL\placeAtDistance.cs" />
+    <Compile Include="HSL\placeAtDistanceConnection.cs" />
+    <Compile Include="HSL\placeAtDistanceEdge.cs" />
+    <Compile Include="HSL\PlaceInterface.cs" />
+    <Compile Include="HSL\Plan.cs" />
+    <Compile Include="HSL\QueryType.cs" />
+    <Compile Include="HSL\RealtimeState.cs" />
+    <Compile Include="HSL\Route.cs" />
+    <Compile Include="HSL\serviceTimeRange.cs" />
+    <Compile Include="HSL\Stop.cs" />
+    <Compile Include="HSL\stopAtDistance.cs" />
+    <Compile Include="HSL\stopAtDistanceConnection.cs" />
+    <Compile Include="HSL\stopAtDistanceEdge.cs" />
+    <Compile Include="HSL\Stoptime.cs" />
+    <Compile Include="HSL\StoptimesInPattern.cs" />
+    <Compile Include="HSL\TranslatedString.cs" />
+    <Compile Include="HSL\Trip.cs" />
+    <Compile Include="HSL\VertexType.cs" />
+    <Compile Include="HSL\WheelchairBoarding.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SuperChargersGraphContext.cs" />
+    <Compile Include="SuperChargers\Country.cs" />
+    <Compile Include="SuperChargers\Email.cs" />
+    <Compile Include="SuperChargers\Location.cs" />
+    <Compile Include="SuperChargers\LocationType.cs" />
+    <Compile Include="SuperChargers\Node.cs" />
+    <Compile Include="SuperChargers\Phone.cs" />
+    <Compile Include="SuperChargers\Region.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\GraphQLinq\GraphQLinq.csproj">
+      <Project>{AD9AA002-9EA5-4AA9-A5BD-2CB73E95F60B}</Project>
+      <Name>GraphQLinq</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

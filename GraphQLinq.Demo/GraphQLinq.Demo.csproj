@@ -43,26 +43,23 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="SuperChargers\Country.cs" />
-    <Compile Include="SuperChargers\Email.cs" />
-    <Compile Include="SuperChargers\Location.cs" />
-    <Compile Include="SuperChargers\LocationType.cs" />
-    <Compile Include="SuperChargers\Node.cs" />
-    <Compile Include="SuperChargers\Phone.cs" />
-    <Compile Include="SuperChargers\Region.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SuperChargersGraphContext.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\GraphQLinq.Generated\GraphQLinq.Generated.csproj">
+      <Project>{3BD98755-AE1B-41DC-A680-DA39B2B1AC4A}</Project>
+      <Name>GraphQLinq.Generated</Name>
+    </ProjectReference>
     <ProjectReference Include="..\GraphQLinq\GraphQLinq.csproj">
       <Project>{ad9aa002-9ea5-4aa9-a5bd-2cb73e95f60b}</Project>
       <Name>GraphQLinq</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
