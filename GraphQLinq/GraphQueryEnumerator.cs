@@ -21,8 +21,6 @@ namespace GraphQLinq
         private const string DataPathPropertyName = "data";
         private const string ErrorPathPropertyName = "errors";
 
-        private static readonly bool HasNestedProperties = !(typeof(T).IsPrimitiveOrString() || typeof(T).IsList());
-
         internal GraphQueryEnumerator(string query, string baseUrl, string authorization, QueryType queryType, Func<TSource, T> mapper)
         {
             this.query = query;
