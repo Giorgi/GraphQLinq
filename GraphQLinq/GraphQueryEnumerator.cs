@@ -8,7 +8,7 @@ using Newtonsoft.Json.Linq;
 
 namespace GraphQLinq
 {
-    class GraphQueryEnumerator<T> : IEnumerator<T>
+    class GraphQueryEnumerator<T, TSource> : IEnumerator<T>
     {
         private IEnumerator<T> listEnumerator;
 
@@ -16,18 +16,20 @@ namespace GraphQLinq
         private readonly string baseUrl;
         private readonly string authorization;
         private readonly QueryType queryType;
+        private readonly Func<TSource, T> mapper;
 
         private const string DataPathPropertyName = "data";
         private const string ErrorPathPropertyName = "errors";
 
         private static readonly bool HasNestedProperties = !(typeof(T).IsPrimitiveOrString() || typeof(T).IsList());
 
-        internal GraphQueryEnumerator(string query, string baseUrl, string authorization, QueryType queryType)
+        internal GraphQueryEnumerator(string query, string baseUrl, string authorization, QueryType queryType, Func<TSource, T> mapper)
         {
             this.query = query;
             this.baseUrl = baseUrl;
             this.authorization = authorization;
             this.queryType = queryType;
+            this.mapper = mapper;
         }
 
         public void Dispose()
@@ -60,49 +62,18 @@ namespace GraphQLinq
             var enumerable = jObject[DataPathPropertyName][GraphQueryBuilder<T>.ResultAlias]
                         .Select(token =>
                         {
-                            JToken jToken;
+                            var jToken = queryType == QueryType.Collection ? token : token.Parent;
 
-                            if (queryType == QueryType.Collection)
+                            if (mapper != null)
                             {
-                                jToken = HasNestedProperties ? token : token[GraphQueryBuilder<T>.ItemAlias];
-                            }
-                            else
-                            {
-                                jToken = FlattenJson(token.Parent);
-
-                                if (!HasNestedProperties)
-                                {
-                                    jToken = jToken[GraphQueryBuilder<T>.ItemAlias];
-                                }
+                                var result = jToken.ToObject<TSource>();
+                                return mapper.Invoke(result);
                             }
 
                             return jToken.ToObject<T>();
                         });
 
             return enumerable;
-        }
-
-        private static JObject FlattenJson(JToken jToken)
-        {
-            var jObject = new JObject();
-
-            var jsonObject = jToken as JObject;
-            var keys = jsonObject.Properties().Select(property => property.Name);
-
-            foreach (var key in keys)
-            {
-                var token = jsonObject[key];
-                if (token.Type == JTokenType.Object)
-                {
-                    jObject.Merge(FlattenJson(token));
-                }
-                else
-                {
-                    jObject.Add(new JProperty(key, token));
-                }
-            }
-
-            return jObject;
         }
 
         private string DownloadJson()

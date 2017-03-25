@@ -11,7 +11,6 @@ namespace GraphQLinq
     class GraphQueryBuilder<T>
     {
         private const string QueryTemplate = @"query {0} {{ {1}: {2} {3} {{ {4} }}}}";
-        internal const string ItemAlias = "item";
         internal const string ResultAlias = "result";
 
         public string BuildQuery(GraphQuery<T> graphQuery, List<string> includes)
@@ -26,7 +25,8 @@ namespace GraphQLinq
 
                 if (body.NodeType == ExpressionType.MemberAccess)
                 {
-                    selectClause = BuildMemberAccessSelectClause(body, selectClause, padding, ItemAlias);
+                    var member = ((MemberExpression)body).Member;
+                    selectClause = BuildMemberAccessSelectClause(body, selectClause, padding, member.Name);
                 }
 
                 if (body.NodeType == ExpressionType.New)
@@ -35,18 +35,11 @@ namespace GraphQLinq
 
                     var fields = new List<string>();
 
-                    for (var i = 0; i < newExpression.Members.Count; i++)
+                    foreach (var argument in newExpression.Arguments.OfType<MemberExpression>())
                     {
-                        var member = newExpression.Members[i] as PropertyInfo;
-
-                        if (member == null) continue;
-
-                        //generate something like alias: field e.g. mailList: emails
-                        var selectField = BuildMemberAccessSelectClause((MemberExpression)newExpression.Arguments[i], selectClause, padding, member.Name);
-
+                        var selectField = BuildMemberAccessSelectClause(argument, selectClause, padding, argument.Member.Name);
                         fields.Add(selectField);
                     }
-
                     selectClause = string.Join(Environment.NewLine, fields);
                 }
             }
@@ -79,11 +72,7 @@ namespace GraphQLinq
 
                 if (member != null)
                 {
-                    if (!string.IsNullOrEmpty(selectClause))
-                    {
-                        selectClause = $"{member.Name.ToCamelCase()} {{ {Environment.NewLine}{selectClause}}}";
-                    }
-                    else
+                    if (string.IsNullOrEmpty(selectClause))
                     {
                         selectClause = $"{padding}{alias}: {member.Name.ToCamelCase()}";
 
@@ -93,7 +82,11 @@ namespace GraphQLinq
                             selectClause = $"{selectClause} {{{Environment.NewLine}{fieldForProperty}{Environment.NewLine}{padding}}}";
                         }
                     }
-                    return BuildMemberAccessSelectClause(((MemberExpression)body).Expression, selectClause, padding, ItemAlias);
+                    else
+                    {
+                        selectClause = $"{member.Name.ToCamelCase()} {{ {Environment.NewLine}{selectClause}}}";
+                    }
+                    return BuildMemberAccessSelectClause(((MemberExpression)body).Expression, selectClause, padding, "");
                 }
                 return selectClause;
             }

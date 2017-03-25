@@ -33,7 +33,8 @@ namespace GraphQLinq
         protected GraphQuery<TR> Clone<TR>()
         {
             var genericQueryType = GetType().GetGenericTypeDefinition();
-            var cloneType = genericQueryType.MakeGenericType(typeof(TR));
+            var genericArguments = GetType().GetGenericArguments();
+            var cloneType = genericQueryType.MakeGenericType(typeof(TR), genericArguments[1]);
 
             var instance = (GraphQuery<TR>)Activator.CreateInstance(cloneType, context, QueryName);
 
@@ -122,11 +123,13 @@ namespace GraphQLinq
             return graphQuery;
         }
 
-        internal IEnumerator<T> BuildEnumerator(QueryType queryType)
+        internal IEnumerator<T> BuildEnumerator<TSource>(QueryType queryType)
         {
             var query = lazyQuery.Value;
 
-            return new GraphQueryEnumerator<T>(query, context.BaseUrl, context.Authorization, queryType);
+            var mapper = (Func<TSource, T>) Selector?.Compile();
+
+            return new GraphQueryEnumerator<T, TSource>(query, context.BaseUrl, context.Authorization, queryType, mapper);
         }
     }
 
@@ -144,9 +147,21 @@ namespace GraphQLinq
             return (GraphItemQuery<TResult>)BuildSelect(resultSelector);
         }
 
-        public T ToItem()
+        public virtual T ToItem()
         {
-            using (var enumerator = BuildEnumerator(QueryType.Item))
+            throw new NotImplementedException();
+        }
+    }
+
+    public class GraphItemQuery<T, TSource> : GraphItemQuery<T>
+    {
+        public GraphItemQuery(GraphContext graphContext, string queryName) : base(graphContext, queryName)
+        {
+        }
+
+        public override T ToItem()
+        {
+            using (var enumerator = BuildEnumerator<TSource>(QueryType.Item))
             {
                 enumerator.MoveNext();
                 return enumerator.Current;
@@ -154,13 +169,25 @@ namespace GraphQLinq
         }
     }
 
+    public class GraphCollectionQuery<T, TSource> : GraphCollectionQuery<T>
+    {
+        public GraphCollectionQuery(GraphContext graphContext, string queryName) : base(graphContext, queryName)
+        {
+        }
+
+        public override IEnumerator<T> GetEnumerator()
+        {
+            return BuildEnumerator<TSource>(QueryType.Collection);
+        }
+    }
+
     public class GraphCollectionQuery<T> : GraphQuery<T>, IEnumerable<T>
     {
         public GraphCollectionQuery(GraphContext graphContext, string queryName) : base(graphContext, queryName) { }
 
-        public IEnumerator<T> GetEnumerator()
+        public virtual IEnumerator<T> GetEnumerator()
         {
-            return BuildEnumerator(QueryType.Collection);
+            throw new NotImplementedException();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
