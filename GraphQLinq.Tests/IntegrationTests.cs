@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using HSL;
 using NUnit.Framework;
 
 namespace GraphQLinq.Tests
@@ -89,15 +90,25 @@ namespace GraphQLinq.Tests
         public void SelectingNestedPropertiesOfSingleTripNestedPropertiesAreNotNull()
         {
             var item = hslGraphContext.Trip(TripId).Select(trip =>
-                new
-                {
-                    tg = trip.gtfsId,
-                    aatrg = trip.route.gtfsId,
-                    trip.pattern.geometry,
-                    n = trip.route.agency.name,
-                    p = trip.route.agency.phone
-                }
+                new TripDetails(trip.gtfsId, trip.route.gtfsId, trip.pattern.geometry, trip.route.agency.name, trip.route.agency.phone)
             ).ToItem();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(item.tg, Is.Not.Null);
+                Assert.That(item.aatrg, Is.Not.Null);
+                Assert.That(item.geometry, Is.Not.Null);
+                Assert.That(item.n, Is.Not.Null);
+                Assert.That(item.p, Is.Not.Null);
+            });
+        }
+
+        [Test]
+        public void SelectingNestedPropertiesOfSingleTripAndCallingConstructorNestedPropertiesAreNotNull()
+        {
+            var item = hslGraphContext.Trip(TripId)
+                .Select(trip => new TripDetails(trip.gtfsId, trip.route.gtfsId, trip.pattern.geometry, trip.route.agency.name, trip.route.agency.phone))
+                .ToItem();
 
             Assert.Multiple(() =>
             {
@@ -131,6 +142,24 @@ namespace GraphQLinq.Tests
             var pattern = hslGraphContext.Trip(TripId).Include(trip => trip.route).ToItem();
 
             Assert.That(pattern.route, Is.Not.Null);
+        }
+    }
+
+    class TripDetails
+    {
+        public string tg { get; }
+        public string aatrg { get; }
+        public List<Coordinates> geometry { get; }
+        public string n { get; }
+        public string p { get; }
+
+        internal TripDetails(string tg, string aatrg, List<Coordinates> geometry, string n, string p)
+        {
+            this.tg = tg;
+            this.aatrg = aatrg;
+            this.geometry = geometry;
+            this.n = n;
+            this.p = p;
         }
     }
 }
