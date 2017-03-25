@@ -1,14 +1,11 @@
 ﻿using NUnit.Framework;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GraphQLinq.Tests
 {
     [TestFixture(Category = "Query generation tests")]
-    public class SuperChargersGraphContextTests
+    public class QueryGenerationTests
     {
         SuperChargersGraphContext context = new SuperChargersGraphContext("");
 
