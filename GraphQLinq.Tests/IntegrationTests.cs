@@ -34,9 +34,7 @@ namespace GraphQLinq.Tests
             var query = superChargersContext.Locations(type: locationTypes);
 
             var locations = query.ToList();
-
-            var locationsWithPhones = locations.Where(location => location.salesPhone != null).ToList();
-            CollectionAssert.IsEmpty(locationsWithPhones);
+            Assert.That(locations, Is.All.Matches<Location>(l => l.salesPhone == null));
         }
 
         [Test]
@@ -46,8 +44,7 @@ namespace GraphQLinq.Tests
 
             var locations = query.ToList();
 
-            var locationsWithNullPhones = locations.Where(location => location.salesPhone == null).ToList();
-            CollectionAssert.IsEmpty(locationsWithNullPhones);
+            Assert.That(locations, Is.All.Matches<Location>(l => l.salesPhone != null));
         }
 
         [Test]
