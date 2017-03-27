@@ -13,7 +13,7 @@ namespace GraphQLinq
         private const string QueryTemplate = @"query {0} {{ {1}: {2} {3} {{ {4} }}}}";
         internal const string ResultAlias = "result";
 
-        public string BuildQuery(GraphQuery<T> graphQuery, List<string> includes)
+        public GraphQLQuery BuildQuery(GraphQuery<T> graphQuery, List<string> includes)
         {
             var selectClause = "";
 
@@ -61,7 +61,8 @@ namespace GraphQLinq
             var dictionary = new Dictionary<string, object> { { "query", graphQLQuery }, { "variables", queryVariables } };
 
             var json = JsonConvert.SerializeObject(dictionary, new StringEnumConverter());
-            return json;
+
+            return new GraphQLQuery(graphQLQuery, queryVariables, json);
         }
 
         private static string BuildMemberAccessSelectClause(Expression body, string selectClause, string padding, string alias)
@@ -141,5 +142,19 @@ namespace GraphQLinq
             fieldsFromInclude = $"{leftPadding}{currentPropertyName.ToCamelCase()} {{{Environment.NewLine}{fieldsFromInclude}{Environment.NewLine}{leftPadding}}}";
             return fieldsFromInclude;
         }
+    }
+
+    class GraphQLQuery
+    {
+        public GraphQLQuery(string query, IReadOnlyDictionary<string, object> variables, string fullQuery)
+        {
+            Query = query;
+            Variables = variables;
+            FullQuery = fullQuery;
+        }
+
+        public string Query { get; }
+        public string FullQuery { get; }
+        public IReadOnlyDictionary<string, object> Variables { get; }
     }
 }

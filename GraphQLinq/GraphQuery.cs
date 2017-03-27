@@ -9,7 +9,7 @@ namespace GraphQLinq
     public abstract class GraphQuery<T>
     {
         private readonly GraphContext context;
-        private readonly Lazy<string> lazyQuery;
+        private readonly Lazy<GraphQLQuery> lazyQuery;
         private readonly GraphQueryBuilder<T> queryBuilder = new GraphQueryBuilder<T>();
 
         internal string QueryName { get; }
@@ -22,12 +22,12 @@ namespace GraphQLinq
             QueryName = queryName;
             context = graphContext;
 
-            lazyQuery = new Lazy<string>(() => queryBuilder.BuildQuery(this, Includes));
+            lazyQuery = new Lazy<GraphQLQuery>(() => queryBuilder.BuildQuery(this, Includes));
         }
 
         public override string ToString()
         {
-            return lazyQuery.Value;
+            return lazyQuery.Value.FullQuery;
         }
 
         protected GraphQuery<TR> Clone<TR>()
@@ -129,7 +129,7 @@ namespace GraphQLinq
 
             var mapper = (Func<TSource, T>) Selector?.Compile();
 
-            return new GraphQueryEnumerator<T, TSource>(query, context.BaseUrl, context.Authorization, queryType, mapper);
+            return new GraphQueryEnumerator<T, TSource>(query.FullQuery, context.BaseUrl, context.Authorization, queryType, mapper);
         }
     }
 
