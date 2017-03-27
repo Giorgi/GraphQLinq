@@ -30,6 +30,9 @@ namespace GraphQLinq
             return lazyQuery.Value.FullQuery;
         }
 
+        public string Query => lazyQuery.Value.Query;
+        public IReadOnlyDictionary<string, object> QueryVariables => lazyQuery.Value.Variables;
+
         protected GraphQuery<TR> Clone<TR>()
         {
             var genericQueryType = GetType().GetGenericTypeDefinition();

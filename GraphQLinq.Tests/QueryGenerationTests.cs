@@ -15,9 +15,7 @@ namespace GraphQLinq.Tests
         {
             var locations = context.Locations().Select(l => l.city);
 
-            var query = locations.ToString();
-
-            Assert.That(query, Does.Contain("city"));
+            Assert.That(locations.Query, Does.Contain("city"));
         }
 
         [Test]
@@ -25,9 +23,7 @@ namespace GraphQLinq.Tests
         {
             var locations = context.Locations().Select(l => new { l.city, l.region });
 
-            var query = locations.ToString();
-
-            Assert.That(query, Does.Contain("city").And.Contains("region"));
+            Assert.That(locations.Query, Does.Contain("city").And.Contains("region"));
         }
 
         [Test]
@@ -35,9 +31,7 @@ namespace GraphQLinq.Tests
         {
             var locations = context.Locations().Select(l => l.salesPhone);
 
-            var query = locations.ToString();
-
-            Assert.That(query, Does.Contain("number").And.Contains("label"));
+            Assert.That(locations.Query, Does.Contain("number").And.Contains("label"));
         }
 
         [Test]
@@ -45,9 +39,7 @@ namespace GraphQLinq.Tests
         {
             var locations = context.Locations().Select(l => l.locationType);
 
-            var query = locations.ToString();
-
-            Assert.That(query, Does.Not.Contain("length").And.Not.Contains("chars"));
+            Assert.That(locations.Query, Does.Not.Contain("length").And.Not.Contains("chars"));
         }
 
         [Test]
@@ -55,9 +47,7 @@ namespace GraphQLinq.Tests
         {
             var locations = context.Locations().Select(l => new { l.salesPhone, l.city });
 
-            var query = locations.ToString();
-
-            Assert.That(query, Does.Contain("number").And.Contains("label").And.Contains("city"));
+            Assert.That(locations.Query, Does.Contain("number").And.Contains("label").And.Contains("city"));
         }
 
         [Test]
@@ -65,9 +55,7 @@ namespace GraphQLinq.Tests
         {
             var locations = context.Locations().Select(l => l.Country);
 
-            var query = locations.ToString();
-
-            Assert.That(query, Does.Contain("country"));
+            Assert.That(locations.Query, Does.Contain("country"));
         }
 
         [Test]
@@ -75,9 +63,7 @@ namespace GraphQLinq.Tests
         {
             var locations = context.Locations();
 
-            var query = locations.ToString();
-
-            Assert.That(query, Does.Not.Contain(nameof(Location.salesPhone)).And.Not.Contains(nameof(Location.emails)));
+            Assert.That(locations.Query, Does.Not.Contain(nameof(Location.salesPhone)).And.Not.Contains(nameof(Location.emails)));
         }
 
         [Test]
@@ -85,9 +71,7 @@ namespace GraphQLinq.Tests
         {
             var locations = context.Locations().Include(l => l.salesPhone);
 
-            var query = locations.ToString();
-
-            Assert.That(query, Does.Contain(nameof(Location.salesPhone))
+            Assert.That(locations.Query, Does.Contain(nameof(Location.salesPhone))
                                .And.Contains(nameof(Phone.label))
                                .And.Contains(nameof(Phone.number)));
         }
@@ -97,21 +81,21 @@ namespace GraphQLinq.Tests
         {
             var locations = context.Locations().Include(l => l.salesPhone.Select(p => p.number));
 
-            var query = locations.ToString();
-
-            Assert.That(query, Does.Contain(nameof(Location.salesPhone))
+            Assert.That(locations.Query, Does.Contain(nameof(Location.salesPhone))
                                .And.Not.Contains(nameof(Phone.label))
                                .And.Contains(nameof(Phone.number)));
         }
-                
+
         [Test]
         public void FilteringQueryWithScalarParameterGeneratedQueryIncludesPassedParameter()
         {
             var locations = context.Locations(openSoon: true).Select(l => l.city);
 
-            var query = locations.ToString();
-
-            Assert.That(query, Does.Contain("openSoon\":true"));
+            Assert.Multiple(() =>
+            {
+                Assert.That(locations.Query, Does.Contain("$openSoon: Boolean").And.Contain("openSoon: $openSoon"));
+                CollectionAssert.Contains(locations.QueryVariables, new KeyValuePair<string, object>("openSoon", true));
+            });
         }
 
         [Test]
@@ -149,9 +133,7 @@ namespace GraphQLinq.Tests
         {
             var agency = hslGraphContext.Agency("232919").Include(a => a.routes.Select(route => route.trips.Select(trip => trip.geometry)));
 
-            var query = agency.ToString();
-
-            Assert.That(query, Does.Not.Contain("capacity").And.Not.Contain("count").And.Not.Contain("item"));
+            Assert.That(agency.Query, Does.Not.Contain("capacity").And.Not.Contain("count").And.Not.Contain("item"));
         }
     }
 }
