@@ -146,12 +146,23 @@ namespace GraphQLinq.Tests
         {
             Agency agency = null;
 
-            Assert.Multiple(() =>
+            var agencyId = "234083";
+            Assert.DoesNotThrow(() => agency = hslGraphContext.Agency(agencyId).Include(a => a.routes.Select(route => route.trips.Select(trip => trip.geometry))).ToItem());
+
+            if (agency == null)
             {
-                Assert.DoesNotThrow(() => agency = hslGraphContext.Agency("232919").Include(a => a.routes.Select(route => route.trips.Select(trip => trip.geometry))).ToItem());
-                CollectionAssert.IsNotEmpty(agency.routes[0].trips[0].geometry);
-                CollectionAssert.IsNotEmpty(agency.routes[1].trips[0].geometry);
-            });
+                Assert.Inconclusive($"Agency with id {agencyId} not found");
+            }
+            else
+            {
+                Assert.Multiple(() =>
+                {
+                    {
+                        CollectionAssert.IsNotEmpty(agency.routes[0].trips[0].geometry);
+                        CollectionAssert.IsNotEmpty(agency.routes[1].trips[0].geometry);
+                    }
+                });
+            }
         }
     }
 
