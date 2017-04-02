@@ -13,7 +13,7 @@ namespace GraphQLinq
         private const string QueryTemplate = @"query {0} {{ {1}: {2} {3} {{ {4} }}}}";
         internal const string ResultAlias = "result";
 
-        public GraphQLQuery BuildQuery(GraphQuery<T> graphQuery, List<string> includes)
+        public GraphQLQuery BuildQuery(GraphQuery<T> graphQuery, List<IncludeDetails> includes)
         {
             var selectClause = "";
 
@@ -105,7 +105,7 @@ namespace GraphQLinq
             return selectClause;
         }
 
-        private static string BuildSelectClauseForType(Type targetType, IEnumerable<string> includes)
+        private static string BuildSelectClauseForType(Type targetType, IEnumerable<IncludeDetails> includes)
         {
             var selectClause = BuildSelectClauseForType(targetType);
 
@@ -118,8 +118,9 @@ namespace GraphQLinq
             return selectClause;
         }
 
-        private static string BuildSelectClauseForInclude(Type targetType, string include, int depth = 1)
+        private static string BuildSelectClauseForInclude(Type targetType, IncludeDetails includeDetails, int depth = 1)
         {
+            var include = includeDetails.Path;
             if (string.IsNullOrEmpty(include))
             {
                 return BuildSelectClauseForType(targetType, depth);
@@ -128,18 +129,20 @@ namespace GraphQLinq
 
             var dotIndex = include.IndexOf(".", StringComparison.InvariantCultureIgnoreCase);
 
-            var restOfTheIncludePath = dotIndex >= 0 ? include.Substring(dotIndex + 1) : "";
-            var currentPropertyName = dotIndex >= 0 ? include.Substring(0, dotIndex) : include;
+            var currentIncludeName = dotIndex >= 0 ? include.Substring(0, dotIndex) : include;
 
-            var propertyType = targetType.GetProperty(currentPropertyName).PropertyType.GetTypeOrListType();
+            var propertyInfo = targetType.GetProperty(currentIncludeName);
+            var propertyType = propertyInfo.PropertyType.GetTypeOrListType();
 
             if (propertyType.IsPrimitiveOrString())
             {
-                return leftPadding + currentPropertyName.ToCamelCase();
+                return leftPadding + currentIncludeName.ToCamelCase();
             }
 
-            var fieldsFromInclude = BuildSelectClauseForInclude(propertyType, restOfTheIncludePath, depth + 1);
-            fieldsFromInclude = $"{leftPadding}{currentPropertyName.ToCamelCase()} {{{Environment.NewLine}{fieldsFromInclude}{Environment.NewLine}{leftPadding}}}";
+            var restOfTheInclude = new IncludeDetails {Path = dotIndex >= 0 ? include.Substring(dotIndex + 1) : "" };
+
+            var fieldsFromInclude = BuildSelectClauseForInclude(propertyType, restOfTheInclude, depth + 1);
+            fieldsFromInclude = $"{leftPadding}{currentIncludeName.ToCamelCase()} {{{Environment.NewLine}{fieldsFromInclude}{Environment.NewLine}{leftPadding}}}";
             return fieldsFromInclude;
         }
     }

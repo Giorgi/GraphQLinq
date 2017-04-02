@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 
 namespace GraphQLinq
 {
@@ -14,7 +15,7 @@ namespace GraphQLinq
 
         internal string QueryName { get; }
         internal LambdaExpression Selector { get; private set; }
-        internal List<string> Includes { get; private set; } = new List<string>();
+        internal List<IncludeDetails> Includes { get; private set; } = new List<IncludeDetails>();
         internal Dictionary<string, object> Arguments { get; set; } = new Dictionary<string, object>();
 
         internal GraphQuery(GraphContext graphContext, string queryName)
@@ -48,61 +49,94 @@ namespace GraphQLinq
             return instance;
         }
 
-        protected static bool TryParsePath(Expression expression, out string path)
+        internal static IncludeDetails ParseIncludePath(Expression expression)
         {
-            path = null;
+            string path = null;
             var withoutConvert = expression.RemoveConvert(); // Removes boxing
             var memberExpression = withoutConvert as MemberExpression;
             var callExpression = withoutConvert as MethodCallExpression;
 
             if (memberExpression != null)
             {
-                var thisPart = memberExpression.Member.Name;
-                string parentPart;
-                if (!TryParsePath(memberExpression.Expression, out parentPart))
+                var parentPath = ParseIncludePath(memberExpression.Expression);
+                if (parentPath == null)
                 {
-                    return false;
+                    return null;
                 }
-                path = parentPart == null ? thisPart : (parentPart + "." + thisPart);
+
+                var thisPart = memberExpression.Member.Name;
+                path = parentPath.Path == null ? thisPart : (parentPath.Path + "." + thisPart);
             }
             else if (callExpression != null)
             {
-                if (callExpression.Method.Name == "Select"
-                    && callExpression.Arguments.Count == 2)
+                if (callExpression.Method.Name == "Select" && callExpression.Arguments.Count == 2)
                 {
-                    string parentPart;
-                    if (!TryParsePath(callExpression.Arguments[0], out parentPart))
+                    var parentPath = ParseIncludePath(callExpression.Arguments[0]);
+                    if (parentPath == null)
                     {
-                        return false;
+                        return null;
                     }
-                    if (parentPart != null)
+
+                    if (parentPath.Path != null)
                     {
                         var subExpression = callExpression.Arguments[1] as LambdaExpression;
                         if (subExpression != null)
                         {
-                            string thisPart;
-                            if (!TryParsePath(subExpression.Body, out thisPart))
+                            var thisPath = ParseIncludePath(subExpression.Body);
+                            if (thisPath == null)
                             {
-                                return false;
+                                return null;
                             }
-                            if (thisPart != null)
+
+                            if (thisPath.Path != null)
                             {
-                                path = parentPart + "." + thisPart;
-                                return true;
+                                path = parentPath.Path + "." + thisPath.Path;
+                                var result = new IncludeDetails { Path = path};
+
+                                result.MethodIncludes.AddRange(parentPath.MethodIncludes);
+                                result.MethodIncludes.AddRange(thisPath.MethodIncludes);
+
+                                return result;
                             }
                         }
                     }
                 }
-                return false;
+                if (callExpression.Method.DeclaringType?.Name == "QueryExtensions")
+                {
+                    var parentPath = ParseIncludePath(callExpression.Arguments[0]);
+                    if (parentPath == null)
+                    {
+                        return null;
+                    }
+
+                    path = parentPath.Path == null ? callExpression.Method.Name : parentPath.Path + "." + callExpression.Method.Name;
+
+                    var arguments = callExpression.Arguments.Zip(callExpression.Method.GetParameters(), (argument, parameter) => new
+                    {
+                        Argument = argument,
+                        parameter.Name
+                    }).Skip(1).ToDictionary(arg => arg.Name, arg => (arg.Argument as ConstantExpression).Value);
+
+                    var result = new IncludeDetails { Path = path };
+                    result.MethodIncludes.Add(new IncludeMethodDetails
+                    {
+                        Method = callExpression.Method,
+                        Parameters = arguments
+                    });
+                    result.MethodIncludes.AddRange(parentPath.MethodIncludes);
+                    return result;
+                }
+
+                return null;
             }
 
-            return true;
+            return new IncludeDetails { Path = path };
         }
 
         protected GraphQuery<T> BuildInclude<TProperty>(Expression<Func<T, TProperty>> path)
         {
-            string include;
-            if (!TryParsePath(path.Body, out include) || include == null)
+            var include = ParseIncludePath(path.Body);
+            if (include?.Path == null)
             {
                 throw new ArgumentException("Invalid Include Path Expression", nameof(path));
             }
@@ -130,7 +164,7 @@ namespace GraphQLinq
         {
             var query = lazyQuery.Value;
 
-            var mapper = (Func<TSource, T>) Selector?.Compile();
+            var mapper = (Func<TSource, T>)Selector?.Compile();
 
             return new GraphQueryEnumerator<T, TSource>(query.FullQuery, context.BaseUrl, context.Authorization, queryType, mapper);
         }
@@ -209,87 +243,20 @@ namespace GraphQLinq
         Collection
     }
 
-    static class ExtensionsUtils
+    class IncludeDetails
     {
-        internal static bool IsPrimitiveOrString(this Type type)
+        public string Path { get; set; }
+        public List<IncludeMethodDetails> MethodIncludes { get; } = new List<IncludeMethodDetails>();
+    }
+
+    class IncludeMethodDetails
+    {
+        public MethodInfo Method { get; set; }
+        public Dictionary<string, object> Parameters { get; set; }
+
+        public override string ToString()
         {
-            return type.IsPrimitive || type == typeof(string);
-        }
-
-        internal static bool IsList(this Type type)
-        {
-            return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>);
-        }
-
-        internal static bool HasNestedProperties(this Type type)
-        {
-            var trueType = GetTypeOrListType(type);
-
-            return !IsPrimitiveOrString(trueType);
-        }
-
-        internal static Type GetTypeOrListType(this Type type)
-        {
-            if (type.IsList())
-            {
-                var genericArguments = type.GetGenericArguments();
-
-                return genericArguments[0].GetTypeOrListType();
-            }
-
-            return type;
-        }
-
-        internal static Expression RemoveConvert(this Expression expression)
-        {
-            while ((expression != null)
-                   && (expression.NodeType == ExpressionType.Convert
-                       || expression.NodeType == ExpressionType.ConvertChecked))
-            {
-                expression = RemoveConvert(((UnaryExpression)expression).Operand);
-            }
-
-            return expression;
-        }
-
-        internal static string ToCamelCase(this string input)
-        {
-            if (char.IsLower(input[0]))
-            {
-                return input;
-            }
-            return input.Substring(0, 1).ToLower() + input.Substring(1);
-        }
-
-        internal static string ToGraphQlType(this Type type)
-        {
-            if (type == typeof(bool))
-            {
-                return "Boolean";
-            }
-
-            if (type == typeof(int))
-            {
-                return "Int";
-            }
-
-            if (type == typeof(string))
-            {
-                return "String!";
-            }
-
-            if (type == typeof(float))
-            {
-                return "Float";
-            }
-
-            if (type.IsList())
-            {
-                var listType = type.GetTypeOrListType();
-                return "[" + ToGraphQlType(listType) + "]";
-            }
-
-            return type.Name;
+            return Method.Name;
         }
     }
 }
