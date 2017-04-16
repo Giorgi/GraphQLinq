@@ -91,10 +91,7 @@ namespace GraphQLinq
                             if (thisPath.Path != null)
                             {
                                 path = parentPath.Path + "." + thisPath.Path;
-                                var result = new IncludeDetails { Path = path};
-
-                                result.MethodIncludes.AddRange(parentPath.MethodIncludes);
-                                result.MethodIncludes.AddRange(thisPath.MethodIncludes);
+                                var result = new IncludeDetails(parentPath.MethodIncludes.Union(thisPath.MethodIncludes)) { Path = path };
 
                                 return result;
                             }
@@ -245,6 +242,15 @@ namespace GraphQLinq
 
     class IncludeDetails
     {
+        public IncludeDetails()
+        {
+            
+        }
+        public IncludeDetails(IEnumerable<IncludeMethodDetails> methodIncludes)
+        {
+            MethodIncludes = methodIncludes.ToList();
+        }
+
         public string Path { get; set; }
         public List<IncludeMethodDetails> MethodIncludes { get; } = new List<IncludeMethodDetails>();
     }
