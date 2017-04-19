@@ -17,6 +17,9 @@ namespace GraphQLinq
         {
             var selectClause = "";
 
+            var passedArguments = graphQuery.Arguments.Where(pair => pair.Value != null).ToList();
+            var queryVariables = passedArguments.ToDictionary(pair => pair.Key, pair => pair.Value);
+
             if (graphQuery.Selector != null)
             {
                 var body = graphQuery.Selector.Body;
@@ -45,17 +48,20 @@ namespace GraphQLinq
             }
             else
             {
-                selectClause = BuildSelectClauseForType(typeof(T), includes);
+                var select = BuildSelectClauseForType(typeof(T), includes);
+                selectClause = select.SelectClause;
+
+                foreach (var item in select.IncludeArguments)
+                {
+                    queryVariables.Add(item.Key,item.Value);
+                }
             }
 
             selectClause = Environment.NewLine + selectClause + Environment.NewLine;
 
-            var passedArguments = graphQuery.Arguments.Where(pair => pair.Value != null).ToList();
-
             var queryParameters = passedArguments.Any() ? $"({string.Join(", ", passedArguments.Select(pair => $"{pair.Key}: ${pair.Key}"))})" : "";
-            var queryParameterTypes = passedArguments.Any() ? $"({string.Join(", ", passedArguments.Select(pair => $"${pair.Key}: {pair.Value.GetType().ToGraphQlType()}"))})" : "";
+            var queryParameterTypes = queryVariables.Any() ? $"({string.Join(", ", queryVariables.Select(pair => $"${pair.Key}: {pair.Value.GetType().ToGraphQlType()}"))})" : "";
 
-            var queryVariables = passedArguments.ToDictionary(pair => pair.Key, pair => pair.Value);
             var graphQLQuery = string.Format(QueryTemplate, queryParameterTypes, ResultAlias, graphQuery.QueryName.ToLower(), queryParameters, selectClause);
 
             var dictionary = new Dictionary<string, object> { { "query", graphQLQuery }, { "variables", queryVariables } };
@@ -105,20 +111,23 @@ namespace GraphQLinq
             return selectClause;
         }
 
-        private static string BuildSelectClauseForType(Type targetType, IEnumerable<IncludeDetails> includes)
+        private static SelectClauseDetails BuildSelectClauseForType(Type targetType, List<IncludeDetails> includes)
         {
             var selectClause = BuildSelectClauseForType(targetType);
+            var includeVariables = new Dictionary<string, object>();
 
-            foreach (var include in includes)
+            for (var index = 0; index < includes.Count; index++)
             {
-                var fieldsFromInclude = BuildSelectClauseForInclude(targetType, include);
+                var include = includes[index];
+                var prefix = includes.Count == 1 ? "" : index.ToString();
+
+                var fieldsFromInclude = BuildSelectClauseForInclude(targetType, include, includeVariables, prefix);
                 selectClause = selectClause + Environment.NewLine + fieldsFromInclude;
             }
-
-            return selectClause;
+            return new SelectClauseDetails { SelectClause = selectClause, IncludeArguments = includeVariables };
         }
 
-        private static string BuildSelectClauseForInclude(Type targetType, IncludeDetails includeDetails, int depth = 1, int index = 0)
+        private static string BuildSelectClauseForInclude(Type targetType, IncludeDetails includeDetails, Dictionary<string, object> includeVariables, string parameterPrefix = "", int parameterIndex = 0, int depth = 1)
         {
             var include = includeDetails.Path;
             if (string.IsNullOrEmpty(include))
@@ -136,13 +145,13 @@ namespace GraphQLinq
 
             var includeName = currentIncludeName.ToCamelCase();
 
-            var includeMethodInfo = includeDetails.MethodIncludes[index].Method;
-            var includeByMethod = currentIncludeName == includeMethodInfo.Name && propertyInfo.PropertyType == includeMethodInfo.ReturnType;
+            var includeMethodInfo = includeDetails.MethodIncludes.Count > parameterIndex ? includeDetails.MethodIncludes[parameterIndex].Method : null;
+            var includeByMethod = includeMethodInfo != null && currentIncludeName == includeMethodInfo.Name && propertyInfo.PropertyType == includeMethodInfo.ReturnType;
 
             if (includeByMethod)
             {
-                var methodDetails = includeDetails.MethodIncludes[index];
-                index++;
+                var methodDetails = includeDetails.MethodIncludes[parameterIndex];
+                parameterIndex++;
 
                 propertyType = methodDetails.Method.ReturnType.GetTypeOrListType();
 
@@ -151,8 +160,13 @@ namespace GraphQLinq
 
                 if (includeMethodParams.Any())
                 {
-                    var includeParameters = string.Join(", ", includeMethodParams.Select(pair => pair.Key + ": $" + pair.Key + index));
+                    var includeParameters = string.Join(", ", includeMethodParams.Select(pair => pair.Key + ": $" + pair.Key + parameterPrefix + parameterIndex));
                     includeName = $"{includeName}({includeParameters})";
+
+                    foreach (var item in includeMethodParams)
+                    {
+                        includeVariables.Add(item.Key + parameterPrefix + parameterIndex, item.Value);
+                    }
                 }
             }
             else
@@ -167,7 +181,7 @@ namespace GraphQLinq
 
             var restOfTheInclude = new IncludeDetails(includeDetails.MethodIncludes) { Path = dotIndex >= 0 ? include.Substring(dotIndex + 1) : "" };
 
-            var fieldsFromInclude = BuildSelectClauseForInclude(propertyType, restOfTheInclude, depth + 1, index);
+            var fieldsFromInclude = BuildSelectClauseForInclude(propertyType, restOfTheInclude, includeVariables, parameterPrefix, parameterIndex, depth + 1);
             fieldsFromInclude = $"{leftPadding}{includeName} {{{Environment.NewLine}{fieldsFromInclude}{Environment.NewLine}{leftPadding}}}";
             return fieldsFromInclude;
         }
@@ -185,5 +199,11 @@ namespace GraphQLinq
         public string Query { get; }
         public string FullQuery { get; }
         public IReadOnlyDictionary<string, object> Variables { get; }
+    }
+
+    class SelectClauseDetails
+    {
+        public string SelectClause { get; set; }
+        public Dictionary<string, object> IncludeArguments { get; set; }
     }
 }
