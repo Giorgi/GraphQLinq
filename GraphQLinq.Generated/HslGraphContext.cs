@@ -56,9 +56,14 @@ namespace GraphQLinq
         //  }
     }
 
-    static class QueryExtensions
+    public static class QueryExtensions
     {
         public static List<Stoptime> stoptimesForDate(this Trip trip, string serviceDay)
+        {
+            throw new NotImplementedException("This method is not implemented. It exists solely for query purposes.");
+        }
+
+        public static List<StoptimesInPattern> stoptimesForServiceDate(this Stop stop, string date)
         {
             throw new NotImplementedException("This method is not implemented. It exists solely for query purposes.");
         }
