@@ -43,7 +43,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="IntegrationTests.cs" />
+    <Compile Include="CollectionQueryTests.cs" />
+    <Compile Include="SingleItemQueryTests.cs" />
     <Compile Include="QueryGenerationTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SuperChargersTests.cs" />

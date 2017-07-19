@@ -16,11 +16,11 @@ namespace GraphQLinq
             return BuildItemQuery<Trip>(parameterValues);
         }
 
-        public GraphCollectionQuery<Agency> Agencies()
+        public GraphCollectionQuery<Stop> Stations()
         {
             var parameterValues = new object[] { };
 
-            return BuildCollectionQuery<Agency>(parameterValues);
+            return BuildCollectionQuery<Stop>(parameterValues);
         }
 
         public GraphItemQuery<Agency> Agency(string id)

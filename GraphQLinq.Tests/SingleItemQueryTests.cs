@@ -5,8 +5,10 @@ using NUnit.Framework;
 
 namespace GraphQLinq.Tests
 {
-    [TestFixture(Category = "Integration tests")]
-    class IntegrationTests
+    [TestFixture]
+    [Category("Single item query")]
+    [Category("Integration tests")]
+    class SingleItemQueryTests
     {
         const string TripId = "HSL:2554_20170717_To_1_1512";
         readonly HslGraphContext hslGraphContext = new HslGraphContext("https://api.digitransit.fi/routing/v1/routers/finland/index/graphql");
