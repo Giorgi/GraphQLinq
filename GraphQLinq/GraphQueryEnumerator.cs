@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -104,6 +105,7 @@ namespace GraphQLinq
             }
         }
 
+        [ExcludeFromCodeCoverage]
         public void Reset()
         {
             throw new NotImplementedException();
@@ -111,6 +113,7 @@ namespace GraphQLinq
 
         public T Current => listEnumerator.Current;
 
+        [ExcludeFromCodeCoverage]
         object IEnumerator.Current => Current;
     }
 }

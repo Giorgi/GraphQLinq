@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using HSL;
 using NUnit.Framework;
 
@@ -11,74 +8,8 @@ namespace GraphQLinq.Tests
     [TestFixture(Category = "Integration tests")]
     class IntegrationTests
     {
-        List<LocationType> locationTypes = new List<LocationType> { LocationType.STORE, LocationType.SERVICE };
-        SuperChargersGraphContext superChargersContext = new SuperChargersGraphContext("https://www.superchargers.io/graphql");
-
-        HslGraphContext hslGraphContext = new HslGraphContext("https://api.digitransit.fi/routing/v1/routers/finland/index/graphql");
         const string TripId = "HSL:2554_20170717_To_1_1512";
-
-        [Test]
-        [Ignore("www.superchargers.io is down")]
-        public void SelectingCitiesReturnsListOfCities()
-        {
-            var query = superChargersContext.Locations(type: locationTypes).Select(l => l.city);
-
-            var locations = query.ToList();
-
-            CollectionAssert.IsNotEmpty(locations);
-            CollectionAssert.AllItemsAreNotNull(locations);
-        }
-
-        [Test]
-        [Ignore("www.superchargers.io is down")]
-        public void SelectingLocationsDoesNotReturnPhones()
-        {
-            var query = superChargersContext.Locations(type: locationTypes);
-
-            var locations = query.ToList();
-            Assert.That(locations, Is.All.Matches<Location>(l => l.salesPhone == null));
-        }
-
-        [Test]
-        [Ignore("www.superchargers.io is down")]
-        public void SelectingLocationsAndIncludingPhonesReturnsPhones()
-        {
-            var query = superChargersContext.Locations(type: locationTypes).Include(location => location.salesPhone);
-
-            var locations = query.ToList();
-
-            Assert.That(locations, Is.All.Matches<Location>(l => l.salesPhone != null));
-        }
-
-        [Test]
-        [Ignore("www.superchargers.io is down")]
-        public void SelectingCitiesAndPhonesReturnsPhones()
-        {
-            var query = superChargersContext.Locations(type: locationTypes).Select(location => new { location.city, location.salesPhone });
-
-            var locations = query.ToList();
-
-            var locationsWithNullPhones = locations.Where(location => location.salesPhone == null).ToList();
-            CollectionAssert.IsEmpty(locationsWithNullPhones);
-        }
-
-        [Test]
-        [Ignore("www.superchargers.io is down")]
-        public void SelectingCitiesWithAliasAndPhonesReturnsPhonesAndCities()
-        {
-            var query = superChargersContext.Locations(type: locationTypes).Select(location => new { CityName = location.city, location.salesPhone });
-
-            var locations = query.ToList();
-
-            var locationsWithNullPhones = locations.Where(location => location.salesPhone == null).ToList();
-            var locationsWithNullCity = locations.Where(location => location.CityName == null).ToList();
-
-            Assert.Multiple(() =>
-            {
-                CollectionAssert.IsEmpty(locationsWithNullPhones);
-                CollectionAssert.IsEmpty(locationsWithNullCity);
-            });
-        }
+        readonly HslGraphContext hslGraphContext = new HslGraphContext("https://api.digitransit.fi/routing/v1/routers/finland/index/graphql");
 
         [Test]
         public void SelectingSingleTripIdIsNotNull()
