@@ -15,9 +15,10 @@ namespace GraphQLinq.Tests
         SuperChargersGraphContext superChargersContext = new SuperChargersGraphContext("https://www.superchargers.io/graphql");
 
         HslGraphContext hslGraphContext = new HslGraphContext("https://api.digitransit.fi/routing/v1/routers/finland/index/graphql");
-        const string TripId = "HSL:1055_20170501_To_1_1205";
+        const string TripId = "HSL:2554_20170717_To_1_1512";
 
         [Test]
+        [Ignore("www.superchargers.io is down")]
         public void SelectingCitiesReturnsListOfCities()
         {
             var query = superChargersContext.Locations(type: locationTypes).Select(l => l.city);
@@ -29,6 +30,7 @@ namespace GraphQLinq.Tests
         }
 
         [Test]
+        [Ignore("www.superchargers.io is down")]
         public void SelectingLocationsDoesNotReturnPhones()
         {
             var query = superChargersContext.Locations(type: locationTypes);
@@ -38,6 +40,7 @@ namespace GraphQLinq.Tests
         }
 
         [Test]
+        [Ignore("www.superchargers.io is down")]
         public void SelectingLocationsAndIncludingPhonesReturnsPhones()
         {
             var query = superChargersContext.Locations(type: locationTypes).Include(location => location.salesPhone);
@@ -48,6 +51,7 @@ namespace GraphQLinq.Tests
         }
 
         [Test]
+        [Ignore("www.superchargers.io is down")]
         public void SelectingCitiesAndPhonesReturnsPhones()
         {
             var query = superChargersContext.Locations(type: locationTypes).Select(location => new { location.city, location.salesPhone });
@@ -59,6 +63,7 @@ namespace GraphQLinq.Tests
         }
 
         [Test]
+        [Ignore("www.superchargers.io is down")]
         public void SelectingCitiesWithAliasAndPhonesReturnsPhonesAndCities()
         {
             var query = superChargersContext.Locations(type: locationTypes).Select(location => new { CityName = location.city, location.salesPhone });
@@ -146,7 +151,7 @@ namespace GraphQLinq.Tests
         {
             Agency agency = null;
 
-            var agencyId = "236468";
+            var agencyId = "248007";
             Assert.DoesNotThrow(() => agency = hslGraphContext.Agency(agencyId).Include(a => a.routes.Select(route => route.trips.Select(trip => trip.geometry))).ToItem());
 
             if (agency == null)
@@ -157,10 +162,8 @@ namespace GraphQLinq.Tests
             {
                 Assert.Multiple(() =>
                 {
-                    {
-                        CollectionAssert.IsNotEmpty(agency.routes[0].trips[0].geometry);
-                        CollectionAssert.IsNotEmpty(agency.routes[1].trips[0].geometry);
-                    }
+                    CollectionAssert.IsNotEmpty(agency.routes[0].trips[0].geometry);
+                    CollectionAssert.IsNotEmpty(agency.routes[1].trips[0].geometry);
                 });
             }
         }
