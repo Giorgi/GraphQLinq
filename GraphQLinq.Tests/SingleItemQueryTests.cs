@@ -10,7 +10,7 @@ namespace GraphQLinq.Tests
     [Category("Integration tests")]
     class SingleItemQueryTests
     {
-        const string TripId = "HSL:2554_20170717_To_1_1512";
+        const string TripId = "HSL:6908 3_20170814_Ti_1_1215";
         readonly HslGraphContext hslGraphContext = new HslGraphContext("https://api.digitransit.fi/routing/v1/routers/finland/index/graphql");
 
         [Test]
@@ -84,7 +84,7 @@ namespace GraphQLinq.Tests
         {
             Agency agency = null;
 
-            var agencyId = "248007";
+            var agencyId = "248798";
             Assert.DoesNotThrow(() => agency = hslGraphContext.Agency(agencyId).Include(a => a.routes.Select(route => route.trips.Select(trip => trip.geometry))).ToItem());
 
             if (agency == null)
