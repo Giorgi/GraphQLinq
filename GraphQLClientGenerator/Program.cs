@@ -39,7 +39,14 @@ namespace GraphQLClientGenerator
                                    }
                                  }
                                }
+                             args {
+                               name
+                               description
+                               }
                              }
+                           }
+                           queryType {
+                             name
                            }
                         }
                       }";

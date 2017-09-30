@@ -28,18 +28,14 @@ namespace GraphQLClientGenerator
             "Boolean"
         };
 
-        private static readonly List<string> ExceptionTypes = new List<string>
-        {
-            "Query"
-        };
-
         private static readonly AdhocWorkspace Workspace = new AdhocWorkspace();
 
         public void GenerateClasses(Schema schema, CodeGenerationOptions options)
         {
+            var queryType = schema.QueryType.Name;
             var types = schema.Types.Where(type => !type.Name.StartsWith("__")
                                                                 && !BuiltInTypes.Contains(type.Name)
-                                                                && !ExceptionTypes.Contains(type.Name)).ToList();
+                                                                && queryType != type.Name).ToList();
 
             var enums = types.Where(type => type.Kind == TypeKind.Enum);
             var classes = types.Where(type => type.Kind == TypeKind.Object);

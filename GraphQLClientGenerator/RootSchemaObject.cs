@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -19,13 +20,17 @@ namespace GraphQLClientGenerator
     public class Schema
     {
         public List<Type> Types { get; set; }
+        public QueryType QueryType { get; set; }
     }
 
-    public class Type
+    public class QueryType
     {
         public string Name { get; set; }
+    }
+
+    public class Type : BaseInfo
+    {
         public TypeKind Kind { get; set; }
-        public string Description { get; set; }
         public List<EnumValue> EnumValues { get; set; }
         public List<Field> Fields { get; set; }
         public List<Type> Interfaces { get; set; }
@@ -51,11 +56,10 @@ namespace GraphQLClientGenerator
         public string Name { get; set; }
     }
 
-    public class Field
+    public class Field : BaseInfo
     {
-        public string Name { get; set; }
         public FieldType Type { get; set; }
-        public string Description { get; set; }
+        public List<Arg> Args { get; set; }
     }
 
     public class FieldType
@@ -63,5 +67,16 @@ namespace GraphQLClientGenerator
         public TypeKind Kind { get; set; }
         public string Name { get; set; }
         public FieldType OfType { get; set; }
+    }
+
+    public class Arg : BaseInfo
+    {
+    }
+
+    [DebuggerDisplay("Name = {" + nameof(Name) + "}")]
+    public class BaseInfo
+    {
+        public string Name { get; set; }
+        public string Description { get; set; }
     }
 }
