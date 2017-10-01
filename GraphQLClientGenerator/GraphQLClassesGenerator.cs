@@ -78,7 +78,9 @@ namespace GraphQLClientGenerator
         private SyntaxNode GenerateEnum(Type enumInfo)
         {
             var namespaceDeclaration = NamespaceDeclaration(IdentifierName(options.Namespace));
-            var declaration = EnumDeclaration(enumInfo.Name).AddModifiers(Token(SyntaxKind.PublicKeyword));
+            var name = options.NormalizeCasing ? enumInfo.Name.ToPascalCase() : enumInfo.Name;
+
+            var declaration = EnumDeclaration(name).AddModifiers(Token(SyntaxKind.PublicKeyword));
 
             foreach (var enumValue in enumInfo.EnumValues)
             {
@@ -96,7 +98,9 @@ namespace GraphQLClientGenerator
 
             var semicolonToken = Token(SyntaxKind.SemicolonToken);
 
-            var declaration = ClassDeclaration(classInfo.Name)
+            var name = options.NormalizeCasing ? classInfo.Name.ToPascalCase() : classInfo.Name;
+
+            var declaration = ClassDeclaration(name)
                                             .AddModifiers(Token(SyntaxKind.PublicKeyword))
                                             .AddModifiers(Token(SyntaxKind.PartialKeyword));
 
@@ -110,7 +114,9 @@ namespace GraphQLClientGenerator
                 var (type, @namespace) = GetSharpTypeName(field.Type);
                 usings.Add(@namespace);
 
-                var property = PropertyDeclaration(ParseTypeName(type), field.Name)
+                var fieldName = options.NormalizeCasing ? field.Name.ToPascalCase() : field.Name;
+
+                var property = PropertyDeclaration(ParseTypeName(type), fieldName)
                                             .AddModifiers(Token(SyntaxKind.PublicKeyword));
 
                 property = property.AddAccessorListAccessors(AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
@@ -137,14 +143,18 @@ namespace GraphQLClientGenerator
             var namespaceDeclaration = NamespaceDeclaration(IdentifierName(options.Namespace));
             var semicolonToken = Token(SyntaxKind.SemicolonToken);
 
-            var declaration = InterfaceDeclaration(interfaceInfo.Name)
+            var name = options.NormalizeCasing ? interfaceInfo.Name.ToPascalCase() : interfaceInfo.Name;
+
+            var declaration = InterfaceDeclaration(name)
                                             .AddModifiers(Token(SyntaxKind.PublicKeyword));
 
             foreach (var field in interfaceInfo.Fields)
             {
                 var (type, _) = GetSharpTypeName(field.Type);
 
-                var property = PropertyDeclaration(ParseTypeName(type), field.Name);
+                var fieldName = options.NormalizeCasing ? field.Name.ToPascalCase() : field.Name;
+
+                var property = PropertyDeclaration(ParseTypeName(type), fieldName);
 
                 property = property.AddAccessorListAccessors(AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
                                    .WithSemicolonToken(semicolonToken));
@@ -180,7 +190,9 @@ namespace GraphQLClientGenerator
                     var (type, @namespace) = GetSharpTypeName(field.Type);
                     usings.Add(@namespace);
 
-                    var methodDeclaration = MethodDeclaration(ParseTypeName(type), field.Name)
+                    var fieldName = options.NormalizeCasing ? field.Name.ToPascalCase() : field.Name;
+
+                    var methodDeclaration = MethodDeclaration(ParseTypeName(type), fieldName)
                                              .AddModifiers(Token(SyntaxKind.PublicKeyword))
                                              .AddModifiers(Token(SyntaxKind.StaticKeyword));
 
@@ -217,8 +229,10 @@ namespace GraphQLClientGenerator
         }
 
 
-        private static void FormatAndWriteToFile(SyntaxNode syntax, string directory, string name)
+        private void FormatAndWriteToFile(SyntaxNode syntax, string directory, string name)
         {
+            name = options.NormalizeCasing ? name.ToPascalCase() : name;
+
             var fileName = Path.Combine(directory, name + ".cs");
             using (var streamWriter = File.CreateText(fileName))
             {
