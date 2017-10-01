@@ -39,9 +39,12 @@ namespace GraphQLClientGenerator
                                    }
                                  }
                                }
-                             args {
-                               name
-                               description
+                               args {
+                                 name
+                                 description
+                                 type {
+                                   name
+                                 }
                                }
                              }
                            }

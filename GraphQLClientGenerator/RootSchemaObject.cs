@@ -71,6 +71,7 @@ namespace GraphQLClientGenerator
 
     public class Arg : BaseInfo
     {
+        public FieldType Type { get; set; }
     }
 
     [DebuggerDisplay("Name = {" + nameof(Name) + "}")]

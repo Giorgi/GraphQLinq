@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting;
 
 namespace GraphQLClientGenerator
@@ -58,13 +59,79 @@ namespace GraphQLClientGenerator
                 var syntax = GenerateInterface(interfaceInfo, options.Namespace);
                 FormatAndWriteToFile(syntax, options.OutputDirectory, interfaceInfo.Name);
             }
+
+            var classesWithArgFields = classes.Where(type => type.Fields.Any(field => field.Args.Any())).ToList();
+
+            var queryExtensions = GenerateQueryExtensions(classesWithArgFields, options);
+            FormatAndWriteToFile(queryExtensions, options.OutputDirectory, "QueryExtensions");
         }
+
+        private SyntaxNode GenerateQueryExtensions(List<Type> classesWithArgFields, CodeGenerationOptions options)
+        {
+            var exceptionMessage = SyntaxFactory.Literal("This method is not implemented. It exists solely for query purposes.");
+            var argumentListSyntax = SyntaxFactory.ArgumentList(SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, exceptionMessage))));
+
+            var notImplemented = SyntaxFactory.ThrowStatement(SyntaxFactory.ObjectCreationExpression(
+                SyntaxFactory.IdentifierName("NotImplementedException"), argumentListSyntax, null));
+
+            var namespaceDeclaration = SyntaxFactory.NamespaceDeclaration(SyntaxFactory.IdentifierName(options.Namespace));
+
+            var usings = new HashSet<string>();
+            
+            var declaration = SyntaxFactory.ClassDeclaration("QueryExtensions")
+                                           .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
+                                           .AddModifiers(SyntaxFactory.Token(SyntaxKind.StaticKeyword));
+
+            foreach (var type in classesWithArgFields)
+            {
+                foreach (var field in type.Fields.Where(f => f.Args.Any()))
+                {
+                    var returnType = GetSharpTypeName(field.Type);
+                    usings.Add(returnType.Item2);
+
+                    var methodDeclaration = SyntaxFactory.MethodDeclaration(SyntaxFactory.ParseTypeName(returnType.Item1), field.Name)
+                                                            .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
+                                                            .AddModifiers(SyntaxFactory.Token(SyntaxKind.StaticKeyword));
+
+                    var methodParameters = new List<ParameterSyntax>();
+                    
+                    var thisParameter = SyntaxFactory.Parameter(SyntaxFactory.Identifier(type.Name.ToCamelCase()))
+                                                            .WithType(SyntaxFactory.ParseTypeName(type.Name))
+                                                            .WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.ThisKeyword)));
+                    methodParameters.Add(thisParameter);
+
+                    foreach (var arg in field.Args)
+                    {
+                        var argumentType = GetSharpTypeName(arg.Type);
+                        usings.Add(argumentType.Item2);
+
+                        var parameterSyntax = SyntaxFactory.Parameter(SyntaxFactory.Identifier(arg.Name)).WithType(SyntaxFactory.ParseTypeName(argumentType.Item1));
+                        methodParameters.Add(parameterSyntax);
+                    }
+
+                    methodDeclaration = methodDeclaration.AddParameterListParameters(methodParameters.ToArray())
+                        .WithBody(SyntaxFactory.Block(notImplemented));
+
+                    declaration = declaration.AddMembers(methodDeclaration);
+                }
+            }
+
+            foreach (var @using in usings.Where(s => !string.IsNullOrEmpty(s)))
+            {
+                namespaceDeclaration = namespaceDeclaration.AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName(@using)));
+            }
+
+            namespaceDeclaration = namespaceDeclaration.AddMembers(declaration);
+
+            return namespaceDeclaration;
+        }
+
 
         private SyntaxNode GenerateEnum(Type enumInfo, string @namespace)
         {
             var namespaceDeclaration = SyntaxFactory.NamespaceDeclaration(SyntaxFactory.IdentifierName(@namespace));
             var declaration = SyntaxFactory.EnumDeclaration(enumInfo.Name).AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword));
-            
+
             foreach (var enumValue in enumInfo.EnumValues)
             {
                 declaration = declaration.AddMembers(SyntaxFactory.EnumMemberDeclaration(SyntaxFactory.Identifier(enumValue.Name)));
