@@ -6,6 +6,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting;
+using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace GraphQLClientGenerator
 {
@@ -76,12 +77,12 @@ namespace GraphQLClientGenerator
 
         private SyntaxNode GenerateEnum(Type enumInfo)
         {
-            var namespaceDeclaration = SyntaxFactory.NamespaceDeclaration(SyntaxFactory.IdentifierName(options.Namespace));
-            var declaration = SyntaxFactory.EnumDeclaration(enumInfo.Name).AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword));
+            var namespaceDeclaration = NamespaceDeclaration(IdentifierName(options.Namespace));
+            var declaration = EnumDeclaration(enumInfo.Name).AddModifiers(Token(SyntaxKind.PublicKeyword));
 
             foreach (var enumValue in enumInfo.EnumValues)
             {
-                declaration = declaration.AddMembers(SyntaxFactory.EnumMemberDeclaration(SyntaxFactory.Identifier(enumValue.Name)));
+                declaration = declaration.AddMembers(EnumMemberDeclaration(Identifier(enumValue.Name)));
             }
 
             return namespaceDeclaration.AddMembers(declaration);
@@ -89,19 +90,19 @@ namespace GraphQLClientGenerator
 
         private SyntaxNode GenerateClass(Type classInfo)
         {
-            var namespaceDeclaration = SyntaxFactory.NamespaceDeclaration(SyntaxFactory.IdentifierName(options.Namespace));
+            var namespaceDeclaration = NamespaceDeclaration(IdentifierName(options.Namespace));
 
             var usings = new HashSet<string>();
 
-            var semicolonToken = SyntaxFactory.Token(SyntaxKind.SemicolonToken);
+            var semicolonToken = Token(SyntaxKind.SemicolonToken);
 
-            var declaration = SyntaxFactory.ClassDeclaration(classInfo.Name)
-                                            .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
-                                            .AddModifiers(SyntaxFactory.Token(SyntaxKind.PartialKeyword));
+            var declaration = ClassDeclaration(classInfo.Name)
+                                            .AddModifiers(Token(SyntaxKind.PublicKeyword))
+                                            .AddModifiers(Token(SyntaxKind.PartialKeyword));
 
             foreach (var @interface in classInfo.Interfaces)
             {
-                declaration = declaration.AddBaseListTypes(SyntaxFactory.SimpleBaseType(SyntaxFactory.ParseTypeName(@interface.Name)));
+                declaration = declaration.AddBaseListTypes(SimpleBaseType(ParseTypeName(@interface.Name)));
             }
 
             foreach (var field in classInfo.Fields)
@@ -109,13 +110,13 @@ namespace GraphQLClientGenerator
                 var (type, @namespace) = GetSharpTypeName(field.Type);
                 usings.Add(@namespace);
 
-                var property = SyntaxFactory.PropertyDeclaration(SyntaxFactory.ParseTypeName(type), field.Name)
-                                            .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword));
+                var property = PropertyDeclaration(ParseTypeName(type), field.Name)
+                                            .AddModifiers(Token(SyntaxKind.PublicKeyword));
 
-                property = property.AddAccessorListAccessors(SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
+                property = property.AddAccessorListAccessors(AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
                                    .WithSemicolonToken(semicolonToken));
 
-                property = property.AddAccessorListAccessors(SyntaxFactory.AccessorDeclaration(SyntaxKind.SetAccessorDeclaration)
+                property = property.AddAccessorListAccessors(AccessorDeclaration(SyntaxKind.SetAccessorDeclaration)
                                    .WithSemicolonToken(semicolonToken));
 
                 declaration = declaration.AddMembers(property);
@@ -123,7 +124,7 @@ namespace GraphQLClientGenerator
 
             foreach (var @using in usings.Where(s => !string.IsNullOrEmpty(s)))
             {
-                namespaceDeclaration = namespaceDeclaration.AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName(@using)));
+                namespaceDeclaration = namespaceDeclaration.AddUsings(UsingDirective(IdentifierName(@using)));
             }
 
             namespaceDeclaration = namespaceDeclaration.AddMembers(declaration);
@@ -133,22 +134,22 @@ namespace GraphQLClientGenerator
 
         private SyntaxNode GenerateInterface(Type interfaceInfo)
         {
-            var namespaceDeclaration = SyntaxFactory.NamespaceDeclaration(SyntaxFactory.IdentifierName(options.Namespace));
-            var semicolonToken = SyntaxFactory.Token(SyntaxKind.SemicolonToken);
+            var namespaceDeclaration = NamespaceDeclaration(IdentifierName(options.Namespace));
+            var semicolonToken = Token(SyntaxKind.SemicolonToken);
 
-            var declaration = SyntaxFactory.InterfaceDeclaration(interfaceInfo.Name)
-                                            .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword));
+            var declaration = InterfaceDeclaration(interfaceInfo.Name)
+                                            .AddModifiers(Token(SyntaxKind.PublicKeyword));
 
             foreach (var field in interfaceInfo.Fields)
             {
                 var (type, _) = GetSharpTypeName(field.Type);
 
-                var property = SyntaxFactory.PropertyDeclaration(SyntaxFactory.ParseTypeName(type), field.Name);
+                var property = PropertyDeclaration(ParseTypeName(type), field.Name);
 
-                property = property.AddAccessorListAccessors(SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
+                property = property.AddAccessorListAccessors(AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
                                    .WithSemicolonToken(semicolonToken));
 
-                property = property.AddAccessorListAccessors(SyntaxFactory.AccessorDeclaration(SyntaxKind.SetAccessorDeclaration)
+                property = property.AddAccessorListAccessors(AccessorDeclaration(SyntaxKind.SetAccessorDeclaration)
                                    .WithSemicolonToken(semicolonToken));
 
                 declaration = declaration.AddMembers(property);
@@ -157,22 +158,20 @@ namespace GraphQLClientGenerator
             return namespaceDeclaration.AddMembers(declaration);
         }
 
-
         private SyntaxNode GenerateQueryExtensions(List<Type> classesWithArgFields)
         {
-            var exceptionMessage = SyntaxFactory.Literal("This method is not implemented. It exists solely for query purposes.");
-            var argumentListSyntax = SyntaxFactory.ArgumentList(SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, exceptionMessage))));
+            var exceptionMessage = Literal("This method is not implemented. It exists solely for query purposes.");
+            var argumentListSyntax = ArgumentList(SingletonSeparatedList(Argument(LiteralExpression(SyntaxKind.StringLiteralExpression, exceptionMessage))));
 
-            var notImplemented = SyntaxFactory.ThrowStatement(SyntaxFactory.ObjectCreationExpression(
-                SyntaxFactory.IdentifierName("NotImplementedException"), argumentListSyntax, null));
+            var notImplemented = ThrowStatement(ObjectCreationExpression(IdentifierName("NotImplementedException"), argumentListSyntax, null));
 
-            var namespaceDeclaration = SyntaxFactory.NamespaceDeclaration(SyntaxFactory.IdentifierName(options.Namespace));
+            var namespaceDeclaration = NamespaceDeclaration(IdentifierName(options.Namespace));
 
             var usings = new HashSet<string>();
-            
-            var declaration = SyntaxFactory.ClassDeclaration("QueryExtensions")
-                .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
-                .AddModifiers(SyntaxFactory.Token(SyntaxKind.StaticKeyword));
+
+            var declaration = ClassDeclaration("QueryExtensions")
+                .AddModifiers(Token(SyntaxKind.PublicKeyword))
+                .AddModifiers(Token(SyntaxKind.StaticKeyword));
 
             foreach (var @class in classesWithArgFields)
             {
@@ -181,28 +180,27 @@ namespace GraphQLClientGenerator
                     var (type, @namespace) = GetSharpTypeName(field.Type);
                     usings.Add(@namespace);
 
-                    var methodDeclaration = SyntaxFactory.MethodDeclaration(SyntaxFactory.ParseTypeName(type), field.Name)
-                        .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
-                        .AddModifiers(SyntaxFactory.Token(SyntaxKind.StaticKeyword));
+                    var methodDeclaration = MethodDeclaration(ParseTypeName(type), field.Name)
+                                             .AddModifiers(Token(SyntaxKind.PublicKeyword))
+                                             .AddModifiers(Token(SyntaxKind.StaticKeyword));
 
-                    var methodParameters = new List<ParameterSyntax>();
-                    
-                    var thisParameter = SyntaxFactory.Parameter(SyntaxFactory.Identifier(@class.Name.ToCamelCase()))
-                        .WithType(SyntaxFactory.ParseTypeName(@class.Name))
-                        .WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.ThisKeyword)));
-                    methodParameters.Add(thisParameter);
+                    var thisParameter = Parameter(Identifier(@class.Name.ToCamelCase()))
+                                             .WithType(ParseTypeName(@class.Name))
+                                             .WithModifiers(TokenList(Token(SyntaxKind.ThisKeyword)));
+
+                    var methodParameters = new List<ParameterSyntax> { thisParameter };
 
                     foreach (var arg in field.Args)
                     {
                         (type, @namespace) = GetSharpTypeName(arg.Type);
                         usings.Add(@namespace);
 
-                        var parameterSyntax = SyntaxFactory.Parameter(SyntaxFactory.Identifier(arg.Name)).WithType(SyntaxFactory.ParseTypeName(type));
+                        var parameterSyntax = Parameter(Identifier(arg.Name)).WithType(ParseTypeName(type));
                         methodParameters.Add(parameterSyntax);
                     }
 
                     methodDeclaration = methodDeclaration.AddParameterListParameters(methodParameters.ToArray())
-                        .WithBody(SyntaxFactory.Block(notImplemented));
+                                             .WithBody(Block(notImplemented));
 
                     declaration = declaration.AddMembers(methodDeclaration);
                 }
@@ -210,13 +208,14 @@ namespace GraphQLClientGenerator
 
             foreach (var @using in usings.Where(s => !string.IsNullOrEmpty(s)))
             {
-                namespaceDeclaration = namespaceDeclaration.AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName(@using)));
+                namespaceDeclaration = namespaceDeclaration.AddUsings(UsingDirective(IdentifierName(@using)));
             }
 
             namespaceDeclaration = namespaceDeclaration.AddMembers(declaration);
 
             return namespaceDeclaration;
         }
+
 
         private static void FormatAndWriteToFile(SyntaxNode syntax, string directory, string name)
         {
