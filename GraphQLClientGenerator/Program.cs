@@ -64,8 +64,8 @@ namespace GraphQLClientGenerator
                 Namespace = "HSL",
                 OutputDirectory = @"E:\src\GraphQLinq\GraphQLinq.Demo\HSL"
             };
-            var graphQLClassesGenerator = new GraphQLClassesGenerator();
-            graphQLClassesGenerator.GenerateClasses(rootObject.Data.Schema, codeGenerationOptions);
+            var graphQLClassesGenerator = new GraphQLClassesGenerator(codeGenerationOptions);
+            graphQLClassesGenerator.GenerateClasses(rootObject.Data.Schema);
         }
     }
 

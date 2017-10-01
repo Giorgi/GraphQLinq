@@ -11,6 +11,8 @@ namespace GraphQLClientGenerator
 {
     class GraphQLClassesGenerator
     {
+        private readonly CodeGenerationOptions options;
+
         private static readonly Dictionary<string, string> TypeMapping = new Dictionary<string, string>()
         {
             { "Int", "int"},
@@ -31,7 +33,12 @@ namespace GraphQLClientGenerator
 
         private static readonly AdhocWorkspace Workspace = new AdhocWorkspace();
 
-        public void GenerateClasses(Schema schema, CodeGenerationOptions options)
+        public GraphQLClassesGenerator(CodeGenerationOptions options)
+        {
+            this.options = options;
+        }
+
+        public void GenerateClasses(Schema schema)
         {
             var queryType = schema.QueryType.Name;
             var types = schema.Types.Where(type => !type.Name.StartsWith("__")
@@ -44,92 +51,32 @@ namespace GraphQLClientGenerator
 
             foreach (var enumInfo in enums)
             {
-                var syntax = GenerateEnum(enumInfo, options.Namespace);
+                var syntax = GenerateEnum(enumInfo);
                 FormatAndWriteToFile(syntax, options.OutputDirectory, enumInfo.Name);
             }
 
             foreach (var classInfo in classes)
             {
-                var syntax = GenerateClass(classInfo, options.Namespace);
+                var syntax = GenerateClass(classInfo);
                 FormatAndWriteToFile(syntax, options.OutputDirectory, classInfo.Name);
             }
 
             foreach (var interfaceInfo in interfaces)
             {
-                var syntax = GenerateInterface(interfaceInfo, options.Namespace);
+                var syntax = GenerateInterface(interfaceInfo);
                 FormatAndWriteToFile(syntax, options.OutputDirectory, interfaceInfo.Name);
             }
 
             var classesWithArgFields = classes.Where(type => type.Fields.Any(field => field.Args.Any())).ToList();
 
-            var queryExtensions = GenerateQueryExtensions(classesWithArgFields, options);
+            var queryExtensions = GenerateQueryExtensions(classesWithArgFields);
             FormatAndWriteToFile(queryExtensions, options.OutputDirectory, "QueryExtensions");
         }
 
-        private SyntaxNode GenerateQueryExtensions(List<Type> classesWithArgFields, CodeGenerationOptions options)
+
+        private SyntaxNode GenerateEnum(Type enumInfo)
         {
-            var exceptionMessage = SyntaxFactory.Literal("This method is not implemented. It exists solely for query purposes.");
-            var argumentListSyntax = SyntaxFactory.ArgumentList(SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, exceptionMessage))));
-
-            var notImplemented = SyntaxFactory.ThrowStatement(SyntaxFactory.ObjectCreationExpression(
-                SyntaxFactory.IdentifierName("NotImplementedException"), argumentListSyntax, null));
-
             var namespaceDeclaration = SyntaxFactory.NamespaceDeclaration(SyntaxFactory.IdentifierName(options.Namespace));
-
-            var usings = new HashSet<string>();
-            
-            var declaration = SyntaxFactory.ClassDeclaration("QueryExtensions")
-                                           .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
-                                           .AddModifiers(SyntaxFactory.Token(SyntaxKind.StaticKeyword));
-
-            foreach (var type in classesWithArgFields)
-            {
-                foreach (var field in type.Fields.Where(f => f.Args.Any()))
-                {
-                    var returnType = GetSharpTypeName(field.Type);
-                    usings.Add(returnType.Item2);
-
-                    var methodDeclaration = SyntaxFactory.MethodDeclaration(SyntaxFactory.ParseTypeName(returnType.Item1), field.Name)
-                                                            .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
-                                                            .AddModifiers(SyntaxFactory.Token(SyntaxKind.StaticKeyword));
-
-                    var methodParameters = new List<ParameterSyntax>();
-                    
-                    var thisParameter = SyntaxFactory.Parameter(SyntaxFactory.Identifier(type.Name.ToCamelCase()))
-                                                            .WithType(SyntaxFactory.ParseTypeName(type.Name))
-                                                            .WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.ThisKeyword)));
-                    methodParameters.Add(thisParameter);
-
-                    foreach (var arg in field.Args)
-                    {
-                        var argumentType = GetSharpTypeName(arg.Type);
-                        usings.Add(argumentType.Item2);
-
-                        var parameterSyntax = SyntaxFactory.Parameter(SyntaxFactory.Identifier(arg.Name)).WithType(SyntaxFactory.ParseTypeName(argumentType.Item1));
-                        methodParameters.Add(parameterSyntax);
-                    }
-
-                    methodDeclaration = methodDeclaration.AddParameterListParameters(methodParameters.ToArray())
-                        .WithBody(SyntaxFactory.Block(notImplemented));
-
-                    declaration = declaration.AddMembers(methodDeclaration);
-                }
-            }
-
-            foreach (var @using in usings.Where(s => !string.IsNullOrEmpty(s)))
-            {
-                namespaceDeclaration = namespaceDeclaration.AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName(@using)));
-            }
-
-            namespaceDeclaration = namespaceDeclaration.AddMembers(declaration);
-
-            return namespaceDeclaration;
-        }
-
-
-        private SyntaxNode GenerateEnum(Type enumInfo, string @namespace)
-        {
-            var namespaceDeclaration = SyntaxFactory.NamespaceDeclaration(SyntaxFactory.IdentifierName(@namespace));
             var declaration = SyntaxFactory.EnumDeclaration(enumInfo.Name).AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword));
 
             foreach (var enumValue in enumInfo.EnumValues)
@@ -140,9 +87,9 @@ namespace GraphQLClientGenerator
             return namespaceDeclaration.AddMembers(declaration);
         }
 
-        private SyntaxNode GenerateClass(Type classInfo, string @namespace)
+        private SyntaxNode GenerateClass(Type classInfo)
         {
-            var namespaceDeclaration = SyntaxFactory.NamespaceDeclaration(SyntaxFactory.IdentifierName(@namespace));
+            var namespaceDeclaration = SyntaxFactory.NamespaceDeclaration(SyntaxFactory.IdentifierName(options.Namespace));
 
             var usings = new HashSet<string>();
 
@@ -184,9 +131,9 @@ namespace GraphQLClientGenerator
             return namespaceDeclaration;
         }
 
-        private SyntaxNode GenerateInterface(Type interfaceInfo, string @namespace)
+        private SyntaxNode GenerateInterface(Type interfaceInfo)
         {
-            var namespaceDeclaration = SyntaxFactory.NamespaceDeclaration(SyntaxFactory.IdentifierName(@namespace));
+            var namespaceDeclaration = SyntaxFactory.NamespaceDeclaration(SyntaxFactory.IdentifierName(options.Namespace));
             var semicolonToken = SyntaxFactory.Token(SyntaxKind.SemicolonToken);
 
             var declaration = SyntaxFactory.InterfaceDeclaration(interfaceInfo.Name)
@@ -208,6 +155,67 @@ namespace GraphQLClientGenerator
             }
 
             return namespaceDeclaration.AddMembers(declaration);
+        }
+
+
+        private SyntaxNode GenerateQueryExtensions(List<Type> classesWithArgFields)
+        {
+            var exceptionMessage = SyntaxFactory.Literal("This method is not implemented. It exists solely for query purposes.");
+            var argumentListSyntax = SyntaxFactory.ArgumentList(SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, exceptionMessage))));
+
+            var notImplemented = SyntaxFactory.ThrowStatement(SyntaxFactory.ObjectCreationExpression(
+                SyntaxFactory.IdentifierName("NotImplementedException"), argumentListSyntax, null));
+
+            var namespaceDeclaration = SyntaxFactory.NamespaceDeclaration(SyntaxFactory.IdentifierName(options.Namespace));
+
+            var usings = new HashSet<string>();
+            
+            var declaration = SyntaxFactory.ClassDeclaration("QueryExtensions")
+                .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
+                .AddModifiers(SyntaxFactory.Token(SyntaxKind.StaticKeyword));
+
+            foreach (var type in classesWithArgFields)
+            {
+                foreach (var field in type.Fields.Where(f => f.Args.Any()))
+                {
+                    var returnType = GetSharpTypeName(field.Type);
+                    usings.Add(returnType.Item2);
+
+                    var methodDeclaration = SyntaxFactory.MethodDeclaration(SyntaxFactory.ParseTypeName(returnType.Item1), field.Name)
+                        .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
+                        .AddModifiers(SyntaxFactory.Token(SyntaxKind.StaticKeyword));
+
+                    var methodParameters = new List<ParameterSyntax>();
+                    
+                    var thisParameter = SyntaxFactory.Parameter(SyntaxFactory.Identifier(type.Name.ToCamelCase()))
+                        .WithType(SyntaxFactory.ParseTypeName(type.Name))
+                        .WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.ThisKeyword)));
+                    methodParameters.Add(thisParameter);
+
+                    foreach (var arg in field.Args)
+                    {
+                        var argumentType = GetSharpTypeName(arg.Type);
+                        usings.Add(argumentType.Item2);
+
+                        var parameterSyntax = SyntaxFactory.Parameter(SyntaxFactory.Identifier(arg.Name)).WithType(SyntaxFactory.ParseTypeName(argumentType.Item1));
+                        methodParameters.Add(parameterSyntax);
+                    }
+
+                    methodDeclaration = methodDeclaration.AddParameterListParameters(methodParameters.ToArray())
+                        .WithBody(SyntaxFactory.Block(notImplemented));
+
+                    declaration = declaration.AddMembers(methodDeclaration);
+                }
+            }
+
+            foreach (var @using in usings.Where(s => !string.IsNullOrEmpty(s)))
+            {
+                namespaceDeclaration = namespaceDeclaration.AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName(@using)));
+            }
+
+            namespaceDeclaration = namespaceDeclaration.AddMembers(declaration);
+
+            return namespaceDeclaration;
         }
 
         private static void FormatAndWriteToFile(SyntaxNode syntax, string directory, string name)
@@ -252,6 +260,7 @@ namespace GraphQLClientGenerator
 
             return Tuple.Create(typeName, "");
         }
+
 
         private static string GetMappedType(string name)
         {
