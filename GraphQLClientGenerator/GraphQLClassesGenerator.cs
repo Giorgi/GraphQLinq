@@ -106,10 +106,10 @@ namespace GraphQLClientGenerator
 
             foreach (var field in classInfo.Fields)
             {
-                var typeInfo = GetSharpTypeName(field.Type);
-                usings.Add(typeInfo.Item2);
+                var (type, @namespace) = GetSharpTypeName(field.Type);
+                usings.Add(@namespace);
 
-                var property = SyntaxFactory.PropertyDeclaration(SyntaxFactory.ParseTypeName(typeInfo.Item1), field.Name)
+                var property = SyntaxFactory.PropertyDeclaration(SyntaxFactory.ParseTypeName(type), field.Name)
                                             .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword));
 
                 property = property.AddAccessorListAccessors(SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
@@ -141,9 +141,9 @@ namespace GraphQLClientGenerator
 
             foreach (var field in interfaceInfo.Fields)
             {
-                var typeInfo = GetSharpTypeName(field.Type);
+                var (type, _) = GetSharpTypeName(field.Type);
 
-                var property = SyntaxFactory.PropertyDeclaration(SyntaxFactory.ParseTypeName(typeInfo.Item1), field.Name);
+                var property = SyntaxFactory.PropertyDeclaration(SyntaxFactory.ParseTypeName(type), field.Name);
 
                 property = property.AddAccessorListAccessors(SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
                                    .WithSemicolonToken(semicolonToken));
@@ -174,30 +174,30 @@ namespace GraphQLClientGenerator
                 .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
                 .AddModifiers(SyntaxFactory.Token(SyntaxKind.StaticKeyword));
 
-            foreach (var type in classesWithArgFields)
+            foreach (var @class in classesWithArgFields)
             {
-                foreach (var field in type.Fields.Where(f => f.Args.Any()))
+                foreach (var field in @class.Fields.Where(f => f.Args.Any()))
                 {
-                    var returnType = GetSharpTypeName(field.Type);
-                    usings.Add(returnType.Item2);
+                    var (type, @namespace) = GetSharpTypeName(field.Type);
+                    usings.Add(@namespace);
 
-                    var methodDeclaration = SyntaxFactory.MethodDeclaration(SyntaxFactory.ParseTypeName(returnType.Item1), field.Name)
+                    var methodDeclaration = SyntaxFactory.MethodDeclaration(SyntaxFactory.ParseTypeName(type), field.Name)
                         .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
                         .AddModifiers(SyntaxFactory.Token(SyntaxKind.StaticKeyword));
 
                     var methodParameters = new List<ParameterSyntax>();
                     
-                    var thisParameter = SyntaxFactory.Parameter(SyntaxFactory.Identifier(type.Name.ToCamelCase()))
-                        .WithType(SyntaxFactory.ParseTypeName(type.Name))
+                    var thisParameter = SyntaxFactory.Parameter(SyntaxFactory.Identifier(@class.Name.ToCamelCase()))
+                        .WithType(SyntaxFactory.ParseTypeName(@class.Name))
                         .WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.ThisKeyword)));
                     methodParameters.Add(thisParameter);
 
                     foreach (var arg in field.Args)
                     {
-                        var argumentType = GetSharpTypeName(arg.Type);
-                        usings.Add(argumentType.Item2);
+                        (type, @namespace) = GetSharpTypeName(arg.Type);
+                        usings.Add(@namespace);
 
-                        var parameterSyntax = SyntaxFactory.Parameter(SyntaxFactory.Identifier(arg.Name)).WithType(SyntaxFactory.ParseTypeName(argumentType.Item1));
+                        var parameterSyntax = SyntaxFactory.Parameter(SyntaxFactory.Identifier(arg.Name)).WithType(SyntaxFactory.ParseTypeName(type));
                         methodParameters.Add(parameterSyntax);
                     }
 
@@ -227,7 +227,7 @@ namespace GraphQLClientGenerator
             }
         }
 
-        private static Tuple<string, string> GetSharpTypeName(FieldType fieldType)
+        private static (string type, string @namespace) GetSharpTypeName(FieldType fieldType)
         {
             if (fieldType == null)
             {
@@ -240,8 +240,8 @@ namespace GraphQLClientGenerator
             {
                 if (fieldType.Kind == TypeKind.List)
                 {
-                    typeName = $"List<{GetSharpTypeName(fieldType.OfType).Item1}>";
-                    return Tuple.Create(typeName, "System.Collections.Generic");
+                    typeName = $"List<{GetSharpTypeName(fieldType.OfType).type}>";
+                    return (typeName, "System.Collections.Generic");
                 }
 
                 if (fieldType.Kind == TypeKind.NonNull && fieldType.OfType?.Name == "ID")
@@ -258,7 +258,7 @@ namespace GraphQLClientGenerator
                 typeName = GetMappedType(fieldType.Name);
             }
 
-            return Tuple.Create(typeName, "");
+            return (typeName, "");
         }
 
 
