@@ -238,6 +238,11 @@ namespace GraphQLClientGenerator
 
         private void FormatAndWriteToFile(SyntaxNode syntax, string directory, string name)
         {
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
             name = options.NormalizeCasing ? name.ToPascalCase() : name;
 
             var fileName = Path.Combine(directory, name + ".cs");
