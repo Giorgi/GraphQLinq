@@ -42,12 +42,15 @@ namespace GraphQLClientGenerator
         public void GenerateClasses(Schema schema)
         {
             var queryType = schema.QueryType.Name;
+            var mutationType = schema.MutationType.Name;
+            var subscriptionType = schema.SubscriptionType.Name;
+
             var types = schema.Types.Where(type => !type.Name.StartsWith("__")
                                                                 && !BuiltInTypes.Contains(type.Name)
-                                                                && queryType != type.Name).ToList();
+                                                                && queryType != type.Name && mutationType != type.Name && subscriptionType != type.Name).ToList();
 
             var enums = types.Where(type => type.Kind == TypeKind.Enum);
-            var classes = types.Where(type => type.Kind == TypeKind.Object);
+            var classes = types.Where(type => type.Kind == TypeKind.Object || type.Kind == TypeKind.InputObject);
             var interfaces = types.Where(type => type.Kind == TypeKind.Interface);
 
             foreach (var enumInfo in enums)
