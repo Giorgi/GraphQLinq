@@ -20,12 +20,9 @@ namespace GraphQLClientGenerator
     public class Schema
     {
         public List<Type> Types { get; set; }
-        public QueryType QueryType { get; set; }
-    }
-
-    public class QueryType
-    {
-        public string Name { get; set; }
+        public Type QueryType { get; set; }
+        public Type MutationType { get; set; }
+        public Type SubscriptionType { get; set; }
     }
 
     public class Type : BaseInfo
@@ -33,6 +30,7 @@ namespace GraphQLClientGenerator
         public TypeKind Kind { get; set; }
         public List<EnumValue> EnumValues { get; set; }
         public List<Field> Fields { get; set; }
+        public List<Field> InputFields { get; set; }
         public List<Type> Interfaces { get; set; }
     }
 
