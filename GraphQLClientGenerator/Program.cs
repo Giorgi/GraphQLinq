@@ -35,6 +35,14 @@ namespace GraphQLClientGenerator
                                      ofType {
                                        name
                                        kind
+                ofType {
+                  name
+                  kind
+                  ofType {
+                    name
+                    kind
+                  }
+                }
                                      }
                                    }
                                  }
@@ -43,7 +51,41 @@ namespace GraphQLClientGenerator
                                  name
                                  description
                                  type {
+            kind
+            name
+            description
+            ofType {
+              name
+              kind
+              ofType {
+                name
+                kind
+                ofType {
+                  name
+                  kind
+                }
+              }
+            }
+          }
+        }
+      }
+      inputFields {
+        name
+        description
+        type {
+          name
+          kind
+          ofType {
+            name
+            kind
+            ofType {
+              name
+              kind
+              ofType {
                                    name
+                kind
+              }
+            }
                                  }
                                }
                              }
@@ -51,12 +93,25 @@ namespace GraphQLClientGenerator
                            queryType {
                              name
                            }
+    mutationType {
+      name
+    }
+    subscriptionType {
+      name
+    }
                         }
-                      }";
+}
+";
 
+            var httpClient = new HttpClient();
             var webClient = new WebClient();
-            webClient.Headers.Add("Content-Type", "application/graphql");
-            var downloadString = webClient.UploadString("https://api.digitransit.fi/routing/v1/routers/finland/index/graphql", query);
+            webClient.Headers.Add("Content-Type", "application/json");
+
+            try
+            {
+                //var downloadString = webClient.UploadString("https://api.spacex.land/graphql", query);
+                var responseMessage = PostAsJsonAsync(httpClient, "https://api.spacex.land/graphql", new { query = query }).GetAwaiter().GetResult();
+                var downloadString = responseMessage.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             var rootObject = JsonConvert.DeserializeObject<RootSchemaObject>(downloadString);
 
             var codeGenerationOptions = new CodeGenerationOptions
