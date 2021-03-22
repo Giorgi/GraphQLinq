@@ -116,7 +116,7 @@ namespace GraphQLClientGenerator
                 declaration = declaration.AddBaseListTypes(SimpleBaseType(ParseTypeName(@interface.Name)));
             }
 
-            foreach (var field in classInfo.Fields)
+            foreach (var field in classInfo.Fields ?? classInfo.InputFields ?? new List<Field>())
             {
                 var (type, @namespace) = GetSharpTypeName(field.Type);
                 usings.Add(@namespace);
