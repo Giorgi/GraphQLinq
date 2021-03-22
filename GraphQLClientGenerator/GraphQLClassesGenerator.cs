@@ -19,8 +19,12 @@ namespace GraphQLClientGenerator
             { "Int", "int"},
             { "Float", "float"},
             { "String", "string"},
+            { "ID", "string"},
+            { "Date", "DateTime"},
             { "Boolean", "bool"},
-            { "Long", "long"}
+            { "Long", "long"},
+            { "uuid", "Guid"},
+            { "timestamptz", "DateTimeOffset"},
         };
 
         private static readonly List<string> BuiltInTypes = new List<string>
@@ -274,7 +278,7 @@ namespace GraphQLClientGenerator
                 typeName = GetMappedType(fieldType.Name);
             }
 
-            return (typeName, "");
+            return (typeName, typeName == "Guid" || typeName == "DateTime" || typeName == "DateTimeOffset" ? "System" : "");
         }
 
 
