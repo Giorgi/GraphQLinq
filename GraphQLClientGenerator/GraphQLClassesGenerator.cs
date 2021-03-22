@@ -75,7 +75,7 @@ namespace GraphQLClientGenerator
                 FormatAndWriteToFile(syntax, options.OutputDirectory, interfaceInfo.Name);
             }
 
-            var classesWithArgFields = classes.Where(type => type.Fields.Any(field => field.Args.Any())).ToList();
+            var classesWithArgFields = classes.Where(type => (type.Fields ?? new List<Field>()).Any(field => field.Args.Any())).ToList();
 
             var queryExtensions = GenerateQueryExtensions(classesWithArgFields);
             FormatAndWriteToFile(queryExtensions, options.OutputDirectory, "QueryExtensions");
@@ -111,7 +111,7 @@ namespace GraphQLClientGenerator
                                             .AddModifiers(Token(SyntaxKind.PublicKeyword))
                                             .AddModifiers(Token(SyntaxKind.PartialKeyword));
 
-            foreach (var @interface in classInfo.Interfaces)
+            foreach (var @interface in classInfo.Interfaces ?? new List<Type>())
             {
                 declaration = declaration.AddBaseListTypes(SimpleBaseType(ParseTypeName(@interface.Name)));
             }
