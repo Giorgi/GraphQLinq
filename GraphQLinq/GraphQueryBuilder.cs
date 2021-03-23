@@ -83,7 +83,7 @@ namespace GraphQLinq
                     {
                         selectClause = $"{padding}{alias}: {member.Name.ToCamelCase()}";
 
-                        if (!member.PropertyType.GetTypeOrListType().IsPrimitiveOrString())
+                        if (!member.PropertyType.GetTypeOrListType().IsValueTypeOrString())
                         {
                             var fieldForProperty = BuildSelectClauseForType(member.PropertyType.GetTypeOrListType(), 3);
                             selectClause = $"{selectClause} {{{Environment.NewLine}{fieldForProperty}{Environment.NewLine}{padding}}}";
@@ -141,7 +141,7 @@ namespace GraphQLinq
             var currentIncludeName = dotIndex >= 0 ? include.Substring(0, dotIndex) : include;
 
             Type propertyType;
-            var propertyInfo = targetType.GetProperty(currentIncludeName);
+            var propertyInfo = targetType.GetProperty(currentIncludeName, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
 
             var includeName = currentIncludeName.ToCamelCase();
 
@@ -174,7 +174,7 @@ namespace GraphQLinq
                 propertyType = propertyInfo.PropertyType.GetTypeOrListType();
             }
 
-            if (propertyType.IsPrimitiveOrString())
+            if (propertyType.IsValueTypeOrString())
             {
                 return leftPadding + includeName;
             }

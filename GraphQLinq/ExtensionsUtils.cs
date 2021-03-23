@@ -6,9 +6,9 @@ namespace GraphQLinq
 {
     static class ExtensionsUtils
     {
-        internal static bool IsPrimitiveOrString(this Type type)
+        internal static bool IsValueTypeOrString(this Type type)
         {
-            return type.IsPrimitive || type == typeof(string);
+            return type.IsValueType || type == typeof(string);
         }
 
         internal static bool IsList(this Type type)
@@ -20,7 +20,7 @@ namespace GraphQLinq
         {
             var trueType = GetTypeOrListType(type);
 
-            return !IsPrimitiveOrString(trueType);
+            return !IsValueTypeOrString(trueType);
         }
 
         internal static Type GetTypeOrListType(this Type type)
