@@ -122,6 +122,7 @@ namespace GraphQLClientGenerator
             {
                 Namespace = "HSL",
                 OutputDirectory = @"E:\src\GraphQLinq\GraphQLinq.Demo\HSL"
+                NormalizeCasing = true,
             };
             var graphQLClassesGenerator = new GraphQLClassesGenerator(codeGenerationOptions);
             graphQLClassesGenerator.GenerateClasses(rootObject.Data.Schema);
@@ -132,5 +133,6 @@ namespace GraphQLClientGenerator
     {
         public string OutputDirectory { get; set; }
         public string Namespace { get; set; }
+        public bool NormalizeCasing { get; set; }
     }
 }
