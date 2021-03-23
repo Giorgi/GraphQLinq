@@ -115,8 +115,8 @@ namespace GraphQLClientGenerator
 
                 //var downloadString = webClient.UploadString("https://api.spacex.land/graphql", query);
             var responseMessage = await httpClient.PostAsJsonAsync("https://api.spacex.land/graphql", new { query = IntrospectionQuery });
-            var downloadString = await responseMessage.Content.ReadAsStringAsync();
-            var rootObject = JsonSerializer.Deserialize<RootSchemaObject>(downloadString);
+            var schemaJson = await responseMessage.Content.ReadAsStringAsync();
+            var rootObject = JsonSerializer.Deserialize<RootSchemaObject>(schemaJson, new JsonSerializerOptions{PropertyNamingPolicy = JsonNamingPolicy.CamelCase});
 
             var codeGenerationOptions = new CodeGenerationOptions
             {
