@@ -33,7 +33,7 @@ namespace GraphQLClientGenerator
         public List<Type> Interfaces { get; set; }
     }
 
-    [JsonConverter(typeof(JsonStringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumMemberConverter))]
     public enum TypeKind
     {
         List,
