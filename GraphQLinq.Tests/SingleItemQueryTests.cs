@@ -66,9 +66,9 @@ namespace GraphQLinq.Tests
         [Test]
         public void SelectingSingleTripNestedPropertyIsNull()
         {
-            var pattern = hslGraphContext.Trip(TripId).ToItem();
+            var trip = hslGraphContext.Trip(TripId).ToItem();
 
-            Assert.That(pattern.pattern, Is.Null);
+            Assert.That(trip.pattern, Is.Null);
         }
 
         [Test]
