@@ -1,13 +1,17 @@
-﻿using System.Net;
-using Newtonsoft.Json;
+﻿using System;
+using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace GraphQLClientGenerator
 {
     class Program
     {
-        static void Main(string[] args)
-        {
-            var query = @"{
+        private const string IntrospectionQuery = @"{
                        __schema {
                            types {
                              name
@@ -103,16 +107,16 @@ namespace GraphQLClientGenerator
 }
 ";
 
+        private static async Task Main(string[] args)
+        {
             var httpClient = new HttpClient();
             var webClient = new WebClient();
             webClient.Headers.Add("Content-Type", "application/json");
 
-            try
-            {
                 //var downloadString = webClient.UploadString("https://api.spacex.land/graphql", query);
-                var responseMessage = PostAsJsonAsync(httpClient, "https://api.spacex.land/graphql", new { query = query }).GetAwaiter().GetResult();
-                var downloadString = responseMessage.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-            var rootObject = JsonConvert.DeserializeObject<RootSchemaObject>(downloadString);
+            var responseMessage = await httpClient.PostAsJsonAsync("https://api.spacex.land/graphql", new { query = IntrospectionQuery });
+            var downloadString = await responseMessage.Content.ReadAsStringAsync();
+            var rootObject = JsonSerializer.Deserialize<RootSchemaObject>(downloadString);
 
             var codeGenerationOptions = new CodeGenerationOptions
             {

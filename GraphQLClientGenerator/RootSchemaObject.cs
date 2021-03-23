@@ -1,8 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.Serialization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
+using System.Text.Json.Serialization;
 
 namespace GraphQLClientGenerator
 {
@@ -13,7 +12,7 @@ namespace GraphQLClientGenerator
 
     public class Data
     {
-        [JsonProperty("__schema")]
+        [JsonPropertyName("__schema")]
         public Schema Schema { get; set; }
     }
 
@@ -34,7 +33,7 @@ namespace GraphQLClientGenerator
         public List<Type> Interfaces { get; set; }
     }
 
-    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum TypeKind
     {
         List,
