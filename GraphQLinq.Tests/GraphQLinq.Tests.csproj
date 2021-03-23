@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CollectionQueryTests.cs" />
+    <Compile Include="MethodIncludeQueryGenerationTests.cs" />
     <Compile Include="SingleItemQueryTests.cs" />
     <Compile Include="QueryGenerationTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
