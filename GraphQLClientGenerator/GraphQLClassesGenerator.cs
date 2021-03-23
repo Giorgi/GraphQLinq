@@ -14,7 +14,7 @@ namespace GraphQLClientGenerator
     {
         private readonly CodeGenerationOptions options;
 
-        private static readonly Dictionary<string, string> TypeMapping = new Dictionary<string, string>()
+        private static readonly Dictionary<string, string> TypeMapping = new()
         {
             { "Int", "int"},
             { "Float", "float"},
@@ -27,7 +27,7 @@ namespace GraphQLClientGenerator
             { "timestamptz", "DateTimeOffset"},
         };
 
-        private static readonly List<string> BuiltInTypes = new List<string>
+        private static readonly List<string> BuiltInTypes = new()
         {
             "ID",
             "Int",
@@ -36,7 +36,7 @@ namespace GraphQLClientGenerator
             "Boolean"
         };
 
-        private static readonly AdhocWorkspace Workspace = new AdhocWorkspace();
+        private static readonly AdhocWorkspace Workspace = new();
 
         public GraphQLClassesGenerator(CodeGenerationOptions options)
         {

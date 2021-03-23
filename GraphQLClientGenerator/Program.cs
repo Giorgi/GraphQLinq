@@ -1,9 +1,8 @@
-﻿using System;
-using System.IO;
+﻿using System.CommandLine;
+using System.CommandLine.Invocation;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -12,33 +11,33 @@ namespace GraphQLClientGenerator
     class Program
     {
         private const string IntrospectionQuery = @"{
-                       __schema {
-                           types {
-                             name
-                             interfaces {
-                               name
-                             }
-                             description
-                             kind
-                             enumValues{
-                               name
-                             }
-                             description
-                             fields {
-                               name
-                               description
-                               type {
-                                 name
-                                 kind
-                                 ofType {
-                                   name
-                                   kind
-                                   ofType {
-                                     name
-                                     kind
-                                     ofType {
-                                       name
-                                       kind
+  __schema {
+    types {
+      name
+      interfaces {
+        name
+      }
+      description
+      kind
+      enumValues {
+        name
+      }
+      description
+      fields {
+        name
+        description
+        type {
+          name
+          kind
+          ofType {
+            name
+            kind
+            ofType {
+              name
+              kind
+              ofType {
+                name
+                kind
                 ofType {
                   name
                   kind
@@ -47,14 +46,14 @@ namespace GraphQLClientGenerator
                     kind
                   }
                 }
-                                     }
-                                   }
-                                 }
-                               }
-                               args {
-                                 name
-                                 description
-                                 type {
+              }
+            }
+          }
+        }
+        args {
+          name
+          description
+          type {
             kind
             name
             description
@@ -86,43 +85,57 @@ namespace GraphQLClientGenerator
               name
               kind
               ofType {
-                                   name
+                name
                 kind
               }
             }
-                                 }
-                               }
-                             }
-                           }
-                           queryType {
-                             name
-                           }
+          }
+        }
+      }
+    }
+    queryType {
+      name
+    }
     mutationType {
       name
     }
     subscriptionType {
       name
     }
-                        }
+  }
 }
 ";
 
         private static async Task Main(string[] args)
         {
+            var generate = new RootCommand
+            {
+                new Argument<string>("endpoint", "Endpoint of the GraphQL service"),
+                new Argument<string>("output", "Output folder"),
+                new Option<string>(new []{ "--namespace", "-n" }, "Namespace of generated classes"),
+            };
+
+            generate.Handler = CommandHandler.Create<string, string, string, IConsole>(HandleGenerate);
+
+            await generate.InvokeAsync(args);
+        }
+
+        private static async Task HandleGenerate(string endpoint, string output, string? @namespace, IConsole console)
+        {
             var httpClient = new HttpClient();
             var webClient = new WebClient();
             webClient.Headers.Add("Content-Type", "application/json");
 
-                //var downloadString = webClient.UploadString("https://api.spacex.land/graphql", query);
-            var responseMessage = await httpClient.PostAsJsonAsync("https://api.spacex.land/graphql", new { query = IntrospectionQuery });
+            //var downloadString = webClient.UploadString("https://api.spacex.land/graphql", query);
+            var responseMessage = await httpClient.PostAsJsonAsync(endpoint, new { query = IntrospectionQuery });
             var schemaJson = await responseMessage.Content.ReadAsStringAsync();
-            var rootObject = JsonSerializer.Deserialize<RootSchemaObject>(schemaJson, new JsonSerializerOptions{PropertyNamingPolicy = JsonNamingPolicy.CamelCase});
+            var rootObject = JsonSerializer.Deserialize<RootSchemaObject>(schemaJson, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 
             var codeGenerationOptions = new CodeGenerationOptions
             {
-                Namespace = "HSL",
-                OutputDirectory = @"E:\src\GraphQLinq\GraphQLinq.Demo\HSL"
+                Namespace = @namespace ?? "",
                 NormalizeCasing = true,
+                OutputDirectory = output
             };
             var graphQLClassesGenerator = new GraphQLClassesGenerator(codeGenerationOptions);
             graphQLClassesGenerator.GenerateClasses(rootObject.Data.Schema);
