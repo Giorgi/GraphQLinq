@@ -43,7 +43,7 @@ namespace GraphQLClientGenerator
             this.options = options;
         }
 
-        public void GenerateClasses(Schema schema)
+        public void GenerateClient(Schema schema)
         {
             var queryType = schema.QueryType.Name;
             var mutationType = schema.MutationType.Name;
@@ -79,6 +79,11 @@ namespace GraphQLClientGenerator
 
             var queryExtensions = GenerateQueryExtensions(classesWithArgFields);
             FormatAndWriteToFile(queryExtensions, options.OutputDirectory, "QueryExtensions");
+
+            var queryClass = schema.Types.Single(type => type.Name == queryType);
+
+            var graphContext = GenerateGraphContext(queryClass);
+            FormatAndWriteToFile(graphContext, options.OutputDirectory, $"{options.ContextName}Context");
         }
 
 
@@ -236,6 +241,96 @@ namespace GraphQLClientGenerator
             return namespaceDeclaration;
         }
 
+        private SyntaxNode GenerateGraphContext(Type queryInfo)
+        {
+            var namespaceDeclaration = NamespaceDeclaration(IdentifierName(options.Namespace));
+
+            var usings = new HashSet<string> { "System", "GraphQLinq" };
+
+            var className = $"{options.ContextName}Context";
+            var declaration = ClassDeclaration(className)
+                .AddModifiers(Token(SyntaxKind.PublicKeyword))
+                .AddBaseListTypes(SimpleBaseType(ParseTypeName("GraphContext")));
+
+            var baseInitializer = ConstructorInitializer(SyntaxKind.BaseConstructorInitializer)
+                                    .AddArgumentListArguments(Argument(IdentifierName("baseUrl")),
+                                                              Argument(LiteralExpression(SyntaxKind.StringLiteralExpression, Literal(""))));
+
+            var constructorDeclaration = ConstructorDeclaration(className)
+                                    .AddModifiers(Token(SyntaxKind.PublicKeyword))
+                                    .AddParameterListParameters(Parameter(Identifier("baseUrl")).WithType(ParseTypeName("string")))
+                                    .WithInitializer(baseInitializer)
+                                    .WithBody(Block());
+
+            declaration = declaration.AddMembers(constructorDeclaration);
+
+            foreach (var field in queryInfo.Fields)
+            {
+                var (type, @namespace) = GetSharpTypeName(field.Type.Kind == TypeKind.NonNull ? field.Type.OfType : field.Type, true);
+                usings.Add(@namespace);
+
+                var baseMethodName = type.Replace("GraphItemQuery", "BuildItemQuery")
+                                         .Replace("GraphCollectionQuery", "BuildCollectionQuery");
+
+                var fieldName = field.Name.NormalizeIfNeeded(options);
+
+                var methodDeclaration = MethodDeclaration(ParseTypeName(type), fieldName)
+                                            .AddModifiers(Token(SyntaxKind.PublicKeyword));
+
+                var methodParameters = new List<ParameterSyntax>();
+
+                var initializer = InitializerExpression(SyntaxKind.ArrayInitializerExpression);
+
+                foreach (var arg in field.Args)
+                {
+                    (type, @namespace) = GetSharpTypeName(arg.Type);
+                    usings.Add(@namespace);
+
+                    var typeName = TypeMapping.ContainsValue(type) ? type : type.NormalizeIfNeeded(options);
+
+                    if (arg.Type.Kind == TypeKind.Scalar && TypeMapping.ContainsValue(typeName))
+                    {
+                        //for int, bool and other types Type.GetType will return null but not for string.
+                        var builtInType = System.Type.GetType($"System.{typeName}", false, true);
+                        
+                        if (builtInType == null || builtInType.IsValueType)
+                        {
+                            typeName += "?";
+                        }
+                    }
+
+                    var parameterSyntax = Parameter(Identifier(arg.Name)).WithType(ParseTypeName(typeName));
+                    methodParameters.Add(parameterSyntax);
+
+                    initializer = initializer.WithExpressions(SingletonSeparatedList<ExpressionSyntax>(IdentifierName(arg.Name)));
+                }
+
+                var paramsArray = ArrayCreationExpression(ArrayType(ParseTypeName("object[]")), initializer);
+
+                var parametersDeclaration = LocalDeclarationStatement(VariableDeclaration(IdentifierName("var"))
+                                            .WithVariables(SingletonSeparatedList(VariableDeclarator(Identifier("parameterValues"))
+                                            .WithInitializer(EqualsValueClause(paramsArray)))));
+
+                var returnStatement = ReturnStatement(InvocationExpression(IdentifierName(baseMethodName))
+                                            .WithArgumentList(ArgumentList(SingletonSeparatedList(Argument(IdentifierName("parameterValues"))))));
+
+                methodDeclaration = methodDeclaration.AddParameterListParameters(methodParameters.ToArray())
+                                                        .WithBody(Block(parametersDeclaration, returnStatement));
+
+                declaration = declaration.AddMembers(methodDeclaration);
+            }
+
+
+            foreach (var @using in usings.Where(s => !string.IsNullOrEmpty(s)))
+            {
+                namespaceDeclaration = namespaceDeclaration.AddUsings(UsingDirective(IdentifierName(@using)));
+            }
+
+            namespaceDeclaration = namespaceDeclaration.AddMembers(declaration);
+
+            return namespaceDeclaration;
+        }
+
 
         private void FormatAndWriteToFile(SyntaxNode syntax, string directory, string name)
         {
@@ -253,7 +348,7 @@ namespace GraphQLClientGenerator
             }
         }
 
-        private (string type, string @namespace) GetSharpTypeName(FieldType fieldType)
+        private (string type, string @namespace) GetSharpTypeName(FieldType? fieldType, bool wrapWithGraphTypes = false)
         {
             if (fieldType == null)
             {
@@ -266,7 +361,9 @@ namespace GraphQLClientGenerator
             {
                 if (fieldType.Kind == TypeKind.List)
                 {
-                    typeName = $"List<{GetSharpTypeName(fieldType.OfType).type}>";
+                    var type = GetSharpTypeName(fieldType.OfType).type;
+                    typeName = wrapWithGraphTypes ? $"GraphCollectionQuery<{type}>" : $"List<{type}>";
+
                     return (typeName, "System.Collections.Generic");
                 }
 
@@ -282,6 +379,11 @@ namespace GraphQLClientGenerator
             else
             {
                 typeName = GetMappedType(fieldType.Name);
+            }
+
+            if (wrapWithGraphTypes)
+            {
+                typeName = $"GraphItemQuery<{typeName}>";
             }
 
             return (typeName, typeName == "Guid" || typeName == "DateTime" || typeName == "DateTimeOffset" ? "System" : "");

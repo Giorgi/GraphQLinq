@@ -62,7 +62,7 @@ namespace GraphQLClientGenerator
     public class FieldType
     {
         public TypeKind Kind { get; set; }
-        public string Name { get; set; }
+        public string? Name { get; set; }
         public FieldType OfType { get; set; }
     }
 

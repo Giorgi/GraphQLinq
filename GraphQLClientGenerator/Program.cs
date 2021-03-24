@@ -113,14 +113,15 @@ namespace GraphQLClientGenerator
                 new Argument<string>("endpoint", "Endpoint of the GraphQL service"),
                 new Argument<string>("output", "Output folder"),
                 new Option<string>(new []{ "--namespace", "-n" }, "Namespace of generated classes"),
+                new Option<string>(new []{ "--context", "-c" }, "Name of the generated context classes"),
             };
 
-            generate.Handler = CommandHandler.Create<string, string, string, IConsole>(HandleGenerate);
+            generate.Handler = CommandHandler.Create<string, string, string, string, IConsole>(HandleGenerate);
 
             await generate.InvokeAsync(args);
         }
 
-        private static async Task HandleGenerate(string endpoint, string output, string? @namespace, IConsole console)
+        private static async Task HandleGenerate(string endpoint, string output, string? @namespace, string? context, IConsole console)
         {
             var httpClient = new HttpClient();
             var webClient = new WebClient();
@@ -135,17 +136,19 @@ namespace GraphQLClientGenerator
             {
                 Namespace = @namespace ?? "",
                 NormalizeCasing = true,
-                OutputDirectory = output
+                OutputDirectory = output,
+                ContextName = context
             };
             var graphQLClassesGenerator = new GraphQLClassesGenerator(codeGenerationOptions);
-            graphQLClassesGenerator.GenerateClasses(rootObject.Data.Schema);
+            graphQLClassesGenerator.GenerateClient(rootObject.Data.Schema);
         }
     }
 
     class CodeGenerationOptions
     {
-        public string OutputDirectory { get; set; }
-        public string Namespace { get; set; }
+        public string Namespace { get; set; } = "";
+        public string ContextName { get; set; }
+        public string? OutputDirectory { get; set; }
         public bool NormalizeCasing { get; set; }
     }
 }
