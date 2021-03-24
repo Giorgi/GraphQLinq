@@ -16,15 +16,15 @@ namespace GraphQLClientGenerator
 
         private static readonly Dictionary<string, string> TypeMapping = new()
         {
-            { "Int", "int"},
-            { "Float", "float"},
-            { "String", "string"},
-            { "ID", "string"},
-            { "Date", "DateTime"},
-            { "Boolean", "bool"},
-            { "Long", "long"},
-            { "uuid", "Guid"},
-            { "timestamptz", "DateTimeOffset"},
+            { "Int", "int" },
+            { "Float", "float" },
+            { "String", "string" },
+            { "ID", "string" },
+            { "Date", "DateTime" },
+            { "Boolean", "bool" },
+            { "Long", "long" },
+            { "uuid", "Guid" },
+            { "timestamptz", "DateTimeOffset" },
         };
 
         private static readonly List<string> BuiltInTypes = new()
@@ -85,7 +85,7 @@ namespace GraphQLClientGenerator
         private SyntaxNode GenerateEnum(Type enumInfo)
         {
             var namespaceDeclaration = NamespaceDeclaration(IdentifierName(options.Namespace));
-            var name = options.NormalizeCasing ? enumInfo.Name.ToPascalCase() : enumInfo.Name;
+            var name = enumInfo.Name.NormalizeIfNeeded(options);
 
             var declaration = EnumDeclaration(name).AddModifiers(Token(SyntaxKind.PublicKeyword));
 
@@ -105,7 +105,7 @@ namespace GraphQLClientGenerator
 
             var semicolonToken = Token(SyntaxKind.SemicolonToken);
 
-            var name = options.NormalizeCasing ? classInfo.Name.ToPascalCase() : classInfo.Name;
+            var name = classInfo.Name.NormalizeIfNeeded(options);
 
             var declaration = ClassDeclaration(name)
                                             .AddModifiers(Token(SyntaxKind.PublicKeyword))
@@ -121,7 +121,7 @@ namespace GraphQLClientGenerator
                 var (type, @namespace) = GetSharpTypeName(field.Type);
                 usings.Add(@namespace);
 
-                var fieldName = options.NormalizeCasing ? field.Name.ToPascalCase() : field.Name;
+                var fieldName = field.Name.NormalizeIfNeeded(options);
 
                 var property = PropertyDeclaration(ParseTypeName(type), fieldName)
                                             .AddModifiers(Token(SyntaxKind.PublicKeyword));
@@ -150,7 +150,7 @@ namespace GraphQLClientGenerator
             var namespaceDeclaration = NamespaceDeclaration(IdentifierName(options.Namespace));
             var semicolonToken = Token(SyntaxKind.SemicolonToken);
 
-            var name = options.NormalizeCasing ? interfaceInfo.Name.ToPascalCase() : interfaceInfo.Name;
+            var name = interfaceInfo.Name.NormalizeIfNeeded(options);
 
             var declaration = InterfaceDeclaration(name)
                                             .AddModifiers(Token(SyntaxKind.PublicKeyword));
@@ -159,7 +159,7 @@ namespace GraphQLClientGenerator
             {
                 var (type, _) = GetSharpTypeName(field.Type);
 
-                var fieldName = options.NormalizeCasing ? field.Name.ToPascalCase() : field.Name;
+                var fieldName = field.Name.NormalizeIfNeeded(options);
 
                 var property = PropertyDeclaration(ParseTypeName(type), fieldName);
 
@@ -184,7 +184,7 @@ namespace GraphQLClientGenerator
 
             var namespaceDeclaration = NamespaceDeclaration(IdentifierName(options.Namespace));
 
-            var usings = new HashSet<string>();
+            var usings = new HashSet<string> { "System" };
 
             var declaration = ClassDeclaration("QueryExtensions")
                 .AddModifiers(Token(SyntaxKind.PublicKeyword))
@@ -197,14 +197,14 @@ namespace GraphQLClientGenerator
                     var (type, @namespace) = GetSharpTypeName(field.Type);
                     usings.Add(@namespace);
 
-                    var fieldName = options.NormalizeCasing ? field.Name.ToPascalCase() : field.Name;
+                    var fieldName = field.Name.NormalizeIfNeeded(options);
 
                     var methodDeclaration = MethodDeclaration(ParseTypeName(type), fieldName)
                                              .AddModifiers(Token(SyntaxKind.PublicKeyword))
                                              .AddModifiers(Token(SyntaxKind.StaticKeyword));
 
                     var thisParameter = Parameter(Identifier(@class.Name.ToCamelCase()))
-                                             .WithType(ParseTypeName(@class.Name))
+                                             .WithType(ParseTypeName(@class.Name.NormalizeIfNeeded(options)))
                                              .WithModifiers(TokenList(Token(SyntaxKind.ThisKeyword)));
 
                     var methodParameters = new List<ParameterSyntax> { thisParameter };
@@ -214,7 +214,8 @@ namespace GraphQLClientGenerator
                         (type, @namespace) = GetSharpTypeName(arg.Type);
                         usings.Add(@namespace);
 
-                        var parameterSyntax = Parameter(Identifier(arg.Name)).WithType(ParseTypeName(type));
+                        var typeName = TypeMapping.ContainsValue(type) ? type : type.NormalizeIfNeeded(options);
+                        var parameterSyntax = Parameter(Identifier(arg.Name)).WithType(ParseTypeName(typeName));
                         methodParameters.Add(parameterSyntax);
                     }
 
@@ -243,7 +244,7 @@ namespace GraphQLClientGenerator
                 Directory.CreateDirectory(directory);
             }
 
-            name = options.NormalizeCasing ? name.ToPascalCase() : name;
+            name = name.NormalizeIfNeeded(options);
 
             var fileName = Path.Combine(directory, name + ".cs");
             using (var streamWriter = File.CreateText(fileName))
@@ -252,7 +253,7 @@ namespace GraphQLClientGenerator
             }
         }
 
-        private static (string type, string @namespace) GetSharpTypeName(FieldType fieldType)
+        private (string type, string @namespace) GetSharpTypeName(FieldType fieldType)
         {
             if (fieldType == null)
             {
@@ -269,7 +270,7 @@ namespace GraphQLClientGenerator
                     return (typeName, "System.Collections.Generic");
                 }
 
-                if (fieldType.Kind == TypeKind.NonNull && fieldType.OfType?.Name == "ID")
+                if (fieldType.Kind == TypeKind.NonNull && fieldType.OfType?.Name?.ToUpper() == "ID")
                 {
                     typeName = "string";
                 }
@@ -287,9 +288,9 @@ namespace GraphQLClientGenerator
         }
 
 
-        private static string GetMappedType(string name)
+        private string GetMappedType(string name)
         {
-            return TypeMapping.ContainsKey(name) ? TypeMapping[name] : name;
+            return TypeMapping.ContainsKey(name) ? TypeMapping[name] : name.NormalizeIfNeeded(options);
         }
     }
 }
