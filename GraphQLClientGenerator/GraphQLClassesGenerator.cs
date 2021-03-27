@@ -308,7 +308,7 @@ namespace GraphQLClientGenerator
                     var parameterSyntax = Parameter(Identifier(arg.Name)).WithType(ParseTypeName(typeName));
                     methodParameters.Add(parameterSyntax);
 
-                    initializer = initializer.WithExpressions(SingletonSeparatedList<ExpressionSyntax>(IdentifierName(arg.Name)));
+                    initializer = initializer.AddExpressions(IdentifierName(arg.Name));
                 }
 
                 var paramsArray = ArrayCreationExpression(ArrayType(ParseTypeName("object[]")), initializer);
