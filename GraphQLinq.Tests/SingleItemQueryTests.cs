@@ -10,7 +10,9 @@ namespace GraphQLinq.Tests
     [Category("Integration tests")]
     class SingleItemQueryTests
     {
-        const string TripId = "HSL:6908 3_20170814_Ti_1_1215";
+        const string AgencyId = "LINKKI:54836";
+        const string TripId = "OULU:0000880601314021";
+        
         readonly HslGraphContext hslGraphContext = new HslGraphContext("https://api.digitransit.fi/routing/v1/routers/finland/index/graphql");
 
         [Test]
@@ -24,17 +26,17 @@ namespace GraphQLinq.Tests
         [Test]
         public void SelectingNestedPropertiesOfSingleTripNestedPropertiesAreNotNull()
         {
-            var item = hslGraphContext.Trip(TripId).Select(trip =>
-                new TripDetails(trip.gtfsId, trip.route.gtfsId, trip.pattern.geometry, trip.route.agency.name, trip.route.agency.phone)
-            ).ToItem();
+            var item = hslGraphContext.Trip(TripId)
+                            .Select(trip => new TripDetails(trip.gtfsId, trip.route.gtfsId, trip.pattern.geometry, trip.route.agency.name, trip.route.agency.phone))
+                            .ToItem();
 
             Assert.Multiple(() =>
             {
-                Assert.That(item.tg, Is.Not.Null);
-                Assert.That(item.aatrg, Is.Not.Null);
-                Assert.That(item.geometry, Is.Not.Null);
-                Assert.That(item.n, Is.Not.Null);
-                Assert.That(item.p, Is.Not.Null);
+                Assert.That(item.TripId, Is.Not.Null);
+                Assert.That(item.RouteId, Is.Not.Null);
+                Assert.That(item.Geometry, Is.Not.Null);
+                Assert.That(item.Name, Is.Not.Null);
+                //Assert.That(item.Phone, Is.Not.Null);
             });
         }
 
@@ -42,16 +44,16 @@ namespace GraphQLinq.Tests
         public void SelectingNestedPropertiesOfSingleTripAndCallingConstructorNestedPropertiesAreNotNull()
         {
             var item = hslGraphContext.Trip(TripId)
-                .Select(trip => new TripDetails(trip.gtfsId, trip.route.gtfsId, trip.pattern.geometry, trip.route.agency.name, trip.route.agency.phone))
-                .ToItem();
+                            .Select(trip => new TripDetails(trip.gtfsId, trip.route.gtfsId, trip.pattern.geometry, trip.route.agency.name, trip.route.agency.phone))
+                            .ToItem();
 
             Assert.Multiple(() =>
             {
-                Assert.That(item.tg, Is.Not.Null);
-                Assert.That(item.aatrg, Is.Not.Null);
-                Assert.That(item.geometry, Is.Not.Null);
-                Assert.That(item.n, Is.Not.Null);
-                Assert.That(item.p, Is.Not.Null);
+                Assert.That(item.TripId, Is.Not.Null);
+                Assert.That(item.RouteId, Is.Not.Null);
+                Assert.That(item.Geometry, Is.Not.Null);
+                Assert.That(item.Name, Is.Not.Null);
+                //Assert.That(item.Phone, Is.Not.Null);
             });
         }
 
@@ -84,12 +86,11 @@ namespace GraphQLinq.Tests
         {
             Agency agency = null;
 
-            var agencyId = "248798";
-            Assert.DoesNotThrow(() => agency = hslGraphContext.Agency(agencyId).Include(a => a.routes.Select(route => route.trips.Select(trip => trip.geometry))).ToItem());
+            Assert.DoesNotThrow(() => agency = hslGraphContext.Agency(AgencyId).Include(a => a.routes.Select(route => route.trips.Select(trip => trip.geometry))).ToItem());
 
             if (agency == null)
             {
-                Assert.Inconclusive($"Agency with id {agencyId} not found");
+                Assert.Inconclusive($"Agency with id {AgencyId} not found");
             }
             else
             {
@@ -104,19 +105,19 @@ namespace GraphQLinq.Tests
 
     class TripDetails
     {
-        public string tg { get; }
-        public string aatrg { get; }
-        public List<Coordinates> geometry { get; }
-        public string n { get; }
-        public string p { get; }
+        public string TripId { get; }
+        public string RouteId { get; }
+        public List<Coordinates> Geometry { get; }
+        public string Name { get; }
+        public string Phone { get; }
 
-        internal TripDetails(string tg, string aatrg, List<Coordinates> geometry, string n, string p)
+        internal TripDetails(string tripId, string routeId, List<Coordinates> geometry, string name, string phone)
         {
-            this.tg = tg;
-            this.aatrg = aatrg;
-            this.geometry = geometry;
-            this.n = n;
-            this.p = p;
+            TripId = tripId;
+            RouteId = routeId;
+            Geometry = geometry;
+            Name = name;
+            Phone = phone;
         }
     }
 }
