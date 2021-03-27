@@ -12,6 +12,7 @@ namespace GraphQLClientGenerator
 {
     class GraphQLClassesGenerator
     {
+        private Dictionary<string, string> renamedClasses = new();
         private readonly CodeGenerationOptions options;
 
         private static readonly Dictionary<string, string> TypeMapping = new()
@@ -54,7 +55,7 @@ namespace GraphQLClientGenerator
                                                                 && queryType != type.Name && mutationType != type.Name && subscriptionType != type.Name).ToList();
 
             var enums = types.Where(type => type.Kind == TypeKind.Enum);
-            var classes = types.Where(type => type.Kind == TypeKind.Object || type.Kind == TypeKind.InputObject);
+            var classes = types.Where(type => type.Kind == TypeKind.Object || type.Kind == TypeKind.InputObject).OrderBy(type => type.Name);
             var interfaces = types.Where(type => type.Kind == TypeKind.Interface);
 
             foreach (var enumInfo in enums)
@@ -110,9 +111,9 @@ namespace GraphQLClientGenerator
 
             var semicolonToken = Token(SyntaxKind.SemicolonToken);
 
-            var name = classInfo.Name.NormalizeIfNeeded(options);
+            var className = classInfo.Name.NormalizeIfNeeded(options);
 
-            var declaration = ClassDeclaration(name)
+            var declaration = ClassDeclaration(className)
                                             .AddModifiers(Token(SyntaxKind.PublicKeyword))
                                             .AddModifiers(Token(SyntaxKind.PartialKeyword));
 
@@ -127,6 +128,12 @@ namespace GraphQLClientGenerator
                 usings.Add(@namespace);
 
                 var fieldName = field.Name.NormalizeIfNeeded(options);
+
+                if (fieldName == className)
+                {
+                    declaration = declaration.ReplaceToken(declaration.Identifier, Identifier($"{className}Type"));
+                    renamedClasses.Add(className, $"{className}Type");
+                }
 
                 var property = PropertyDeclaration(ParseTypeName(type), fieldName)
                                             .AddModifiers(Token(SyntaxKind.PublicKeyword));
@@ -292,7 +299,7 @@ namespace GraphQLClientGenerator
                     {
                         //for int, bool and other types Type.GetType will return null but not for string.
                         var builtInType = System.Type.GetType($"System.{typeName}", false, true);
-                        
+
                         if (builtInType == null || builtInType.IsValueType)
                         {
                             typeName += "?";
@@ -384,6 +391,11 @@ namespace GraphQLClientGenerator
             if (wrapWithGraphTypes)
             {
                 typeName = $"GraphItemQuery<{typeName}>";
+            }
+
+            if (renamedClasses.ContainsKey(typeName))
+            {
+                typeName = renamedClasses[typeName];
             }
 
             return (typeName, typeName == "Guid" || typeName == "DateTime" || typeName == "DateTimeOffset" ? "System" : "");
