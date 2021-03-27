@@ -124,9 +124,6 @@ namespace GraphQLClientGenerator
 
             foreach (var field in classInfo.Fields ?? classInfo.InputFields ?? new List<Field>())
             {
-                var (type, @namespace) = GetSharpTypeName(field.Type);
-                usings.Add(@namespace);
-
                 var fieldName = field.Name.NormalizeIfNeeded(options);
 
                 if (fieldName == className)
@@ -135,7 +132,15 @@ namespace GraphQLClientGenerator
                     renamedClasses.Add(className, $"{className}Type");
                 }
 
-                var property = PropertyDeclaration(ParseTypeName(type), fieldName)
+                var (fieldType, @namespace) = GetSharpTypeName(field.Type);
+                usings.Add(@namespace);
+                
+                if (NeedsNullable(fieldType, field.Type))
+                {
+                    fieldType += "?";
+                }
+
+                var property = PropertyDeclaration(ParseTypeName(fieldType), fieldName)
                                             .AddModifiers(Token(SyntaxKind.PublicKeyword));
 
                 property = property.AddAccessorListAccessors(AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
@@ -295,15 +300,9 @@ namespace GraphQLClientGenerator
 
                     var typeName = TypeMapping.ContainsValue(type) ? type : type.NormalizeIfNeeded(options);
 
-                    if (arg.Type.Kind == TypeKind.Scalar && TypeMapping.ContainsValue(typeName))
+                    if (NeedsNullable(typeName, arg.Type))
                     {
-                        //for int, bool and other types Type.GetType will return null but not for string.
-                        var builtInType = System.Type.GetType($"System.{typeName}", false, true);
-
-                        if (builtInType == null || builtInType.IsValueType)
-                        {
-                            typeName += "?";
-                        }
+                        typeName += "?";
                     }
 
                     var parameterSyntax = Parameter(Identifier(arg.Name)).WithType(ParseTypeName(typeName));
@@ -336,6 +335,23 @@ namespace GraphQLClientGenerator
             namespaceDeclaration = namespaceDeclaration.AddMembers(declaration);
 
             return namespaceDeclaration;
+        }
+
+        private static bool NeedsNullable(string typeName, FieldType type)
+        {
+            if (type.Kind == TypeKind.Scalar && TypeMapping.ContainsValue(typeName))
+            {
+                //Hacky way to return false for string and null for primitive types.
+                //For int, bool and other types Type.GetType will return null but not for string.
+                var builtInType = System.Type.GetType($"System.{typeName}", false, true);
+
+                if (builtInType == null || builtInType.IsValueType)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
 
