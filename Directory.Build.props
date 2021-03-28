@@ -1,0 +1,9 @@
+<Project>
+  <PropertyGroup Label="Common assembly attributes">
+    <Version>0.1.0</Version>
+    <FileVersion>0.1.0.0</FileVersion>
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
+    <Authors>Giorgi Dalakishvili</Authors>
+    <Copyright>Copyright (c) 2017 - 2021 Giorgi Dalakishvili</Copyright>
+  </PropertyGroup>
+</Project>
