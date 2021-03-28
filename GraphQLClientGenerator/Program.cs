@@ -111,7 +111,7 @@ namespace GraphQLClientGenerator
             var generate = new RootCommand
             {
                 new Argument<string>("endpoint", "Endpoint of the GraphQL service"),
-                new Argument<string>("output", "Output folder"),
+                new Option<string>(new []{ "--output", "-o" }, "Output folder"),
                 new Option<string>(new []{ "--namespace", "-n" }, "Namespace of generated classes"),
                 new Option<string>(new []{ "--context", "-c" }, "Name of the generated context classes"),
             };
@@ -136,8 +136,8 @@ namespace GraphQLClientGenerator
             {
                 Namespace = @namespace ?? "",
                 NormalizeCasing = true,
-                OutputDirectory = output,
                 ContextName = context
+                OutputDirectory = string.IsNullOrEmpty(output) ? Environment.CurrentDirectory : output,
             };
             var graphQLClassesGenerator = new GraphQLClassesGenerator(codeGenerationOptions);
             graphQLClassesGenerator.GenerateClient(rootObject.Data.Schema);
@@ -148,7 +148,7 @@ namespace GraphQLClientGenerator
     {
         public string Namespace { get; set; } = "";
         public string ContextName { get; set; }
-        public string? OutputDirectory { get; set; }
+        public string OutputDirectory { get; set; } = "";
         public bool NormalizeCasing { get; set; }
     }
 }
