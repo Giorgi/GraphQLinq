@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30711.63
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GraphQLinq.Demo", "GraphQLinq.Demo\GraphQLinq.Demo.csproj", "{D7CE01EE-342B-4836-BD9E-9BBF09A25263}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GraphQLinq", "GraphQLinq\GraphQLinq.csproj", "{AD9AA002-9EA5-4AA9-A5BD-2CB73E95F60B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GraphQLinq", "GraphQLinq\GraphQLinq.csproj", "{AD9AA002-9EA5-4AA9-A5BD-2CB73E95F60B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GraphQLinq.Tests", "GraphQLinq.Tests\GraphQLinq.Tests.csproj", "{2A292F0E-8ED7-4E4B-A03A-A0C1F6E8F8F8}"
 EndProject
@@ -36,5 +36,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8C296DB2-F89F-43E3-8ADB-EAEFA266C843}
 	EndGlobalSection
 EndGlobal

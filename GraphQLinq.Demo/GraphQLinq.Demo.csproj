@@ -1,76 +1,64 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{D7CE01EE-342B-4836-BD9E-9BBF09A25263}</ProjectGuid>
+    <TargetFramework>net5.0</TargetFramework>
     <OutputType>Exe</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>GraphQLinq.Demo</RootNamespace>
-    <AssemblyName>GraphQLinq.Demo</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <TargetFrameworkProfile />
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
+    <ProjectReference Include="..\GraphQLinq.Generated\GraphQLinq.Generated.csproj" />
+    <ProjectReference Include="..\GraphQLinq\GraphQLinq.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Program.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
-    <None Include="packages.config" />
+    <Compile Remove="HSL\Agency.cs" />
+    <Compile Remove="HSL\Alert.cs" />
+    <Compile Remove="HSL\BikePark.cs" />
+    <Compile Remove="HSL\BikeRentalStation.cs" />
+    <Compile Remove="HSL\BikesAllowed.cs" />
+    <Compile Remove="HSL\CarPark.cs" />
+    <Compile Remove="HSL\Cluster.cs" />
+    <Compile Remove="HSL\Coordinates.cs" />
+    <Compile Remove="HSL\debugOutput.cs" />
+    <Compile Remove="HSL\DepartureRow.cs" />
+    <Compile Remove="HSL\fare.cs" />
+    <Compile Remove="HSL\fareComponent.cs" />
+    <Compile Remove="HSL\FilterPlaceType.cs" />
+    <Compile Remove="HSL\Itinerary.cs" />
+    <Compile Remove="HSL\Leg.cs" />
+    <Compile Remove="HSL\LegGeometry.cs" />
+    <Compile Remove="HSL\LocationType.cs" />
+    <Compile Remove="HSL\Mode.cs" />
+    <Compile Remove="HSL\Node.cs" />
+    <Compile Remove="HSL\OptimizeType.cs" />
+    <Compile Remove="HSL\PageInfo.cs" />
+    <Compile Remove="HSL\Pattern.cs" />
+    <Compile Remove="HSL\PickupDropoffType.cs" />
+    <Compile Remove="HSL\Place.cs" />
+    <Compile Remove="HSL\placeAtDistance.cs" />
+    <Compile Remove="HSL\placeAtDistanceConnection.cs" />
+    <Compile Remove="HSL\placeAtDistanceEdge.cs" />
+    <Compile Remove="HSL\PlaceInterface.cs" />
+    <Compile Remove="HSL\Plan.cs" />
+    <Compile Remove="HSL\QueryExtensions.cs" />
+    <Compile Remove="HSL\RealtimeState.cs" />
+    <Compile Remove="HSL\Route.cs" />
+    <Compile Remove="HSL\serviceTimeRange.cs" />
+    <Compile Remove="HSL\Stop.cs" />
+    <Compile Remove="HSL\StopAtDistance.cs" />
+    <Compile Remove="HSL\stopAtDistanceConnection.cs" />
+    <Compile Remove="HSL\stopAtDistanceEdge.cs" />
+    <Compile Remove="HSL\Stoptime.cs" />
+    <Compile Remove="HSL\StoptimesInPattern.cs" />
+    <Compile Remove="HSL\TicketType.cs" />
+    <Compile Remove="HSL\TranslatedString.cs" />
+    <Compile Remove="HSL\Trip.cs" />
+    <Compile Remove="HSL\VertexType.cs" />
+    <Compile Remove="HSL\WheelchairBoarding.cs" />
+    <Compile Remove="SpaceX\Conflict_action.cs" />
+    <Compile Remove="SpaceX\Order_by.cs" />
+    <Compile Remove="SpaceX\Users_constraint.cs" />
+    <Compile Remove="SpaceX\Users_select_column.cs" />
+    <Compile Remove="SpaceX\Users_update_column.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\GraphQLinq.Generated\GraphQLinq.Generated.csproj">
-      <Project>{3BD98755-AE1B-41DC-A680-DA39B2B1AC4A}</Project>
-      <Name>GraphQLinq.Generated</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\GraphQLinq\GraphQLinq.csproj">
-      <Project>{ad9aa002-9ea5-4aa9-a5bd-2cb73e95f60b}</Project>
-      <Name>GraphQLinq</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup />
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>
