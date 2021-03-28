@@ -1,4 +1,5 @@
-﻿using System.CommandLine;
+﻿using System;
+using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Net;
 using System.Net.Http;
@@ -121,7 +122,7 @@ namespace GraphQLClientGenerator
             await generate.InvokeAsync(args);
         }
 
-        private static async Task HandleGenerate(string endpoint, string output, string? @namespace, string? context, IConsole console)
+        private static async Task HandleGenerate(string endpoint, string? output, string? @namespace, string? context, IConsole console)
         {
             var httpClient = new HttpClient();
             var webClient = new WebClient();
@@ -136,8 +137,8 @@ namespace GraphQLClientGenerator
             {
                 Namespace = @namespace ?? "",
                 NormalizeCasing = true,
-                ContextName = context
                 OutputDirectory = string.IsNullOrEmpty(output) ? Environment.CurrentDirectory : output,
+                ContextName = context ?? "Query"
             };
             var graphQLClassesGenerator = new GraphQLClassesGenerator(codeGenerationOptions);
             graphQLClassesGenerator.GenerateClient(rootObject.Data.Schema);
@@ -146,8 +147,8 @@ namespace GraphQLClientGenerator
 
     class CodeGenerationOptions
     {
-        public string Namespace { get; set; } = "";
-        public string ContextName { get; set; }
+        public string? Namespace { get; set; } = "";
+        public string ContextName { get; set; } = "";
         public string OutputDirectory { get; set; } = "";
         public bool NormalizeCasing { get; set; }
     }
