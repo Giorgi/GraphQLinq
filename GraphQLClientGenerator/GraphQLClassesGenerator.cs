@@ -61,36 +61,36 @@ namespace GraphQLClientGenerator
             foreach (var enumInfo in enums)
             {
                 var syntax = GenerateEnum(enumInfo);
-                FormatAndWriteToFile(syntax, options.OutputDirectory, enumInfo.Name);
+                FormatAndWriteToFile(syntax, enumInfo.Name);
             }
 
             foreach (var classInfo in classes)
             {
                 var syntax = GenerateClass(classInfo);
-                FormatAndWriteToFile(syntax, options.OutputDirectory, classInfo.Name);
+                FormatAndWriteToFile(syntax, classInfo.Name);
             }
 
             foreach (var interfaceInfo in interfaces)
             {
                 var syntax = GenerateInterface(interfaceInfo);
-                FormatAndWriteToFile(syntax, options.OutputDirectory, interfaceInfo.Name);
+                FormatAndWriteToFile(syntax, interfaceInfo.Name);
             }
 
             var classesWithArgFields = classes.Where(type => (type.Fields ?? new List<Field>()).Any(field => field.Args.Any())).ToList();
 
             var queryExtensions = GenerateQueryExtensions(classesWithArgFields);
-            FormatAndWriteToFile(queryExtensions, options.OutputDirectory, "QueryExtensions");
+            FormatAndWriteToFile(queryExtensions, "QueryExtensions");
 
             var queryClass = schema.Types.Single(type => type.Name == queryType);
 
             var graphContext = GenerateGraphContext(queryClass);
-            FormatAndWriteToFile(graphContext, options.OutputDirectory, $"{options.ContextName}Context");
+            FormatAndWriteToFile(graphContext, $"{options.ContextName}Context");
         }
 
 
         private SyntaxNode GenerateEnum(Type enumInfo)
         {
-            var namespaceDeclaration = NamespaceDeclaration(IdentifierName(options.Namespace));
+            var topLevelDeclaration = RoslynUtilities.GetTopLevelNode(options.Namespace);
             var name = enumInfo.Name.NormalizeIfNeeded(options);
 
             var declaration = EnumDeclaration(name).AddModifiers(Token(SyntaxKind.PublicKeyword));
@@ -100,12 +100,12 @@ namespace GraphQLClientGenerator
                 declaration = declaration.AddMembers(EnumMemberDeclaration(Identifier(enumValue.Name)));
             }
 
-            return namespaceDeclaration.AddMembers(declaration);
+            return topLevelDeclaration.AddMembers(declaration);
         }
 
         private SyntaxNode GenerateClass(Type classInfo)
         {
-            var namespaceDeclaration = NamespaceDeclaration(IdentifierName(options.Namespace));
+            var topLevelDeclaration = RoslynUtilities.GetTopLevelNode(options.Namespace);
 
             var usings = new HashSet<string>();
 
@@ -134,7 +134,7 @@ namespace GraphQLClientGenerator
 
                 var (fieldType, @namespace) = GetSharpTypeName(field.Type);
                 usings.Add(@namespace);
-                
+
                 if (NeedsNullable(fieldType, field.Type))
                 {
                     fieldType += "?";
@@ -154,17 +154,17 @@ namespace GraphQLClientGenerator
 
             foreach (var @using in usings.Where(s => !string.IsNullOrEmpty(s)))
             {
-                namespaceDeclaration = namespaceDeclaration.AddUsings(UsingDirective(IdentifierName(@using)));
+                topLevelDeclaration = topLevelDeclaration.AddUsings(UsingDirective(IdentifierName(@using)));
             }
 
-            namespaceDeclaration = namespaceDeclaration.AddMembers(declaration);
+            topLevelDeclaration = topLevelDeclaration.AddMembers(declaration);
 
-            return namespaceDeclaration;
+            return topLevelDeclaration;
         }
 
         private SyntaxNode GenerateInterface(Type interfaceInfo)
         {
-            var namespaceDeclaration = NamespaceDeclaration(IdentifierName(options.Namespace));
+            var topLevelDeclaration = RoslynUtilities.GetTopLevelNode(options.Namespace);
             var semicolonToken = Token(SyntaxKind.SemicolonToken);
 
             var name = interfaceInfo.Name.NormalizeIfNeeded(options);
@@ -189,7 +189,7 @@ namespace GraphQLClientGenerator
                 declaration = declaration.AddMembers(property);
             }
 
-            return namespaceDeclaration.AddMembers(declaration);
+            return topLevelDeclaration.AddMembers(declaration);
         }
 
         private SyntaxNode GenerateQueryExtensions(List<Type> classesWithArgFields)
@@ -199,7 +199,7 @@ namespace GraphQLClientGenerator
 
             var notImplemented = ThrowStatement(ObjectCreationExpression(IdentifierName("NotImplementedException"), argumentListSyntax, null));
 
-            var namespaceDeclaration = NamespaceDeclaration(IdentifierName(options.Namespace));
+            var topLevelDeclaration = RoslynUtilities.GetTopLevelNode(options.Namespace);
 
             var usings = new HashSet<string> { "System" };
 
@@ -245,17 +245,17 @@ namespace GraphQLClientGenerator
 
             foreach (var @using in usings.Where(s => !string.IsNullOrEmpty(s)))
             {
-                namespaceDeclaration = namespaceDeclaration.AddUsings(UsingDirective(IdentifierName(@using)));
+                topLevelDeclaration = topLevelDeclaration.AddUsings(UsingDirective(IdentifierName(@using)));
             }
 
-            namespaceDeclaration = namespaceDeclaration.AddMembers(declaration);
+            topLevelDeclaration = topLevelDeclaration.AddMembers(declaration);
 
-            return namespaceDeclaration;
+            return topLevelDeclaration;
         }
 
         private SyntaxNode GenerateGraphContext(Type queryInfo)
         {
-            var namespaceDeclaration = NamespaceDeclaration(IdentifierName(options.Namespace));
+            var topLevelDeclaration = RoslynUtilities.GetTopLevelNode(options.Namespace);
 
             var usings = new HashSet<string> { "System", "GraphQLinq" };
 
@@ -329,12 +329,12 @@ namespace GraphQLClientGenerator
 
             foreach (var @using in usings.Where(s => !string.IsNullOrEmpty(s)))
             {
-                namespaceDeclaration = namespaceDeclaration.AddUsings(UsingDirective(IdentifierName(@using)));
+                topLevelDeclaration = topLevelDeclaration.AddUsings(UsingDirective(IdentifierName(@using)));
             }
 
-            namespaceDeclaration = namespaceDeclaration.AddMembers(declaration);
+            topLevelDeclaration = topLevelDeclaration.AddMembers(declaration);
 
-            return namespaceDeclaration;
+            return topLevelDeclaration;
         }
 
         private static bool NeedsNullable(string typeName, FieldType type)
@@ -355,16 +355,16 @@ namespace GraphQLClientGenerator
         }
 
 
-        private void FormatAndWriteToFile(SyntaxNode syntax, string directory, string name)
+        private void FormatAndWriteToFile(SyntaxNode syntax, string name)
         {
-            if (!Directory.Exists(directory))
+            if (!Directory.Exists(options.OutputDirectory))
             {
-                Directory.CreateDirectory(directory);
+                Directory.CreateDirectory(options.OutputDirectory);
             }
 
             name = name.NormalizeIfNeeded(options);
 
-            var fileName = Path.Combine(directory, name + ".cs");
+            var fileName = Path.Combine(options.OutputDirectory, name + ".cs");
             using (var streamWriter = File.CreateText(fileName))
             {
                 Formatter.Format(syntax, Workspace).WriteTo(streamWriter);
