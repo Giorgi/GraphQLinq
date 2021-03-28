@@ -164,7 +164,7 @@ namespace GraphQLinq
 
             var mapper = (Func<TSource, T>)Selector?.Compile();
 
-            return new GraphQueryEnumerator<T, TSource>(query.FullQuery, context.BaseUrl, context.Authorization, queryType, mapper);
+            return new GraphQueryEnumerator<T, TSource>(context, query.FullQuery, queryType, mapper);
         }
     }
 
@@ -246,7 +246,7 @@ namespace GraphQLinq
     {
         public IncludeDetails()
         {
-            
+
         }
         public IncludeDetails(IEnumerable<IncludeMethodDetails> methodIncludes)
         {

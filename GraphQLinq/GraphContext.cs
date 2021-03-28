@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using Newtonsoft.Json.Serialization;
 
 namespace GraphQLinq
 {
@@ -10,10 +11,12 @@ namespace GraphQLinq
         {
             BaseUrl = baseUrl;
             Authorization = authorization;
+            ContractResolver = new DefaultContractResolver();
         }
 
-        public string BaseUrl { get; private set; }
-        public string Authorization { get; private set; }
+        public string BaseUrl { get; }
+        public string Authorization { get; }
+        public IContractResolver ContractResolver { get; set; }
 
         protected GraphCollectionQuery<T> BuildCollectionQuery<T>(object[] parameterValues, [CallerMemberName] string queryName = null)
         {

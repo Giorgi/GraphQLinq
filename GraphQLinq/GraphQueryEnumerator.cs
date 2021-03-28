@@ -5,7 +5,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Net;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 
 namespace GraphQLinq
 {
@@ -18,17 +20,19 @@ namespace GraphQLinq
         private readonly string authorization;
         private readonly QueryType queryType;
         private readonly Func<TSource, T> mapper;
+        private readonly IContractResolver resolver;
 
         private const string DataPathPropertyName = "data";
         private const string ErrorPathPropertyName = "errors";
 
-        internal GraphQueryEnumerator(string query, string baseUrl, string authorization, QueryType queryType, Func<TSource, T> mapper)
+        internal GraphQueryEnumerator(GraphContext context, string query, QueryType queryType, Func<TSource, T> mapper)
         {
             this.query = query;
-            this.baseUrl = baseUrl;
-            this.authorization = authorization;
-            this.queryType = queryType;
             this.mapper = mapper;
+            this.queryType = queryType;
+            baseUrl = context.BaseUrl;
+            resolver = context.ContractResolver ?? new DefaultContractResolver();
+            authorization = context.Authorization;
         }
 
         public void Dispose()
@@ -61,15 +65,16 @@ namespace GraphQLinq
             var enumerable = jObject[DataPathPropertyName][GraphQueryBuilder<T>.ResultAlias]
                         .Select(token =>
                         {
+                            var jsonSerializer = new JsonSerializer { ContractResolver = resolver };
                             var jToken = queryType == QueryType.Collection ? token : token.Parent;
 
                             if (mapper != null)
                             {
-                                var result = jToken.ToObject<TSource>();
+                                var result = jToken.ToObject<TSource>(jsonSerializer);
                                 return mapper.Invoke(result);
                             }
 
-                            return jToken.ToObject<T>();
+                            return jToken.ToObject<T>(jsonSerializer);
                         });
 
             return enumerable;
