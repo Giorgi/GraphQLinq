@@ -15,7 +15,7 @@
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     <PackageIcon>Icon.png</PackageIcon>
-    <Description>Strongly typed GraphQL queries with LINQ query syntax</Description>
+    <Description>Strongly typed GraphQL queries with LINQ query syntax.</Description>
     <Version>1.0.0-beta</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>

@@ -5,18 +5,25 @@
     <Nullable>enable</Nullable>
 
     <PackAsTool>true</PackAsTool>
-    <ToolCommandName>graphqlclient</ToolCommandName>
+    <ToolCommandName>GraphQLinq-Scaffold</ToolCommandName>
     <PackageOutputPath>./nupkg</PackageOutputPath>
     <Authors>Giorgi Dalakishvili</Authors>
-    <Copyright>Copyright © 2017-2021</Copyright>
+    <Copyright>Copyright (c) 2017 - 2021 Giorgi Dalakishvili</Copyright>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
-    <AssemblyVersion>0.1.0.0</AssemblyVersion>
-    <FileVersion>0.1.0.0</FileVersion>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
     <RepositoryType>git</RepositoryType>
     
     <Deterministic>true</Deterministic>
     <ContinuousIntegrationBuild Condition="'$(Configuration)'=='Release'">True</ContinuousIntegrationBuild>
-    <Version>0.1.0</Version>
+    <Version>1.0.0-beta</Version>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageProjectUrl>https://github.com/Giorgi/GraphQLinq/</PackageProjectUrl>
+    <PackageIcon>Icon.png</PackageIcon>
+    <RepositoryUrl>https://github.com/Giorgi/GraphQLinq/</RepositoryUrl>
+    <PackageTags>GraphQL LINQ json api</PackageTags>
+    <PackageReleaseNotes>Initial Release</PackageReleaseNotes>
+    <Description>Generate classes from GraphQL endpoint and write strongly typed queries with LINQ.</Description>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Macross.Json.Extensions" Version="2.0.0" />
@@ -26,6 +33,10 @@
     <PackageReference Include="System.Net.Http.Json" Version="5.0.0" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\Icon.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
     <None Include="..\LICENSE.md">
       <Pack>True</Pack>
       <PackagePath></PackagePath>

@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GraphQLinq.Tests", "GraphQL
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GraphQLinq.Generated", "GraphQLinq.Generated\GraphQLinq.Generated.csproj", "{3BD98755-AE1B-41DC-A680-DA39B2B1AC4A}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GraphQLinq.Scaffolding", "GraphQLinq.Scaffolding\GraphQLinq.Scaffolding.csproj", "{B16D1D38-3CC3-4F8E-BC7D-5620370662AE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{3BD98755-AE1B-41DC-A680-DA39B2B1AC4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3BD98755-AE1B-41DC-A680-DA39B2B1AC4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3BD98755-AE1B-41DC-A680-DA39B2B1AC4A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B16D1D38-3CC3-4F8E-BC7D-5620370662AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B16D1D38-3CC3-4F8E-BC7D-5620370662AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B16D1D38-3CC3-4F8E-BC7D-5620370662AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B16D1D38-3CC3-4F8E-BC7D-5620370662AE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
