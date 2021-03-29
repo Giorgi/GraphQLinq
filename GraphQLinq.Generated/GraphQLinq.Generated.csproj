@@ -5,9 +5,9 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\GraphQLinq\GraphQLinq.csproj" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <ProjectReference Include="..\GraphQLinq.Client\GraphQLinq.Client.csproj" />
   </ItemGroup>
 </Project>

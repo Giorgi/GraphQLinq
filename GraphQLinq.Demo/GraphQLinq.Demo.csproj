@@ -4,8 +4,8 @@
     <OutputType>Exe</OutputType>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\GraphQLinq.Client\GraphQLinq.Client.csproj" />
     <ProjectReference Include="..\GraphQLinq.Generated\GraphQLinq.Generated.csproj" />
-    <ProjectReference Include="..\GraphQLinq\GraphQLinq.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
