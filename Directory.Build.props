@@ -1,4 +1,9 @@
 <Project>
+  <PropertyGroup Label="Configure assembly names and namespaces">
+    <AssemblyName>$(SolutionName).$(MSBuildProjectName)</AssemblyName>
+    <RootNamespace>$(AssemblyName)</RootNamespace>
+  </PropertyGroup>
+
   <PropertyGroup Label="Common assembly attributes">
     <Version>0.1.0</Version>
     <FileVersion>0.1.0.0</FileVersion>

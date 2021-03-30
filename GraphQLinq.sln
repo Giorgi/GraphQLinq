@@ -3,15 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30711.63
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GraphQLinq.Demo", "GraphQLinq.Demo\GraphQLinq.Demo.csproj", "{D7CE01EE-342B-4836-BD9E-9BBF09A25263}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Demo", "GraphQLinq.Demo\Demo.csproj", "{D7CE01EE-342B-4836-BD9E-9BBF09A25263}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GraphQLinq.Client", "GraphQLinq.Client\GraphQLinq.Client.csproj", "{AD9AA002-9EA5-4AA9-A5BD-2CB73E95F60B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Client", "GraphQLinq.Client\Client.csproj", "{AD9AA002-9EA5-4AA9-A5BD-2CB73E95F60B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GraphQLinq.Tests", "GraphQLinq.Tests\GraphQLinq.Tests.csproj", "{2A292F0E-8ED7-4E4B-A03A-A0C1F6E8F8F8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "GraphQLinq.Tests\Tests.csproj", "{2A292F0E-8ED7-4E4B-A03A-A0C1F6E8F8F8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GraphQLinq.Generated", "GraphQLinq.Generated\GraphQLinq.Generated.csproj", "{3BD98755-AE1B-41DC-A680-DA39B2B1AC4A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Generated", "GraphQLinq.Generated\Generated.csproj", "{3BD98755-AE1B-41DC-A680-DA39B2B1AC4A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GraphQLinq.Scaffolding", "GraphQLinq.Scaffolding\GraphQLinq.Scaffolding.csproj", "{B16D1D38-3CC3-4F8E-BC7D-5620370662AE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Scaffolding", "GraphQLinq.Scaffolding\Scaffolding.csproj", "{B16D1D38-3CC3-4F8E-BC7D-5620370662AE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

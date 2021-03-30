@@ -8,6 +8,6 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\GraphQLinq.Client\GraphQLinq.Client.csproj" />
+    <ProjectReference Include="..\GraphQLinq.Client\Client.csproj" />
   </ItemGroup>
 </Project>
