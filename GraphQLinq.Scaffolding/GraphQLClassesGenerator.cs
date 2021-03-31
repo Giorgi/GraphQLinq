@@ -8,7 +8,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
-namespace GraphQLClientGenerator
+namespace GraphQLinq.Scaffolding
 {
     class GraphQLClassesGenerator
     {

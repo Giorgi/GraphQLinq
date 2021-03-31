@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 
-namespace GraphQLClientGenerator
+namespace GraphQLinq.Scaffolding
 {
     public class RootSchemaObject
     {
