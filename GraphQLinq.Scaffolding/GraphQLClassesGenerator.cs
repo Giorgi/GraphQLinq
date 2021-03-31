@@ -44,7 +44,7 @@ namespace GraphQLClientGenerator
             this.options = options;
         }
 
-        public void GenerateClient(Schema schema)
+        public void GenerateClient(Schema schema, string endpointUrl)
         {
             var queryType = schema.QueryType.Name;
             var mutationType = schema.MutationType.Name;
@@ -88,7 +88,7 @@ namespace GraphQLClientGenerator
             var queryClass = schema.Types.Single(type => type.Name == queryType);
 
             Console.WriteLine("Scaffolding GraphQLContext");
-            var graphContext = GenerateGraphContext(queryClass);
+            var graphContext = GenerateGraphContext(queryClass, endpointUrl);
             FormatAndWriteToFile(graphContext, $"{options.ContextName}Context");
         }
 
@@ -258,7 +258,7 @@ namespace GraphQLClientGenerator
             return topLevelDeclaration;
         }
 
-        private SyntaxNode GenerateGraphContext(Type queryInfo)
+        private SyntaxNode GenerateGraphContext(Type queryInfo, string endpointUrl)
         {
             var topLevelDeclaration = RoslynUtilities.GetTopLevelNode(options.Namespace);
 
@@ -268,6 +268,14 @@ namespace GraphQLClientGenerator
             var declaration = ClassDeclaration(className)
                 .AddModifiers(Token(SyntaxKind.PublicKeyword))
                 .AddBaseListTypes(SimpleBaseType(ParseTypeName("GraphContext")));
+
+            var thisInitializer = ConstructorInitializer(SyntaxKind.ThisConstructorInitializer)
+                                    .AddArgumentListArguments(Argument(LiteralExpression(SyntaxKind.StringLiteralExpression, Literal(endpointUrl))));
+
+            var defaultConstructorDeclaration = ConstructorDeclaration(className)
+                .AddModifiers(Token(SyntaxKind.PublicKeyword))
+                .WithInitializer(thisInitializer)
+                .WithBody(Block());
 
             var baseInitializer = ConstructorInitializer(SyntaxKind.BaseConstructorInitializer)
                                     .AddArgumentListArguments(Argument(IdentifierName("baseUrl")),
@@ -279,7 +287,7 @@ namespace GraphQLClientGenerator
                                     .WithInitializer(baseInitializer)
                                     .WithBody(Block());
 
-            declaration = declaration.AddMembers(constructorDeclaration);
+            declaration = declaration.AddMembers(defaultConstructorDeclaration, constructorDeclaration);
 
             foreach (var field in queryInfo.Fields)
             {

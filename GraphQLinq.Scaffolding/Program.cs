@@ -148,7 +148,7 @@ namespace GraphQLClientGenerator
             };
 
             var graphQLClassesGenerator = new GraphQLClassesGenerator(codeGenerationOptions);
-            graphQLClassesGenerator.GenerateClient(rootObject.Data.Schema);
+            graphQLClassesGenerator.GenerateClient(rootObject.Data.Schema, endpoint);
 
             Console.WriteLine("Scaffolding complete");
             Console.ReadKey();
