@@ -1,10 +1,13 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.IO;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
+using Spectre.Console;
 
 namespace GraphQLinq.Scaffolding
 {
@@ -126,30 +129,44 @@ namespace GraphQLinq.Scaffolding
             //var webClient = new WebClient();
             //webClient.Headers.Add("Content-Type", "application/json");
             //var downloadString = webClient.UploadString("endpoint", query);
-            Console.WriteLine("Scaffolding GraphQL client for {0}", endpoint);
+            Thread.Sleep(5000);
+            AnsiConsole.MarkupLine("[bold]Welcome to GraphQL Client Scaffolding tool[/]");
+            AnsiConsole.WriteLine();
 
-            using var httpClient = new HttpClient();
-            Console.WriteLine("Running introspection query");
+            string outputFolder = Path.IsPathRooted(output) ? output : Path.Combine(Environment.CurrentDirectory, output ?? "");
 
-            using var responseMessage = await httpClient.PostAsJsonAsync(endpoint, new {query = IntrospectionQuery});
-            string schemaJson = await responseMessage.Content.ReadAsStringAsync();
+            AnsiConsole.MarkupLine("Scaffolding GraphQL client code for [bold]{0}[/] to [bold]{1}[/]", endpoint, outputFolder);
 
-            var rootObject = JsonSerializer.Deserialize<RootSchemaObject>(schemaJson, new JsonSerializerOptions {PropertyNamingPolicy = JsonNamingPolicy.CamelCase});
-
-            Console.WriteLine("Scaffolding client code");
-
-            var codeGenerationOptions = new CodeGenerationOptions
+            var schema = await AnsiConsole.Status().StartAsync("Performing introspection", async ctx =>
             {
-                Namespace = @namespace ?? "",
-                NormalizeCasing = true,
-                OutputDirectory = string.IsNullOrEmpty(output) ? Environment.CurrentDirectory : output,
-                ContextName = context ?? "Query"
-            };
+                AnsiConsole.WriteLine("Running introspection query ...");
+                using var httpClient = new HttpClient();
+                using var responseMessage = await httpClient.PostAsJsonAsync(endpoint, new { query = IntrospectionQuery });
 
-            var graphQLClassesGenerator = new GraphQLClassesGenerator(codeGenerationOptions);
-            graphQLClassesGenerator.GenerateClient(rootObject.Data.Schema, endpoint);
+                AnsiConsole.WriteLine("Reading and deserializing schema information ...");
+                var schemaJson = await responseMessage.Content.ReadAsStringAsync();
+                return JsonSerializer.Deserialize<RootSchemaObject>(schemaJson, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            });
+            AnsiConsole.WriteLine();
 
-            Console.WriteLine("Scaffolding complete");
+            var contextClassFullName = AnsiConsole.Status().Start($"Scaffolding GraphQL client code {endpoint}", statusContext =>
+            {
+                var codeGenerationOptions = new CodeGenerationOptions
+                {
+                    Namespace = @namespace ?? "",
+                    NormalizeCasing = true,
+                    OutputDirectory = outputFolder,
+                    ContextName = context ?? "Query"
+                };
+
+                var graphQLClassesGenerator = new GraphQLClassesGenerator(codeGenerationOptions);
+                return graphQLClassesGenerator.GenerateClient(schema.Data.Schema, endpoint);
+            });
+
+            AnsiConsole.WriteLine();
+            AnsiConsole.MarkupLine("[bold]Scaffolding complete[/]");
+            AnsiConsole.MarkupLine("Use [bold]{0}[/] to run strongly typed LINQ queries", contextClassFullName);
+
             Console.ReadKey();
         }
     }
