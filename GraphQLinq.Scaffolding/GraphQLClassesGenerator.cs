@@ -58,18 +58,21 @@ namespace GraphQLClientGenerator
             var classes = types.Where(type => type.Kind == TypeKind.Object || type.Kind == TypeKind.InputObject).OrderBy(type => type.Name);
             var interfaces = types.Where(type => type.Kind == TypeKind.Interface);
 
+            Console.WriteLine("Scaffolding enums");
             foreach (var enumInfo in enums)
             {
                 var syntax = GenerateEnum(enumInfo);
                 FormatAndWriteToFile(syntax, enumInfo.Name);
             }
 
+            Console.WriteLine("Scaffolding classes");
             foreach (var classInfo in classes)
             {
                 var syntax = GenerateClass(classInfo);
                 FormatAndWriteToFile(syntax, classInfo.Name);
             }
 
+            Console.WriteLine("Scaffolding interfaces");
             foreach (var interfaceInfo in interfaces)
             {
                 var syntax = GenerateInterface(interfaceInfo);
@@ -78,11 +81,13 @@ namespace GraphQLClientGenerator
 
             var classesWithArgFields = classes.Where(type => (type.Fields ?? new List<Field>()).Any(field => field.Args.Any())).ToList();
 
+            Console.WriteLine("Scaffolding Query Extensions");
             var queryExtensions = GenerateQueryExtensions(classesWithArgFields);
             FormatAndWriteToFile(queryExtensions, "QueryExtensions");
 
             var queryClass = schema.Types.Single(type => type.Name == queryType);
 
+            Console.WriteLine("Scaffolding GraphQLContext");
             var graphContext = GenerateGraphContext(queryClass);
             FormatAndWriteToFile(graphContext, $"{options.ContextName}Context");
         }

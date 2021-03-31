@@ -124,14 +124,20 @@ namespace GraphQLClientGenerator
 
         private static async Task HandleGenerate(string endpoint, string? output, string? @namespace, string? context, IConsole console)
         {
-            var httpClient = new HttpClient();
-            var webClient = new WebClient();
-            webClient.Headers.Add("Content-Type", "application/json");
+            //var webClient = new WebClient();
+            //webClient.Headers.Add("Content-Type", "application/json");
+            //var downloadString = webClient.UploadString("endpoint", query);
+            Console.WriteLine("Scaffolding GraphQL client for {0}", endpoint);
 
-            //var downloadString = webClient.UploadString("https://api.spacex.land/graphql", query);
-            var responseMessage = await httpClient.PostAsJsonAsync(endpoint, new { query = IntrospectionQuery });
-            var schemaJson = await responseMessage.Content.ReadAsStringAsync();
-            var rootObject = JsonSerializer.Deserialize<RootSchemaObject>(schemaJson, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            using var httpClient = new HttpClient();
+            Console.WriteLine("Running introspection query");
+
+            using var responseMessage = await httpClient.PostAsJsonAsync(endpoint, new {query = IntrospectionQuery});
+            string schemaJson = await responseMessage.Content.ReadAsStringAsync();
+
+            var rootObject = JsonSerializer.Deserialize<RootSchemaObject>(schemaJson, new JsonSerializerOptions {PropertyNamingPolicy = JsonNamingPolicy.CamelCase});
+
+            Console.WriteLine("Scaffolding client code");
 
             var codeGenerationOptions = new CodeGenerationOptions
             {
@@ -140,8 +146,12 @@ namespace GraphQLClientGenerator
                 OutputDirectory = string.IsNullOrEmpty(output) ? Environment.CurrentDirectory : output,
                 ContextName = context ?? "Query"
             };
+
             var graphQLClassesGenerator = new GraphQLClassesGenerator(codeGenerationOptions);
             graphQLClassesGenerator.GenerateClient(rootObject.Data.Schema);
+
+            Console.WriteLine("Scaffolding complete");
+            Console.ReadKey();
         }
     }
 
