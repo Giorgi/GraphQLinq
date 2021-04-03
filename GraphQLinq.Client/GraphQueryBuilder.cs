@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
 
 namespace GraphQLinq
 {
@@ -53,7 +54,7 @@ namespace GraphQLinq
 
                 foreach (var item in select.IncludeArguments)
                 {
-                    queryVariables.Add(item.Key,item.Value);
+                    queryVariables.Add(item.Key, item.Value);
                 }
             }
 
@@ -66,7 +67,15 @@ namespace GraphQLinq
 
             var dictionary = new Dictionary<string, object> { { "query", graphQLQuery }, { "variables", queryVariables } };
 
-            var json = JsonConvert.SerializeObject(dictionary, new StringEnumConverter());
+            var json = JsonConvert.SerializeObject(dictionary, new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+                ContractResolver = new DefaultContractResolver
+                {
+                    NamingStrategy = new CamelCaseNamingStrategy()
+                },
+                Converters = new List<JsonConverter> { new StringEnumConverter() }
+            });
 
             return new GraphQLQuery(graphQLQuery, queryVariables, json);
         }
