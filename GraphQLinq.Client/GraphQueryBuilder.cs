@@ -27,24 +27,44 @@ namespace GraphQLinq
 
                 var padding = new string(' ', 4);
 
-                if (body.NodeType == ExpressionType.MemberAccess)
+                switch (body.NodeType)
                 {
-                    var member = ((MemberExpression)body).Member;
-                    selectClause = BuildMemberAccessSelectClause(body, selectClause, padding, member.Name);
-                }
+                    case ExpressionType.MemberAccess:
+                        {
+                            var member = ((MemberExpression)body).Member;
+                            selectClause = BuildMemberAccessSelectClause(body, selectClause, padding, member.Name);
+                            break;
+                        }
+                    case ExpressionType.New:
+                        {
+                            var newExpression = (NewExpression)body;
 
-                if (body.NodeType == ExpressionType.New)
-                {
-                    var newExpression = (NewExpression)body;
+                            var fields = new List<string>();
 
-                    var fields = new List<string>();
+                            foreach (var argument in newExpression.Arguments.OfType<MemberExpression>())
+                            {
+                                var selectField = BuildMemberAccessSelectClause(argument, selectClause, padding, argument.Member.Name);
+                                fields.Add(selectField);
+                            }
+                            selectClause = string.Join(Environment.NewLine, fields);
+                            break;
+                        }
+                    case ExpressionType.MemberInit:
+                        {
+                            var memberInitExpression = (MemberInitExpression)body;
 
-                    foreach (var argument in newExpression.Arguments.OfType<MemberExpression>())
-                    {
-                        var selectField = BuildMemberAccessSelectClause(argument, selectClause, padding, argument.Member.Name);
-                        fields.Add(selectField);
-                    }
-                    selectClause = string.Join(Environment.NewLine, fields);
+                            var fields = new List<string>();
+
+                            foreach (var argument in memberInitExpression.Bindings.OfType<MemberAssignment>())
+                            {
+                                var selectField = BuildMemberAccessSelectClause(argument.Expression, selectClause, padding, argument.Member.Name);
+                                fields.Add(selectField);
+                            }
+                            selectClause = string.Join(Environment.NewLine, fields);
+                            break;
+                        }
+                    default:
+                        throw new NotSupportedException($"Selector of type {body.NodeType} is not implemented yet");
                 }
             }
             else
