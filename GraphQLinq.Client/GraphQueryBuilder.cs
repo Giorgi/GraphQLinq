@@ -92,9 +92,9 @@ namespace GraphQLinq
 
         private static string BuildMemberAccessSelectClause(Expression body, string selectClause, string padding, string alias)
         {
-            if (body.NodeType == ExpressionType.MemberAccess)
+            if (body is MemberExpression memberExpression)
             {
-                var member = ((MemberExpression)body).Member as PropertyInfo;
+                var member = memberExpression.Member as PropertyInfo;
 
                 if (member != null)
                 {
@@ -112,7 +112,7 @@ namespace GraphQLinq
                     {
                         selectClause = $"{member.Name.ToCamelCase()} {{ {Environment.NewLine}{selectClause}}}";
                     }
-                    return BuildMemberAccessSelectClause(((MemberExpression)body).Expression, selectClause, padding, "");
+                    return BuildMemberAccessSelectClause(memberExpression.Expression, selectClause, padding, "");
                 }
                 return selectClause;
             }

@@ -18,9 +18,7 @@ namespace GraphQLinq
 
         internal static bool HasNestedProperties(this Type type)
         {
-            var trueType = GetTypeOrListType(type);
-
-            return !IsValueTypeOrString(trueType);
+            return !IsValueTypeOrString(type);
         }
 
         internal static Type GetTypeOrListType(this Type type)
