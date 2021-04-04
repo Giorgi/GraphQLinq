@@ -1,5 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
+using SpaceX;
+using Spectre.Console;
+using Spectre.Console.Rendering;
 
 namespace GraphQLinq.Demo
 {
@@ -7,21 +15,218 @@ namespace GraphQLinq.Demo
     {
         static void Main(string[] args)
         {
-            var locationTypes = new List<LocationType> { LocationType.STORE, LocationType.SERVICE };
-            var graphQuery = new SuperChargersGraphContext("https://www.superchargers.io/graphql").Locations(type: locationTypes);//Near(30, -90);
+            SpaceXQueryExamples();
+        }
 
-            //var q = graphQuery.Select(location => new { c = location.locationType });
-            var t = graphQuery.Include(location => location.Details("na", "desc"));
-            //graphQuery.Select(location => new
-            //{
-            //    location.emails,
-            //    location.salesPhone
-            //}).Include(s => s.emails).ToList();
-            graphQuery = graphQuery.Include(location => location.salesPhone).Include(location => location.emails);
-            //var enumerator = q.ToList();
+        private static void SpaceXQueryExamples()
+        {
+            var spaceXContext = new QueryContext();
 
-            var locations = t.ToList();
-            var list = graphQuery.ToList();
+            #region Company details
+            var company = spaceXContext.Company().ToItem();
+
+            RenderCompanyDetails(company);
+            #endregion
+
+            #region Specific properties of company
+            //Use an anonymous type to select specific properties
+            var companySummaryAnonymous = spaceXContext.Company().Select(c => new { c.Ceo, c.Name, c.Headquarters }).ToItem();
+
+            //Use data class to select specific properties
+            var companySummary = spaceXContext.Company().Select(c => new CompanySummary
+            {
+                Ceo = c.Ceo,
+                Name = c.Name,
+                Headquarters = c.Headquarters
+            }).ToItem();
+
+            RenderCompanySummary(companySummary);
+            #endregion
+
+            #region Include navigation properties
+            var companyWithHeadquartersAndLinks = spaceXContext.Company()
+                                                                .Include(info => info.Headquarters)
+                                                                .Include(info => info.Links).ToItem();
+
+            RenderCompanyDetailsAndLinks(companyWithHeadquartersAndLinks);
+            #endregion
+
+            #region Filter missions, compose queries
+            var missionsQuery = spaceXContext.Missions(new MissionsFind { Manufacturer = "Orbital ATK" }, null, null)
+                                                 .Include(mission => mission.Manufacturers);
+            var missions = missionsQuery.ToList();
+
+            RenderMissions(missions);
+
+            var missionsWithPayloads = missionsQuery.Include(mission => mission.Payloads).ToList();
+
+            RenderMissions(missionsWithPayloads, true);
+            #endregion
+
+            #region Multiple levels of Includes
+            //Launch_date_unix and Static_fire_date_unix need custom converter
+            spaceXContext.ContractResolver = new SpaceXContractResolver();
+
+            var launches = spaceXContext.Launches(null, 10, 0, null, null)
+                                        .Include(launch => launch.Links)
+                                        .Include(launch => launch.Rocket)
+                                        .Include(launch => launch.Rocket.Second_stage.Payloads.Select(payload => payload.Manufacturer))
+                                        .ToList();
+
+            RenderLaunches(launches);
+            #endregion
+
+            Console.ReadKey();
+        }
+
+        private static void RenderLaunches(List<Launch> launches)
+        {
+            var table = new Table().Title("Launches");
+            table.AddColumn(nameof(Launch.Mission_name)).AddColumn(nameof(Launch.Launch_date_utc))
+                 .AddColumn(nameof(Launch.Rocket.Rocket_name)).AddColumn(nameof(Launch.Links)).AddColumn(
+                     $"{nameof(Launch.Rocket.Second_stage.Payloads)}  {nameof(Payload.Manufacturer)}");
+
+            foreach (var launch in launches)
+            {
+                var linksTable = new Table().AddColumn(nameof(launch.Links));
+                linksTable.AddRow(new Markup($"[link={launch.Links.Article_link}]Article_link - {launch.Links.Article_link}[/]"));
+                linksTable.AddRow(new Markup($"[link={launch.Links.Video_link}]Video_link - {launch.Links.Video_link}[/]"));
+                linksTable.AddRow(new Markup($"[link={launch.Links.Presskit}]Presskit - {launch.Links.Presskit}[/]"));
+                linksTable.AddRow(new Markup($"[link={launch.Links.Reddit_launch}]Reddit_launch - {launch.Links.Reddit_launch}[/]"));
+                linksTable.AddRow(new Markup($"[link={launch.Links.Wikipedia}]Wikipedia - {launch.Links.Wikipedia}[/]"));
+
+                var payloadsTable = new Table().AddColumn(nameof(Payload.Manufacturer));
+                foreach (var payload in launch.Rocket.Second_stage.Payloads.Where(payload => payload != null))
+                {
+                    payloadsTable.AddRow(payload.Manufacturer ?? "");
+                }
+
+                table.AddRow(new Markup(launch.Mission_name),
+                             new Markup(launch.Launch_date_utc.ToString()),
+                             new Markup(launch.Rocket.Rocket_name),
+                             linksTable,
+                             payloadsTable);
+            }
+
+            AnsiConsole.Render(table);
+        }
+
+        private static void RenderMissions(List<Mission> missions, bool showPayload = false)
+        {
+            var table = new Table().Title(showPayload ? "Missions with Payload" : "Missions");
+
+            table.AddColumn(nameof(Mission.Name)).AddColumn(nameof(Mission.Description)).AddColumn(nameof(Mission.Manufacturers));
+
+            if (showPayload)
+            {
+                table.AddColumn("Payloads");
+            }
+
+            foreach (var mission in missions)
+            {
+                var manufacturers = string.Join(Environment.NewLine, mission.Manufacturers);
+
+                var rowItems = new List<IRenderable> { new Markup(mission.Name), new Markup(mission.Description), new Markup(manufacturers) };
+
+                if (showPayload)
+                {
+                    var payloadsTable = new Table().AddColumn("Property").AddColumn("Value").Centered();
+
+                    //For some reason the server returns null items in the list
+                    foreach (var payload in mission.Payloads.Where(payload => payload != null))
+                    {
+                        payloadsTable.AddRow(nameof(payload.Nationality), payload.Nationality);
+                        payloadsTable.AddRow(nameof(payload.Payload_mass_kg), payload.Payload_mass_kg.ToString());
+                        payloadsTable.AddRow(nameof(payload.Orbit), payload.Orbit);
+                        payloadsTable.AddRow(nameof(payload.Reused), payload.Reused.ToString());
+
+                        payloadsTable.AddEmptyRow();
+                    }
+
+                    rowItems.Add(payloadsTable);
+                }
+
+                table.AddRow(rowItems);
+            }
+
+            AnsiConsole.Render(table);
+        }
+
+        private static void RenderCompanyDetails(Info company)
+        {
+            var table = new Table().Title("Company Details");
+
+            table.AddColumn("Property").AddColumn("Value").Centered();
+
+            table.AddRow(nameof(company.Name), company.Name);
+            table.AddRow(nameof(company.Ceo), company.Ceo);
+            table.AddRow(nameof(company.Summary), company.Summary);
+            table.AddRow(nameof(company.Founded), company.Founded.ToString());
+            table.AddRow(nameof(company.Founder), company.Founder);
+            table.AddRow(nameof(company.Employees), company.Employees.ToString());
+
+            AnsiConsole.Render(table);
+        }
+
+        private static void RenderCompanyDetailsAndLinks(Info company)
+        {
+            var table = new Table().Title("Company Details and Headquarters");
+
+            table.AddColumn("Property").AddColumn("Value").Centered();
+
+            table.AddRow(nameof(company.Name), company.Name);
+            table.AddRow(nameof(company.Ceo), company.Ceo);
+            table.AddRow(nameof(company.Summary), company.Summary);
+            table.AddRow(nameof(company.Founded), company.Founded.ToString());
+            table.AddRow(nameof(company.Founder), company.Founder);
+            table.AddRow(nameof(company.Employees), company.Employees.ToString());
+
+            table.AddRow(new Markup(nameof(company.Headquarters)),
+                new Panel(string.Join(Environment.NewLine, company.Headquarters.State, company.Headquarters.City, company.Headquarters.Address)));
+
+            AnsiConsole.Render(table);
+
+            AnsiConsole.MarkupLine($"[link={company.Links.Elon_twitter}]Elon Twitter - {company.Links.Elon_twitter}[/]");
+            AnsiConsole.MarkupLine($"[link={company.Links.Flickr}]Flickr - {company.Links.Flickr}[/]");
+            AnsiConsole.MarkupLine($"[link={company.Links.Twitter}]Twitter - {company.Links.Twitter}[/]");
+            AnsiConsole.MarkupLine($"[link={company.Links.Website}]Website - {company.Links.Website}[/]");
+        }
+
+        private static void RenderCompanySummary(CompanySummary companyInfo)
+        {
+            var table = new Table().Title("Company Selected Details and Headquarters");
+
+            table.AddColumn("Property").AddColumn("Value");
+
+            table.AddRow(nameof(companyInfo.Name), companyInfo.Name);
+            table.AddRow(nameof(companyInfo.Ceo), companyInfo.Ceo);
+            table.AddRow(new Markup(nameof(companyInfo.Headquarters)),
+                         new Panel(string.Join(Environment.NewLine, companyInfo.Headquarters.State, companyInfo.Headquarters.City, companyInfo.Headquarters.Address)));
+
+            AnsiConsole.Render(table);
+        }
+    }
+
+    class CompanySummary
+    {
+        public string Ceo { get; set; }
+        public string Name { get; set; }
+        public AddressType Headquarters { get; set; }
+    }
+
+    public class SpaceXContractResolver : DefaultContractResolver
+    {
+        protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
+        {
+            var property = base.CreateProperty(member, memberSerialization);
+
+            var isDate = property.PropertyType == typeof(DateTime) || property.PropertyType == typeof(DateTime?);
+            if (isDate && property.PropertyName.Contains("unix"))
+            {
+                property.Converter = new UnixDateTimeConverter();
+            }
+
+            return property;
         }
     }
 }

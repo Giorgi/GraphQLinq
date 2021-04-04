@@ -9,6 +9,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Spectre.Console" Version="0.38.0" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="HSL\Agency.cs" />
