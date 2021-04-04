@@ -75,16 +75,14 @@ namespace GraphQLinq.Demo
 
             RenderLaunches(launches);
             #endregion
-
-            Console.ReadKey();
         }
 
         private static void RenderLaunches(List<Launch> launches)
         {
             var table = new Table().Title("Launches");
-            table.AddColumn(nameof(Launch.Mission_name)).AddColumn(nameof(Launch.Launch_date_utc))
+            table.AddColumn(nameof(Launch.Mission_name), column => column.Width = 12).AddColumn(nameof(Launch.Launch_date_utc), column => column.Width = 15)
                  .AddColumn(nameof(Launch.Rocket.Rocket_name)).AddColumn(nameof(Launch.Links)).AddColumn(
-                     $"{nameof(Launch.Rocket.Second_stage.Payloads)}  {nameof(Payload.Manufacturer)}");
+                     $"{nameof(Launch.Rocket.Second_stage.Payloads)}  {nameof(Payload.Manufacturer)}", column => column.Width=12);
 
             foreach (var launch in launches)
             {
@@ -95,20 +93,18 @@ namespace GraphQLinq.Demo
                 linksTable.AddRow(new Markup($"[link={launch.Links.Reddit_launch}]Reddit_launch - {launch.Links.Reddit_launch}[/]"));
                 linksTable.AddRow(new Markup($"[link={launch.Links.Wikipedia}]Wikipedia - {launch.Links.Wikipedia}[/]"));
 
-                var payloadsTable = new Table().AddColumn(nameof(Payload.Manufacturer));
-                foreach (var payload in launch.Rocket.Second_stage.Payloads.Where(payload => payload != null))
-                {
-                    payloadsTable.AddRow(payload.Manufacturer ?? "");
-                }
+                var payloadManufacturers = string.Join(Environment.NewLine, launch.Rocket.Second_stage.Payloads.Where(payload => payload != null)
+                                                 .Select(p => p.Manufacturer));
 
                 table.AddRow(new Markup(launch.Mission_name),
                              new Markup(launch.Launch_date_utc.ToString()),
                              new Markup(launch.Rocket.Rocket_name),
                              linksTable,
-                             payloadsTable);
+                             new Markup(payloadManufacturers));
             }
 
             AnsiConsole.Render(table);
+            AnsiConsole.MarkupLine("");
         }
 
         private static void RenderMissions(List<Mission> missions, bool showPayload = false)
@@ -150,6 +146,7 @@ namespace GraphQLinq.Demo
             }
 
             AnsiConsole.Render(table);
+            AnsiConsole.MarkupLine("");
         }
 
         private static void RenderCompanyDetails(Info company)
@@ -166,6 +163,7 @@ namespace GraphQLinq.Demo
             table.AddRow(nameof(company.Employees), company.Employees.ToString());
 
             AnsiConsole.Render(table);
+            AnsiConsole.MarkupLine("");
         }
 
         private static void RenderCompanyDetailsAndLinks(Info company)
@@ -190,6 +188,7 @@ namespace GraphQLinq.Demo
             AnsiConsole.MarkupLine($"[link={company.Links.Flickr}]Flickr - {company.Links.Flickr}[/]");
             AnsiConsole.MarkupLine($"[link={company.Links.Twitter}]Twitter - {company.Links.Twitter}[/]");
             AnsiConsole.MarkupLine($"[link={company.Links.Website}]Website - {company.Links.Website}[/]");
+            AnsiConsole.MarkupLine("");
         }
 
         private static void RenderCompanySummary(CompanySummary companyInfo)
@@ -204,6 +203,7 @@ namespace GraphQLinq.Demo
                          new Panel(string.Join(Environment.NewLine, companyInfo.Headquarters.State, companyInfo.Headquarters.City, companyInfo.Headquarters.Address)));
 
             AnsiConsole.Render(table);
+            AnsiConsole.MarkupLine("");
         }
     }
 
