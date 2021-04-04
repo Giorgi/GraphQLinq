@@ -1,12 +1,12 @@
 # GraphQLinq
 
-Strongly typed GraphQL queries with LINQ query syntax.
+LINQ to GraphQL - Strongly typed GraphQL queries with LINQ query syntax.
 
 ![Project Icon](Icon.png "GraphQLinq Project Icon")
 
 ## About The Project
 
-GraphQLinq is a .NET tool for generating C# classes from a GraphQL endpoint and a C# library for writing strongly typed GraphQL queries with LINQ. 
+GraphQLinq is a .NET tool for generating C# classes from a GraphQL endpoint and a C# library for writing strongly typed GraphQL queries with LINQ.
 
 With GraphQLinq you will:
 
@@ -42,4 +42,5 @@ The `o` option specifies the output directory for generated classes and `n` spec
 
 ## Running GraphQL Queries with LINQ
 
-The scaffolding tool
+The scaffolding tool generates classes for types available in the GraphQL type system and a `QueryContext` class that serves as an entry point for running the queries. Here are several examples of queries that you can run:
+
