@@ -44,9 +44,9 @@ The `o` option specifies the output directory for generated classes and `n` spec
 
 The scaffolding tool generates classes for types available in the GraphQL type system and a `QueryContext` class that serves as an entry point for running the queries. GraphQLinq supports running different types of queries.
 
-### Select all Primitive Properties of a Type
+### Query all Primitive Properties of a Type
 
-To select all properties of a type simply run a query like this:
+To query all properties of a type simply run a query like this:
 
 ```cs
 var spaceXContext = new QueryContext();
@@ -56,7 +56,7 @@ var company = spaceXContext.Company().ToItem();
 RenderCompanyDetails(company);
 ```
 
-This will select all primitive and string properties of `Company` but it won't select nested properties or collection type properties. Here is the output of the code snippet:
+This will query all primitive and string properties of `Company` but it won't query nested properties or collection type properties. Here is the output of the code snippet:
 
 ```sh
 ┌───────────┬──────────────────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -73,9 +73,9 @@ This will select all primitive and string properties of `Company` but it won't s
 └───────────┴──────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Select Specific Properties
+### Query Specific Properties
 
-If you want to select specific properties, including a navigation property, you can specify it with the `Select` method. You either map the projection to an existing type or an anonymous object (`Headquarters` is a nested property):
+If you want to query specific properties, including a navigation property, you can specify it with the `Select` method. You either map the projection to an existing type or an anonymous object (`Headquarters` is a nested property):
 
 ```cs
 var companySummaryAnonymous = spaceXContext.Company().Select(c => new { c.Ceo, c.Name, c.Headquarters }).ToItem();
@@ -105,4 +105,47 @@ This will result in the following output:
 │              │ │ Rocket Road │ │
 │              │ └─────────────┘ │
 └──────────────┴─────────────────┘
+```
+
+### Include Navigation Properties
+
+You can also query navigation properties using the `Include` method. You can include several properties if you need, and you can also `Include` nested navigation properties:
+
+```cs
+var companyWithHeadquartersAndLinks = spaceXContext.Company()
+                                            .Include(info => info.Headquarters)
+                                            .Include(info => info.Links).ToItem();
+
+RenderCompanyDetailsAndLinks(companyWithHeadquartersAndLinks);
+```
+
+### Pass Parameters to Queries and Compose Queries
+
+If the query has parameters, the generated method will have a parameter for each query parameter.
+
+This code will query for all `Missions` that were include **Orbital ATK** as a manufacturer:
+
+```cs
+var missionsQuery = spaceXContext.Missions(new MissionsFind { Manufacturer = "Orbital ATK" }, null, null)
+                                 .Include(mission => mission.Manufacturers);
+var missions = missionsQuery.ToList();
+
+RenderMissions(missions);
+```
+
+### Include Multiple Levels of Navigation Properties
+
+The `Include` method allows quering for multi-level nested properties too. For example, here is how to query for `Launches` and include Rocket's second stage payload manufacturer:
+
+```cs
+//Launch_date_unix and Static_fire_date_unix need custom converter
+spaceXContext.ContractResolver = new SpaceXContractResolver();
+
+var launches = spaceXContext.Launches(null, 10, 0, null, null)
+                            .Include(launch => launch.Links)
+                            .Include(launch => launch.Rocket)
+                            .Include(launch => launch.Rocket.Second_stage.Payloads.Select(payload => payload.Manufacturer))
+                            .ToList();
+
+RenderLaunches(launches);
 ```
