@@ -4,9 +4,25 @@ LINQ to GraphQL - Strongly typed GraphQL queries with LINQ query syntax.
 
 ![Project Icon](Icon.png "GraphQLinq Project Icon")
 
+- [About The Project](#about-the-project)
+- [Getting Started](#getting-started)
+  - [Installing Scaffolding Tool](#installing-scaffolding-tool)
+  - [Scaffolding Client Code](#scaffolding-client-code)
+  - [Install GraphQLinq NuGet Package](#install-graphqlinq-nuget-package)
+- [Running GraphQL Queries with LINQ](#running-graphql-queries-with-linq)
+  - [Query all Primitive Properties of a Type](#query-all-primitive-properties-of-a-type)
+  - [Query Specific Properties](#query-specific-properties)
+  - [Include Navigation Properties](#include-navigation-properties)
+  - [Pass Parameters to Queries and Compose Queries](#pass-parameters-to-queries-and-compose-queries)
+  - [Include Multiple Levels of Navigation Properties](#include-multiple-levels-of-navigation-properties)
+  - [View Generated Query](#view-generated-query)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## About The Project
 
-GraphQLinq is a .NET tool for generating C# classes from a GraphQL endpoint and a C# library for writing strongly typed GraphQL queries with LINQ.
+GraphQLinq is a .NET tool for generating C# classes from a GraphQL endpoint and a .Net Standard library for writing strongly typed GraphQL queries with LINQ.
 
 With GraphQLinq you will:
 
@@ -17,9 +33,9 @@ With GraphQLinq you will:
 
 ## Getting Started
 
-### Installing Scaffolding Tool
+### Install Scaffolding Tool
 
-Before you starting writing queries, you need to generate classes from GraphQL types. This is done by `GraphQLinq.Scaffolding`, a .NET tool that is part of the project.
+Before you starting writing queries, you need to generate classes from GraphQL types. This is done by `GraphQLinq.Scaffolding`, a .NET tool that is part of this project.
 
 To get the tool, open your favourite command shell and run
 
@@ -40,6 +56,14 @@ dotnet tool run graphql-scaffold https://api.spacex.land/graphql -o SpaceX -n Sp
 The `o` option specifies the output directory for generated classes and `n` specifies the namespace of the classes.
 
 ![Scaffolding](Scaffolding.gif "Scaffolding GraphQL Client")
+
+### Install GraphQLinq NuGet Package
+
+Before writing the queries you need to install the LINQ to GraphQL client library from NuGet. Run the following command to install it in the current project:
+
+```sh
+dotnet add package GraphQLinq.Client --version 1.0.0-beta
+```
 
 ## Running GraphQL Queries with LINQ
 
@@ -151,7 +175,7 @@ var launches = spaceXContext.Launches(null, 10, 0, null, null)
 RenderLaunches(launches);
 ```
 
-## View Generated Query
+### View Generated Query
 
 You can view the GraphQL query and variables by using the `Query` and `Variables` property of the `GraphQuery` class. The `ToString()` method of the `GraphQuery` class returns the query and the variables combined:
 
@@ -190,3 +214,17 @@ and the content of `fullQuery` will be:
   manufacturers
  }}","variables":{"find":{"manufacturer":"Orbital ATK"}}}
 ```
+
+## Roadmap
+
+See the [open issues](https://github.com/Giorgi/GraphQLinq/issues) for a list of proposed features and known issues.
+
+## Contributing
+
+If you encounter a bug or have a feature request, please use the [Issue Tracker](https://github.com/Giorgi/GraphQLinq/issues/new). The project is also open to contributions so feel free to fork the project and open pull requests.
+
+## License
+
+Copyright © Giorgi Dalakishvili
+
+Distributed under the Apache License. See [License](License.md) for more information.
