@@ -42,5 +42,67 @@ The `o` option specifies the output directory for generated classes and `n` spec
 
 ## Running GraphQL Queries with LINQ
 
-The scaffolding tool generates classes for types available in the GraphQL type system and a `QueryContext` class that serves as an entry point for running the queries. Here are several examples of queries that you can run:
+The scaffolding tool generates classes for types available in the GraphQL type system and a `QueryContext` class that serves as an entry point for running the queries. GraphQLinq supports running different types of queries.
 
+### Select all Primitive Properties of a Type
+
+To select all properties of a type simply run a query like this:
+
+```cs
+var spaceXContext = new QueryContext();
+
+var company = spaceXContext.Company().ToItem();
+
+RenderCompanyDetails(company);
+```
+
+This will select all primitive and string properties of `Company` but it won't select nested properties or collection type properties. Here is the output of the code snippet:
+
+```sh
+┌───────────┬──────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ Property  │ Value                                                                                                    │
+├───────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ Name      │ SpaceX                                                                                                   │
+│ Ceo       │ Elon Musk                                                                                                │
+│ Summary   │ SpaceX designs, manufactures and launches advanced rockets and spacecraft. The company was founded in    │
+│           │ 2002 to revolutionize space technology, with the ultimate goal of enabling people to live on other       │
+│           │ planets.                                                                                                 │
+│ Founded   │ 2002                                                                                                     │
+│ Founder   │ Elon Musk                                                                                                │
+│ Employees │ 7000                                                                                                     │
+└───────────┴──────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Select Specific Properties
+
+If you want to select specific properties, including a navigation property, you can specify it with the `Select` method. You either map the projection to an existing type or an anonymous object (`Headquarters` is a nested property):
+
+```cs
+var companySummaryAnonymous = spaceXContext.Company().Select(c => new { c.Ceo, c.Name, c.Headquarters }).ToItem();
+
+//Use data class to select specific properties
+var companySummary = spaceXContext.Company().Select(c => new CompanySummary
+{
+    Ceo = c.Ceo,
+    Name = c.Name,
+    Headquarters = c.Headquarters
+}).ToItem();
+
+RenderCompanySummary(companySummary);
+```
+
+This will result in the following output:
+
+```sh
+┌──────────────┬─────────────────┐
+│ Property     │ Value           │
+├──────────────┼─────────────────┤
+│ Name         │ SpaceX          │
+│ Ceo          │ Elon Musk       │
+│ Headquarters │ ┌─────────────┐ │
+│              │ │ California  │ │
+│              │ │ Hawthorne   │ │
+│              │ │ Rocket Road │ │
+│              │ └─────────────┘ │
+└──────────────┴─────────────────┘
+```
