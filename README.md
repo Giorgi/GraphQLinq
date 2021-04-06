@@ -2,7 +2,7 @@
 
 LINQ to GraphQL - Strongly typed GraphQL queries with LINQ query syntax.
 
-![Project Icon](docs\Images\Icon.png "GraphQLinq Project Icon")
+![Project Icon](docs/Images/Icon.png "GraphQLinq Project Icon")
 
 - [About The Project](#about-the-project)
 - [Getting Started](#getting-started)
@@ -55,7 +55,7 @@ dotnet tool run graphql-scaffold https://api.spacex.land/graphql -o SpaceX -n Sp
 
 The `o` option specifies the output directory for generated classes and `n` specifies the namespace of the classes.
 
-![Scaffolding](docs\Images\Scaffolding.gif "Scaffolding GraphQL Client")
+![Scaffolding](docs/Images/Scaffolding.gif "Scaffolding GraphQL Client")
 
 ### Install GraphQLinq NuGet Package
 
