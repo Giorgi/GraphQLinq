@@ -34,11 +34,11 @@
     <PackageReference Include="System.Net.Http.Json" Version="5.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Icon.png">
+    <None Include="..\..\docs\Images\Icon.png">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
-    <None Include="..\LICENSE.md">
+    <None Include="..\..\LICENSE.md">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
