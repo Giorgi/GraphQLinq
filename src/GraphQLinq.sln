@@ -20,7 +20,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "_build", "..\build\_build.csproj", "{F2ACC472-9FB9-4688-BC06-5C202F7C20E5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "_build", "build\_build.csproj", "{F2ACC472-9FB9-4688-BC06-5C202F7C20E5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
