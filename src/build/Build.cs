@@ -32,6 +32,8 @@ class Build : NukeBuild
 
     [Solution] readonly Solution Solution;
     [GitRepository] readonly GitRepository GitRepository;
+    
+    readonly string[] ProjectsToPack = { "Client", "Scaffolding" };
 
     AbsolutePath SourceDirectory => RootDirectory;
     AbsolutePath TestDirectory => SourceDirectory / "GraphQLinq.Tests";
@@ -74,5 +76,18 @@ class Build : NukeBuild
                 .SetCoverletOutputFormat(CoverletOutputFormat.opencover)
                 .SetCoverletOutput("TestResults/")
                 .EnableNoRestore());
+        });
+
+    Target Pack => _ => _
+        .DependsOn(Test)
+        .Executes(() =>
+        {
+            var projects = from project in ProjectsToPack
+                           select Solution.GetProject(project);
+
+            DotNetPack(s => s
+                .SetOutputDirectory(OutputDirectory)
+                .SetConfiguration("Release")
+                .CombineWith(projects, (settings, project) => settings.SetProject(project)));
         });
 }
