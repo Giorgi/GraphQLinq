@@ -1,5 +1,8 @@
 namespace SpaceX
 {
+    using System;
+    using System.Collections.Generic;
+
     public partial class RocketFirstStage
     {
         public int? Burn_time_sec { get; set; }

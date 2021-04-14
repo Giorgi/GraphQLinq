@@ -1,5 +1,8 @@
 namespace SpaceX
 {
+    using System;
+    using System.Collections.Generic;
+
     public partial class LaunchRocketFirstStageCore
     {
         public int? Block { get; set; }

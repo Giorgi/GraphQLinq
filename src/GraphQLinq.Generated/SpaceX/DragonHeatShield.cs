@@ -1,5 +1,8 @@
 namespace SpaceX
 {
+    using System;
+    using System.Collections.Generic;
+
     public partial class DragonHeatShield
     {
         public string Dev_partner { get; set; }

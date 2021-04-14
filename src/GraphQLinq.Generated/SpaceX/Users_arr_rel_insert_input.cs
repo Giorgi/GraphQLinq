@@ -1,5 +1,6 @@
 namespace SpaceX
 {
+    using System;
     using System.Collections.Generic;
 
     public partial class Users_arr_rel_insert_input

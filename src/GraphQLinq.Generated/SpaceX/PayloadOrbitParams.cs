@@ -1,6 +1,7 @@
 namespace SpaceX
 {
     using System;
+    using System.Collections.Generic;
 
     public partial class PayloadOrbitParams
     {

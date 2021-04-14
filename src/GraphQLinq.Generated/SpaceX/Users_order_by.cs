@@ -1,5 +1,8 @@
 namespace SpaceX
 {
+    using System;
+    using System.Collections.Generic;
+
     public partial class Users_order_by
     {
         public Order_by Id { get; set; }

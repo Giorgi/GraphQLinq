@@ -1,5 +1,8 @@
 namespace SpaceX
 {
+    using System;
+    using System.Collections.Generic;
+
     public partial class Users_aggregate_fields
     {
         public int? Count { get; set; }

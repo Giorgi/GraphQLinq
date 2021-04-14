@@ -1,5 +1,8 @@
 namespace SpaceX
 {
+    using System;
+    using System.Collections.Generic;
+
     public partial class LaunchRocket
     {
         public LaunchRocketFairings Fairings { get; set; }

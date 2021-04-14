@@ -1,7 +1,7 @@
 namespace SpaceX
 {
-    using System;
     using GraphQLinq;
+    using System;
     using System.Collections.Generic;
 
     public class QueryContext : GraphContext

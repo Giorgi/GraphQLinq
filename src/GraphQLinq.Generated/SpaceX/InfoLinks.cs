@@ -1,5 +1,8 @@
 namespace SpaceX
 {
+    using System;
+    using System.Collections.Generic;
+
     public partial class InfoLinks
     {
         public string Elon_twitter { get; set; }
