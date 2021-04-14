@@ -49,7 +49,7 @@ namespace GraphQLinq.Scaffolding
         {
             var queryType = schema.QueryType.Name;
             var mutationType = schema.MutationType.Name;
-            var subscriptionType = schema.SubscriptionType.Name;
+            var subscriptionType = schema.SubscriptionType?.Name;
 
             var types = schema.Types.Where(type => !type.Name.StartsWith("__")
                                                                 && !BuiltInTypes.Contains(type.Name)
