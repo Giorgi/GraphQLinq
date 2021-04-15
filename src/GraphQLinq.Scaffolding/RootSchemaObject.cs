@@ -18,19 +18,19 @@ namespace GraphQLinq.Scaffolding
 
     public class Schema
     {
-        public List<Type> Types { get; set; }
-        public Type QueryType { get; set; }
-        public Type MutationType { get; set; }
-        public Type SubscriptionType { get; set; }
+        public List<GraphqlType> Types { get; set; }
+        public GraphqlType QueryType { get; set; }
+        public GraphqlType MutationType { get; set; }
+        public GraphqlType? SubscriptionType { get; set; }
     }
 
-    public class Type : BaseInfo
+    public class GraphqlType : BaseInfo
     {
         public TypeKind Kind { get; set; }
         public List<EnumValue> EnumValues { get; set; }
         public List<Field> Fields { get; set; }
         public List<Field> InputFields { get; set; }
-        public List<Type> Interfaces { get; set; }
+        public List<GraphqlType> Interfaces { get; set; }
     }
 
     [JsonConverter(typeof(JsonStringEnumMemberConverter))]
@@ -63,7 +63,7 @@ namespace GraphQLinq.Scaffolding
     {
         public TypeKind Kind { get; set; }
         public string? Name { get; set; }
-        public FieldType OfType { get; set; }
+        public FieldType? OfType { get; set; }
     }
 
     public class Arg : BaseInfo

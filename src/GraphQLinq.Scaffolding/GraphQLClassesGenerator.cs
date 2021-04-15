@@ -13,20 +13,23 @@ namespace GraphQLinq.Scaffolding
 {
     class GraphQLClassesGenerator
     {
+        List<string> usings = new() { "System", "System.Collections.Generic" };
+
         private Dictionary<string, string> renamedClasses = new();
         private readonly CodeGenerationOptions options;
 
-        private static readonly Dictionary<string, string> TypeMapping = new()
+        private static readonly Dictionary<string, (string Name, Type type)> TypeMapping = new(StringComparer.InvariantCultureIgnoreCase)
         {
-            { "Int", "int" },
-            { "Float", "float" },
-            { "String", "string" },
-            { "ID", "string" },
-            { "Date", "DateTime" },
-            { "Boolean", "bool" },
-            { "Long", "long" },
-            { "uuid", "Guid" },
-            { "timestamptz", "DateTimeOffset" },
+            { "Int", new("int", typeof(int)) },
+            { "Float", new("float", typeof(float)) },
+            { "String", new("string", typeof(string)) },
+            { "ID", new("string", typeof(string)) },
+            { "Date", new("DateTime", typeof(DateTime)) },
+            { "Boolean", new("bool", typeof(bool)) },
+            { "Long", new("long", typeof(long)) },
+            { "uuid", new("Guid", typeof(Guid)) },
+            { "timestamptz", new("DateTimeOffset", typeof(DateTimeOffset)) },
+            { "Uri", new("Uri", typeof(Uri)) }
         };
 
         private static readonly List<string> BuiltInTypes = new()
@@ -56,7 +59,7 @@ namespace GraphQLinq.Scaffolding
                                                                 && queryType != type.Name && mutationType != type.Name && subscriptionType != type.Name).ToList();
 
             var enums = types.Where(type => type.Kind == TypeKind.Enum);
-            var classes = types.Where(type => type.Kind == TypeKind.Object || type.Kind == TypeKind.InputObject).OrderBy(type => type.Name);
+            var classes = types.Where(type => type.Kind == TypeKind.Object || type.Kind == TypeKind.InputObject || type.Kind == TypeKind.Union).OrderBy(type => type.Name);
             var interfaces = types.Where(type => type.Kind == TypeKind.Interface);
 
             AnsiConsole.WriteLine("Scaffolding enums ...");
@@ -96,7 +99,7 @@ namespace GraphQLinq.Scaffolding
         }
 
 
-        private SyntaxNode GenerateEnum(Type enumInfo)
+        private SyntaxNode GenerateEnum(GraphqlType enumInfo)
         {
             var topLevelDeclaration = RoslynUtilities.GetTopLevelNode(options.Namespace);
             var name = enumInfo.Name.NormalizeIfNeeded(options);
@@ -111,21 +114,18 @@ namespace GraphQLinq.Scaffolding
             return topLevelDeclaration.AddMembers(declaration);
         }
 
-        private SyntaxNode GenerateClass(Type classInfo)
+        private SyntaxNode GenerateClass(GraphqlType classInfo)
         {
             var topLevelDeclaration = RoslynUtilities.GetTopLevelNode(options.Namespace);
-
-            var usings = new HashSet<string>();
 
             var semicolonToken = Token(SyntaxKind.SemicolonToken);
 
             var className = classInfo.Name.NormalizeIfNeeded(options);
 
             var declaration = ClassDeclaration(className)
-                                            .AddModifiers(Token(SyntaxKind.PublicKeyword))
-                                            .AddModifiers(Token(SyntaxKind.PartialKeyword));
+                                .AddModifiers(Token(SyntaxKind.PublicKeyword), Token(SyntaxKind.PartialKeyword));
 
-            foreach (var @interface in classInfo.Interfaces ?? new List<Type>())
+            foreach (var @interface in classInfo.Interfaces ?? new List<GraphqlType>())
             {
                 declaration = declaration.AddBaseListTypes(SimpleBaseType(ParseTypeName(@interface.Name)));
             }
@@ -140,15 +140,14 @@ namespace GraphQLinq.Scaffolding
                     renamedClasses.Add(className, $"{className}Type");
                 }
 
-                var (fieldType, @namespace) = GetSharpTypeName(field.Type);
-                usings.Add(@namespace);
+                var (fieldTypeName, fieldType) = GetSharpTypeName(field.Type);
 
                 if (NeedsNullable(fieldType, field.Type))
                 {
-                    fieldType += "?";
+                    fieldTypeName += "?";
                 }
 
-                var property = PropertyDeclaration(ParseTypeName(fieldType), fieldName)
+                var property = PropertyDeclaration(ParseTypeName(fieldTypeName), fieldName)
                                             .AddModifiers(Token(SyntaxKind.PublicKeyword));
 
                 property = property.AddAccessorListAccessors(AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
@@ -160,7 +159,7 @@ namespace GraphQLinq.Scaffolding
                 declaration = declaration.AddMembers(property);
             }
 
-            foreach (var @using in usings.Where(s => !string.IsNullOrEmpty(s)))
+            foreach (var @using in usings)
             {
                 topLevelDeclaration = topLevelDeclaration.AddUsings(UsingDirective(IdentifierName(@using)));
             }
@@ -170,23 +169,28 @@ namespace GraphQLinq.Scaffolding
             return topLevelDeclaration;
         }
 
-        private SyntaxNode GenerateInterface(Type interfaceInfo)
+        private SyntaxNode GenerateInterface(GraphqlType interfaceInfo)
         {
             var topLevelDeclaration = RoslynUtilities.GetTopLevelNode(options.Namespace);
+
             var semicolonToken = Token(SyntaxKind.SemicolonToken);
 
             var name = interfaceInfo.Name.NormalizeIfNeeded(options);
 
-            var declaration = InterfaceDeclaration(name)
-                                            .AddModifiers(Token(SyntaxKind.PublicKeyword));
+            var declaration = InterfaceDeclaration(name).AddModifiers(Token(SyntaxKind.PublicKeyword));
 
             foreach (var field in interfaceInfo.Fields)
             {
-                var (type, _) = GetSharpTypeName(field.Type);
+                var (fieldTypeName, fieldType) = GetSharpTypeName(field.Type);
+
+                if (NeedsNullable(fieldType, field.Type))
+                {
+                    fieldTypeName += "?";
+                }
 
                 var fieldName = field.Name.NormalizeIfNeeded(options);
 
-                var property = PropertyDeclaration(ParseTypeName(type), fieldName);
+                var property = PropertyDeclaration(ParseTypeName(fieldTypeName), fieldName);
 
                 property = property.AddAccessorListAccessors(AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
                                    .WithSemicolonToken(semicolonToken));
@@ -197,10 +201,15 @@ namespace GraphQLinq.Scaffolding
                 declaration = declaration.AddMembers(property);
             }
 
+            foreach (var @using in usings)
+            {
+                topLevelDeclaration = topLevelDeclaration.AddUsings(UsingDirective(IdentifierName(@using)));
+            }
+
             return topLevelDeclaration.AddMembers(declaration);
         }
 
-        private SyntaxNode GenerateQueryExtensions(List<Type> classesWithArgFields)
+        private SyntaxNode GenerateQueryExtensions(List<GraphqlType> classesWithArgFields)
         {
             var exceptionMessage = Literal("This method is not implemented. It exists solely for query purposes.");
             var argumentListSyntax = ArgumentList(SingletonSeparatedList(Argument(LiteralExpression(SyntaxKind.StringLiteralExpression, exceptionMessage))));
@@ -209,24 +218,19 @@ namespace GraphQLinq.Scaffolding
 
             var topLevelDeclaration = RoslynUtilities.GetTopLevelNode(options.Namespace);
 
-            var usings = new HashSet<string> { "System" };
-
             var declaration = ClassDeclaration("QueryExtensions")
-                .AddModifiers(Token(SyntaxKind.PublicKeyword))
-                .AddModifiers(Token(SyntaxKind.StaticKeyword));
+                                            .AddModifiers(Token(SyntaxKind.PublicKeyword), Token(SyntaxKind.StaticKeyword));
 
             foreach (var @class in classesWithArgFields)
             {
                 foreach (var field in @class.Fields.Where(f => f.Args.Any()))
                 {
-                    var (type, @namespace) = GetSharpTypeName(field.Type);
-                    usings.Add(@namespace);
+                    var (fieldTypeName, _) = GetSharpTypeName(field.Type);
 
                     var fieldName = field.Name.NormalizeIfNeeded(options);
 
-                    var methodDeclaration = MethodDeclaration(ParseTypeName(type), fieldName)
-                                             .AddModifiers(Token(SyntaxKind.PublicKeyword))
-                                             .AddModifiers(Token(SyntaxKind.StaticKeyword));
+                    var methodDeclaration = MethodDeclaration(ParseTypeName(fieldTypeName), fieldName)
+                                            .AddModifiers(Token(SyntaxKind.PublicKeyword), Token(SyntaxKind.StaticKeyword));
 
                     var identifierName = @class.Name.ToCamelCase();
 
@@ -243,10 +247,10 @@ namespace GraphQLinq.Scaffolding
 
                     foreach (var arg in field.Args)
                     {
-                        (type, @namespace) = GetSharpTypeName(arg.Type);
-                        usings.Add(@namespace);
+                        (fieldTypeName, _) = GetSharpTypeName(arg.Type);
 
-                        var typeName = TypeMapping.ContainsValue(type) ? type : type.NormalizeIfNeeded(options);
+                        var typeName = TypeMapping.Values.Any(tuple => tuple.Name == fieldTypeName) ? fieldTypeName : fieldTypeName.NormalizeIfNeeded(options);
+
                         var parameterSyntax = Parameter(Identifier(arg.Name)).WithType(ParseTypeName(typeName));
                         methodParameters.Add(parameterSyntax);
                     }
@@ -258,7 +262,7 @@ namespace GraphQLinq.Scaffolding
                 }
             }
 
-            foreach (var @using in usings.Where(s => !string.IsNullOrEmpty(s)))
+            foreach (var @using in usings)
             {
                 topLevelDeclaration = topLevelDeclaration.AddUsings(UsingDirective(IdentifierName(@using)));
             }
@@ -268,11 +272,9 @@ namespace GraphQLinq.Scaffolding
             return topLevelDeclaration;
         }
 
-        private SyntaxNode GenerateGraphContext(Type queryInfo, string endpointUrl)
+        private SyntaxNode GenerateGraphContext(GraphqlType queryInfo, string endpointUrl)
         {
-            var topLevelDeclaration = RoslynUtilities.GetTopLevelNode(options.Namespace);
-
-            var usings = new HashSet<string> { "System", "GraphQLinq" };
+            var topLevelDeclaration = RoslynUtilities.GetTopLevelNode(options.Namespace).AddUsings(UsingDirective(IdentifierName("GraphQLinq")));
 
             var className = $"{options.ContextName}Context";
             var declaration = ClassDeclaration(className)
@@ -301,15 +303,14 @@ namespace GraphQLinq.Scaffolding
 
             foreach (var field in queryInfo.Fields)
             {
-                var (type, @namespace) = GetSharpTypeName(field.Type.Kind == TypeKind.NonNull ? field.Type.OfType : field.Type, true);
-                usings.Add(@namespace);
+                var (fieldTypeName, fieldType) = GetSharpTypeName(field.Type.Kind == TypeKind.NonNull ? field.Type.OfType : field.Type, true);
 
-                var baseMethodName = type.Replace("GraphItemQuery", "BuildItemQuery")
+                var baseMethodName = fieldTypeName.Replace("GraphItemQuery", "BuildItemQuery")
                                          .Replace("GraphCollectionQuery", "BuildCollectionQuery");
 
                 var fieldName = field.Name.NormalizeIfNeeded(options);
 
-                var methodDeclaration = MethodDeclaration(ParseTypeName(type), fieldName)
+                var methodDeclaration = MethodDeclaration(ParseTypeName(fieldTypeName), fieldName)
                                             .AddModifiers(Token(SyntaxKind.PublicKeyword));
 
                 var methodParameters = new List<ParameterSyntax>();
@@ -318,17 +319,14 @@ namespace GraphQLinq.Scaffolding
 
                 foreach (var arg in field.Args)
                 {
-                    (type, @namespace) = GetSharpTypeName(arg.Type);
-                    usings.Add(@namespace);
+                    (fieldTypeName, fieldType) = GetSharpTypeName(arg.Type);
 
-                    var typeName = TypeMapping.ContainsValue(type) ? type : type.NormalizeIfNeeded(options);
-
-                    if (NeedsNullable(typeName, arg.Type))
+                    if (NeedsNullable(fieldType, arg.Type))
                     {
-                        typeName += "?";
+                        fieldTypeName += "?";
                     }
 
-                    var parameterSyntax = Parameter(Identifier(arg.Name)).WithType(ParseTypeName(typeName));
+                    var parameterSyntax = Parameter(Identifier(arg.Name)).WithType(ParseTypeName(fieldTypeName));
                     methodParameters.Add(parameterSyntax);
 
                     initializer = initializer.AddExpressions(IdentifierName(arg.Name));
@@ -349,8 +347,7 @@ namespace GraphQLinq.Scaffolding
                 declaration = declaration.AddMembers(methodDeclaration);
             }
 
-
-            foreach (var @using in usings.Where(s => !string.IsNullOrEmpty(s)))
+            foreach (var @using in usings)
             {
                 topLevelDeclaration = topLevelDeclaration.AddUsings(UsingDirective(IdentifierName(@using)));
             }
@@ -360,21 +357,14 @@ namespace GraphQLinq.Scaffolding
             return topLevelDeclaration;
         }
 
-        private static bool NeedsNullable(string typeName, FieldType type)
+        private static bool NeedsNullable(Type? systemType, FieldType type)
         {
-            if (type.Kind == TypeKind.Scalar && TypeMapping.ContainsValue(typeName))
+            if (systemType == null)
             {
-                //Hacky way to return false for string and null for primitive types.
-                //For int, bool and other types Type.GetType will return null but not for string.
-                var builtInType = System.Type.GetType($"System.{typeName}", false, true);
-
-                if (builtInType == null || builtInType.IsValueType)
-                {
-                    return true;
-                }
+                return false;
             }
 
-            return false;
+            return type.Kind == TypeKind.Scalar && systemType.IsValueType;
         }
 
 
@@ -394,7 +384,7 @@ namespace GraphQLinq.Scaffolding
             }
         }
 
-        private (string type, string @namespace) GetSharpTypeName(FieldType? fieldType, bool wrapWithGraphTypes = false)
+        private (string typeName, Type? typeType) GetSharpTypeName(FieldType? fieldType, bool wrapWithGraphTypes = false)
         {
             if (fieldType == null)
             {
@@ -402,48 +392,55 @@ namespace GraphQLinq.Scaffolding
             }
 
             var typeName = fieldType.Name;
+            Type? resultType;
 
             if (typeName == null)
             {
-                if (fieldType.Kind == TypeKind.List)
+                switch (fieldType.Kind)
                 {
-                    var type = GetSharpTypeName(fieldType.OfType).type;
-                    typeName = wrapWithGraphTypes ? $"GraphCollectionQuery<{type}>" : $"List<{type}>";
+                    case TypeKind.List:
+                    {
+                        var type = GetSharpTypeName(fieldType.OfType).typeName;
+                        typeName = wrapWithGraphTypes ? $"GraphCollectionQuery<{type}>" : $"List<{type}>";
 
-                    return (typeName, "System.Collections.Generic");
-                }
-
-                if (fieldType.Kind == TypeKind.NonNull && fieldType.OfType?.Name?.ToUpper() == "ID")
-                {
-                    typeName = "string";
-                }
-                else
-                {
-                    return GetSharpTypeName(fieldType.OfType);
+                        return (typeName, null);
+                    }
+                    case TypeKind.NonNull when fieldType.OfType?.Name?.ToUpper() == "ID":
+                        (typeName, resultType) = GetMappedType("string");
+                        break;
+                    default:
+                        return GetSharpTypeName(fieldType.OfType);
                 }
             }
             else
             {
-                typeName = GetMappedType(fieldType.Name);
+                (typeName, resultType) = GetMappedType(fieldType.Name);
+
+                if (resultType == null && fieldType.Kind == TypeKind.Scalar)
+                {
+                    (typeName, resultType) = GetMappedType("string");
+                }
             }
 
             if (wrapWithGraphTypes)
             {
                 typeName = $"GraphItemQuery<{typeName}>";
+                resultType = null;
             }
 
             if (renamedClasses.ContainsKey(typeName))
             {
                 typeName = renamedClasses[typeName];
+                resultType = null;
             }
 
-            return (typeName, typeName == "Guid" || typeName == "DateTime" || typeName == "DateTimeOffset" ? "System" : "");
+            return (typeName, resultType);
         }
 
 
-        private string GetMappedType(string name)
+        private (string, Type?) GetMappedType(string name)
         {
-            return TypeMapping.ContainsKey(name) ? TypeMapping[name] : name.NormalizeIfNeeded(options);
+            return TypeMapping.ContainsKey(name) ? TypeMapping[name] : new(name.NormalizeIfNeeded(options), null);
         }
     }
 }
