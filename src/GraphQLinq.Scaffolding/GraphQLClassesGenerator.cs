@@ -228,7 +228,14 @@ namespace GraphQLinq.Scaffolding
                                              .AddModifiers(Token(SyntaxKind.PublicKeyword))
                                              .AddModifiers(Token(SyntaxKind.StaticKeyword));
 
-                    var thisParameter = Parameter(Identifier(@class.Name.ToCamelCase()))
+                    var identifierName = @class.Name.ToCamelCase();
+
+                    if (SyntaxFacts.GetKeywordKind(identifierName) != SyntaxKind.None)
+                    {
+                        identifierName = $"@{identifierName}";
+                    }
+
+                    var thisParameter = Parameter(Identifier(identifierName))
                                              .WithType(ParseTypeName(@class.Name.NormalizeIfNeeded(options)))
                                              .WithModifiers(TokenList(Token(SyntaxKind.ThisKeyword)));
 
