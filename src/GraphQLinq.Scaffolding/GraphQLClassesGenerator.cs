@@ -303,6 +303,11 @@ namespace GraphQLinq.Scaffolding
 
             foreach (var field in queryInfo.Fields)
             {
+                if (field.Type.Name == queryInfo.Name || field.Type.OfType?.Name == queryInfo.Name)
+                {
+                    continue; //Workaround for Query.relay method in GitHub schema
+                }
+                
                 var (fieldTypeName, fieldType) = GetSharpTypeName(field.Type.Kind == TypeKind.NonNull ? field.Type.OfType : field.Type, true);
 
                 var baseMethodName = fieldTypeName.Replace("GraphItemQuery", "BuildItemQuery")
@@ -399,12 +404,11 @@ namespace GraphQLinq.Scaffolding
                 switch (fieldType.Kind)
                 {
                     case TypeKind.List:
-                    {
-                        var type = GetSharpTypeName(fieldType.OfType).typeName;
-                        typeName = wrapWithGraphTypes ? $"GraphCollectionQuery<{type}>" : $"List<{type}>";
-
-                        return (typeName, null);
-                    }
+                        {
+                            var type = GetSharpTypeName(fieldType.OfType).typeName;
+                            typeName = wrapWithGraphTypes ? $"GraphCollectionQuery<{type}>" : $"List<{type}>";
+                            return (typeName, null);
+                        }
                     case TypeKind.NonNull when fieldType.OfType?.Name?.ToUpper() == "ID":
                         (typeName, resultType) = GetMappedType("string");
                         break;
