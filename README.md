@@ -148,7 +148,8 @@ RenderCompanyDetailsAndLinks(companyWithHeadquartersAndLinks);
 
 If the query has parameters, the generated method will have a parameter for each query parameter.
 
-This code will query for all `Missions` that were include **Orbital ATK** as a manufacturer:
+This code will query for all `Missions` that were include **Orbital ATK** as a manufacturer. It also builds a new query over the existing one that
+includes `Payloads` in the result.
 
 ```cs
 var missionsQuery = spaceXContext.Missions(new MissionsFind { Manufacturer = "Orbital ATK" }, null, null)
@@ -156,6 +157,10 @@ var missionsQuery = spaceXContext.Missions(new MissionsFind { Manufacturer = "Or
 var missions = missionsQuery.ToList();
 
 RenderMissions(missions);
+
+var missionsWithPayloads = missionsQuery.Include(mission => mission.Payloads).ToList();
+
+RenderMissions(missionsWithPayloads, true);
 ```
 
 ### Include Multiple Levels of Navigation Properties
