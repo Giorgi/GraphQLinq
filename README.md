@@ -40,7 +40,7 @@ Before you starting writing queries, you need to generate classes from GraphQL t
 To get the tool, open your favourite command shell and run
 
 ```sh
-dotnet tool install --global GraphQLinq.Scaffolding
+dotnet tool install --global --version 1.0.0-beta GraphQLinq.Scaffolding
 ```
 
 Running this command will install the `GraphQLinq.Scaffolding` tool and make it available globally for all projects.
@@ -50,7 +50,7 @@ Running this command will install the `GraphQLinq.Scaffolding` tool and make it 
 Next, navigate to the project where you want to add the classes and scaffold the client code. In this example, I will use the [SpaceX GraphQL Api](https://api.spacex.land/graphql) so run the following command:
 
 ```sh
-dotnet tool run graphql-scaffold https://api.spacex.land/graphql -o SpaceX -n SpaceX
+graphqlinq-scaffold https://api.spacex.land/graphql -o SpaceX -n SpaceX
 ```
 
 The `o` option specifies the output directory for generated classes, and `n` specifies the namespace of the classes.
