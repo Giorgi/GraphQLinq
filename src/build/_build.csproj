@@ -13,4 +13,8 @@
     <PackageReference Include="Nuke.Common" Version="5.1.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageDownload Include="coveralls.net" Version="[3.0.0]" />
+  </ItemGroup>
+
 </Project>
