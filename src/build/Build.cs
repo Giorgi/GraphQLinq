@@ -38,6 +38,7 @@ class Build : NukeBuild
     AbsolutePath SourceDirectory => RootDirectory;
     AbsolutePath TestDirectory => SourceDirectory / "GraphQLinq.Tests";
     AbsolutePath OutputDirectory => RootDirectory / "output";
+    AbsolutePath TestResultsDirectory => SourceDirectory / "TestResults";
 
     Target Clean => _ => _
         .Before(Restore)
@@ -68,13 +69,15 @@ class Build : NukeBuild
         .DependsOn(Compile)
         .Executes(() =>
         {
+            EnsureCleanDirectory(TestResultsDirectory);
+
             DotNetTest(s => s
                 .SetProjectFile(TestDirectory / "Tests.csproj")
-                .SetResultsDirectory(TestDirectory / "TestResults")
+                .SetResultsDirectory(TestResultsDirectory)
                 .SetLogger("trx")
                 .EnableCollectCoverage()
                 .SetCoverletOutputFormat(CoverletOutputFormat.opencover)
-                .SetCoverletOutput("TestResults/")
+                .SetCoverletOutput("../TestResults/")
                 .EnableNoRestore());
         });
 
