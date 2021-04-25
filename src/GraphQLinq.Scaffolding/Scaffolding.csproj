@@ -6,7 +6,7 @@
 
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>GraphQLinq-Scaffold</ToolCommandName>
-    <PackageOutputPath>./nupkg</PackageOutputPath>
+    <PackageOutputPath>./../output</PackageOutputPath>
     <Authors>Giorgi Dalakishvili</Authors>
     <Copyright>Copyright (c) 2017 - 2021 Giorgi Dalakishvili</Copyright>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
@@ -17,13 +17,14 @@
     <Deterministic>true</Deterministic>
     <ContinuousIntegrationBuild Condition="'$(Configuration)'=='Release'">True</ContinuousIntegrationBuild>
     <Version>1.0.0-beta</Version>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageProjectUrl>https://github.com/Giorgi/GraphQLinq/</PackageProjectUrl>
     <PackageIcon>Icon.png</PackageIcon>
     <RepositoryUrl>https://github.com/Giorgi/GraphQLinq/</RepositoryUrl>
     <PackageTags>GraphQL LINQ json api</PackageTags>
     <PackageReleaseNotes>Initial Release</PackageReleaseNotes>
     <Description>Generate classes from GraphQL endpoint and write strongly typed queries with LINQ.</Description>
+    <PackageId>GraphQLinq.Scaffolding</PackageId>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Macross.Json.Extensions" Version="2.0.0" />
