@@ -89,8 +89,9 @@ class Build : NukeBuild
                            select Solution.GetProject(project);
 
             DotNetPack(s => s
-                .SetOutputDirectory(OutputDirectory)
                 .SetConfiguration("Release")
+                .SetOutputDirectory(OutputDirectory)
+                .SetProperty("SolutionName", Solution.Name)
                 .CombineWith(projects, (settings, project) => settings.SetProject(project)));
         });
 }
