@@ -2,6 +2,8 @@
 
 LINQ to GraphQL - Strongly typed GraphQL queries with LINQ query syntax.
 
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge&logo=Apache)](License.md)
+
 ![Project Icon](docs/Images/Icon.png "GraphQLinq Project Icon")
 
 - [About The Project](#about-the-project)

@@ -2,21 +2,23 @@ using System;
 using System.Linq;
 using Nuke.Common;
 using Nuke.Common.CI;
+using Nuke.Common.CI.AppVeyor;
 using Nuke.Common.Execution;
 using Nuke.Common.Git;
 using Nuke.Common.IO;
 using Nuke.Common.ProjectModel;
 using Nuke.Common.Tooling;
+using Nuke.Common.Tools.CoverallsNet;
 using Nuke.Common.Tools.Coverlet;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Utilities.Collections;
-using static Nuke.Common.EnvironmentInfo;
 using static Nuke.Common.IO.FileSystemTasks;
-using static Nuke.Common.IO.PathConstruction;
+using static Nuke.Common.Tools.CoverallsNet.CoverallsNetTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 
 [CheckBuildProjectConfigurations]
 [ShutdownDotNetAfterServerBuild]
+[AppVeyor(AppVeyorImage.VisualStudio2019, InvokedTargets = new[] { nameof(Test) }, Secrets = new[] { "COVERALLS_REPO_TOKEN:0wXxQdMQF5yHgpUe3heAG5zY2YYNBZYEF9FmgqoQi6b6IC0JibAA+idcnOkwTeEg" })]
 class Build : NukeBuild
 {
     /// Support plugins are available for:
@@ -79,6 +81,8 @@ class Build : NukeBuild
                 .SetCoverletOutputFormat(CoverletOutputFormat.opencover)
                 .SetCoverletOutput("../TestResults/")
                 .EnableNoRestore());
+
+            CoverallsNet(s => s.EnableOpenCover().SetInput(TestResultsDirectory / "coverage.opencover.xml"));
         });
 
     Target Pack => _ => _
