@@ -3,6 +3,9 @@
 LINQ to GraphQL - Strongly typed GraphQL queries with LINQ query syntax.
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge&logo=Apache)](License.md)
+[![AppVeyor](https://img.shields.io/appveyor/build/Giorgi/graphqlinq/master.svg?style=for-the-badge&logo=appveyor)](https://ci.appveyor.com/project/Giorgi/graphqlinq)
+[![Coverage Status](https://img.shields.io/coveralls/github/Giorgi/GraphQLinq?logo=coveralls&style=for-the-badge)](https://coveralls.io/github/Giorgi/graphqlinq)
+[![Ko-Fi](https://img.shields.io/static/v1?style=for-the-badge&message=Support%20the%20Project&color=success&logo=ko-fi&label=$$)](https://ko-fi.com/U6U81LHU8)
 
 ![Project Icon](docs/Images/Icon.png "GraphQLinq Project Icon")
 
