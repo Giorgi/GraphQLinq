@@ -17,6 +17,11 @@
 image:
   - Visual Studio 2019
 
+before_build:
+
+- cmd: cd src
+
+
 build_script:
   - cmd: .\build.cmd Test
   - sh: ./build.cmd Test
