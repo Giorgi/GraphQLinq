@@ -16,10 +16,11 @@
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     <PackageIcon>Icon.png</PackageIcon>
+    <PackageReadmeFile>README-NuGet.md</PackageReadmeFile>
     <Description>Strongly typed GraphQL queries with LINQ query syntax.</Description>
-    <Version>1.0.0-beta</Version>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>1.0.0.0</FileVersion>
+    <Version>1.0.1-beta</Version>
+    <AssemblyVersion>1.0.0.1</AssemblyVersion>
+    <FileVersion>1.0.0.1</FileVersion>
     <PackageId>GraphQLinq.Client</PackageId>
     <Product>GraphQLinq.Client</Product>
     <PackageTags>GraphQL LINQ json api</PackageTags>
@@ -38,6 +39,10 @@
       <PackagePath></PackagePath>
     </None>
     <None Include="..\..\LICENSE.md">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+    <None Include="..\..\docs\README-NuGet.md">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>

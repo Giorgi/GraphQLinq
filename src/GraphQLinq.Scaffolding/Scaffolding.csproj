@@ -10,16 +10,17 @@
     <Authors>Giorgi Dalakishvili</Authors>
     <Copyright>Copyright (c) 2017 - 2021 Giorgi Dalakishvili</Copyright>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>1.0.0.0</FileVersion>
+    <AssemblyVersion>1.0.0.1</AssemblyVersion>
+    <FileVersion>1.0.0.1</FileVersion>
     <RepositoryType>git</RepositoryType>
     
     <Deterministic>true</Deterministic>
     <ContinuousIntegrationBuild Condition="'$(Configuration)'=='Release'">True</ContinuousIntegrationBuild>
-    <Version>1.0.0-beta</Version>
+    <Version>1.0.1-beta</Version>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageProjectUrl>https://github.com/Giorgi/GraphQLinq/</PackageProjectUrl>
     <PackageIcon>Icon.png</PackageIcon>
+    <PackageReadmeFile>README-NuGet.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/Giorgi/GraphQLinq/</RepositoryUrl>
     <PackageTags>GraphQL LINQ json api</PackageTags>
     <PackageReleaseNotes>Initial Release</PackageReleaseNotes>
@@ -40,6 +41,10 @@
       <PackagePath></PackagePath>
     </None>
     <None Include="..\..\LICENSE.md">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+    <None Include="..\..\docs\README-NuGet.md">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
