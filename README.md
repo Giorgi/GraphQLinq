@@ -7,6 +7,10 @@ LINQ to GraphQL - Strongly typed GraphQL queries with LINQ query syntax.
 [![Coverage Status](https://img.shields.io/coveralls/github/Giorgi/GraphQLinq?logo=coveralls&style=for-the-badge)](https://coveralls.io/github/Giorgi/graphqlinq)
 [![Ko-Fi](https://img.shields.io/static/v1?style=for-the-badge&message=Support%20the%20Project&color=success&logo=ko-fi&label=$$)](https://ko-fi.com/U6U81LHU8)
 
+
+[![](https://img.shields.io/nuget/dt/GraphQLinq.Client.svg?label=GraphQLinq.Client&style=for-the-badge&logo=NuGet)](https://www.nuget.org/packages/GraphQLinq.Client/)
+[![](https://img.shields.io/nuget/dt/GraphQLinq.Scaffolding.svg?label=GraphQLinq.Scaffolding&style=for-the-badge&logo=NuGet)](https://www.nuget.org/packages/GraphQLinq.Scaffolding/)
+
 ![Project Icon](docs/Images/Icon.png "GraphQLinq Project Icon")
 
 - [About The Project](#about-the-project)
