@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -108,7 +108,7 @@ namespace GraphQLinq.Scaffolding
 
             foreach (var enumValue in enumInfo.EnumValues)
             {
-                declaration = declaration.AddMembers(EnumMemberDeclaration(Identifier(enumValue.Name)));
+                declaration = declaration.AddMembers(EnumMemberDeclaration(Identifier(EscapeIdentifierName(enumValue.Name))));
             }
 
             return topLevelDeclaration.AddMembers(declaration);
@@ -232,12 +232,7 @@ namespace GraphQLinq.Scaffolding
                     var methodDeclaration = MethodDeclaration(ParseTypeName(fieldTypeName), fieldName)
                                             .AddModifiers(Token(SyntaxKind.PublicKeyword), Token(SyntaxKind.StaticKeyword));
 
-                    var identifierName = @class.Name.ToCamelCase();
-
-                    if (SyntaxFacts.GetKeywordKind(identifierName) != SyntaxKind.None)
-                    {
-                        identifierName = $"@{identifierName}";
-                    }
+                    var identifierName = EscapeIdentifierName(@class.Name.ToCamelCase());
 
                     var thisParameter = Parameter(Identifier(identifierName))
                                              .WithType(ParseTypeName(@class.Name.NormalizeIfNeeded(options)))
@@ -445,6 +440,11 @@ namespace GraphQLinq.Scaffolding
         private (string, Type?) GetMappedType(string name)
         {
             return TypeMapping.ContainsKey(name) ? TypeMapping[name] : new(name.NormalizeIfNeeded(options), null);
+        }
+
+        private string EscapeIdentifierName(string name)
+        {
+            return SyntaxFacts.GetKeywordKind(name) != SyntaxKind.None ? $"@{name}" : name;
         }
     }
 }
