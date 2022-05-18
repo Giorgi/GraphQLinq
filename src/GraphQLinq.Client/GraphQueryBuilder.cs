@@ -73,7 +73,7 @@ namespace GraphQLinq
             var queryParameters = passedArguments.Any() ? $"({string.Join(", ", passedArguments.Select(pair => $"{pair.Key}: ${pair.Key}"))})" : "";
             var queryParameterTypes = queryVariables.Any() ? $"({string.Join(", ", queryVariables.Select(pair => $"${pair.Key}: {pair.Value.GetType().ToGraphQlType()}"))})" : "";
 
-            var graphQLQuery = string.Format(QueryTemplate, queryParameterTypes, ResultAlias, graphQuery.QueryName.ToLower(), queryParameters, selectClause);
+            var graphQLQuery = string.Format(QueryTemplate, queryParameterTypes, ResultAlias, graphQuery.QueryName, queryParameters, selectClause);
 
             var dictionary = new Dictionary<string, object> { { "query", graphQLQuery }, { "variables", queryVariables } };
 

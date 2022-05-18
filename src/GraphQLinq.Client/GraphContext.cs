@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using Newtonsoft.Json.Serialization;
 
@@ -32,7 +33,7 @@ namespace GraphQLinq
 
         private Dictionary<string, object> BuildDictionary(object[] parameterValues, string queryName)
         {
-            var parameters = GetType().GetMethod(queryName).GetParameters();
+            var parameters = GetType().GetMethod(queryName, BindingFlags.Public | BindingFlags.IgnoreCase | BindingFlags.Instance).GetParameters();
             var arguments = parameters.Zip(parameterValues, (info, value) => new { info.Name, Value = value }).ToDictionary(arg => arg.Name, arg => arg.Value);
             return arguments;
         }

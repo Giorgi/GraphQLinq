@@ -51,7 +51,7 @@ namespace GraphQLinq.Scaffolding
         public string GenerateClient(Schema schema, string endpointUrl)
         {
             var queryType = schema.QueryType.Name;
-            var mutationType = schema.MutationType.Name;
+            var mutationType = schema.MutationType?.Name;
             var subscriptionType = schema.SubscriptionType?.Name;
 
             var types = schema.Types.Where(type => !type.Name.StartsWith("__")
@@ -302,7 +302,7 @@ namespace GraphQLinq.Scaffolding
                 {
                     continue; //Workaround for Query.relay method in GitHub schema
                 }
-                
+
                 var (fieldTypeName, fieldType) = GetSharpTypeName(field.Type.Kind == TypeKind.NonNull ? field.Type.OfType : field.Type, true);
 
                 var baseMethodName = fieldTypeName.Replace("GraphItemQuery", "BuildItemQuery")
@@ -338,8 +338,11 @@ namespace GraphQLinq.Scaffolding
                                             .WithVariables(SingletonSeparatedList(VariableDeclarator(Identifier("parameterValues"))
                                             .WithInitializer(EqualsValueClause(paramsArray)))));
 
+                var parametersArgument = Argument(IdentifierName("parameterValues"));
+                var argumentSyntax = Argument(LiteralExpression(SyntaxKind.StringLiteralExpression, Literal($"{field.Name}")));
+                
                 var returnStatement = ReturnStatement(InvocationExpression(IdentifierName(baseMethodName))
-                                            .WithArgumentList(ArgumentList(SingletonSeparatedList(Argument(IdentifierName("parameterValues"))))));
+                                            .WithArgumentList(ArgumentList(SeparatedList(new List<ArgumentSyntax> { parametersArgument, argumentSyntax }))));
 
                 methodDeclaration = methodDeclaration.AddParameterListParameters(methodParameters.ToArray())
                                                         .WithBody(Block(parametersDeclaration, returnStatement));
