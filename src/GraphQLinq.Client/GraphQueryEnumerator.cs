@@ -1,23 +1,24 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using System.Linq;
-using System.Net;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 
 namespace GraphQLinq
 {
-    class GraphQueryEnumerator<T, TSource> : IEnumerator<T>
+    public interface IGraphQueryEnumerator<T>
     {
-        private IEnumerator<T> listEnumerator;
+        Task<IEnumerable<T>> Execute();
+    }
 
+    class GraphQueryEnumerator<T, TSource> : IGraphQueryEnumerator<T>
+    {
+        private readonly GraphContext context;
         private readonly string query;
-        private readonly string baseUrl;
-        private readonly string authorization;
         private readonly QueryType queryType;
         private readonly Func<TSource, T> mapper;
         private readonly IContractResolver resolver;
@@ -27,32 +28,16 @@ namespace GraphQLinq
 
         internal GraphQueryEnumerator(GraphContext context, string query, QueryType queryType, Func<TSource, T> mapper)
         {
+            this.context = context;
             this.query = query;
             this.mapper = mapper;
             this.queryType = queryType;
-            baseUrl = context.BaseUrl;
-            resolver = context.ContractResolver ?? new DefaultContractResolver();
-            authorization = context.Authorization;
+            this.resolver = context.ContractResolver ?? new DefaultContractResolver();
         }
 
-        public void Dispose()
+        private async Task<IEnumerable<T>> DownloadData()
         {
-            listEnumerator.Dispose();
-        }
-
-        public bool MoveNext()
-        {
-            if (listEnumerator == null)
-            {
-                listEnumerator = DownloadData().GetEnumerator();
-            }
-
-            return listEnumerator.MoveNext();
-        }
-
-        private IEnumerable<T> DownloadData()
-        {
-            var json = DownloadJson();
+            var json = await DownloadJson(context.HttpClient);
 
             var jObject = JObject.Parse(json);
 
@@ -63,62 +48,42 @@ namespace GraphQLinq
             }
 
             var enumerable = jObject[DataPathPropertyName][GraphQueryBuilder<T>.ResultAlias]
-                        .Select(token =>
-                        {
-                            var jsonSerializer = new JsonSerializer { ContractResolver = resolver };
-                            var jToken = queryType == QueryType.Collection ? token : token.Parent;
+                .Select(token =>
+                {
+                    var jsonSerializer = new JsonSerializer { ContractResolver = resolver };
+                    var jToken = queryType == QueryType.Collection ? token : token.Parent;
 
-                            if (mapper != null)
-                            {
-                                var result = jToken.ToObject<TSource>(jsonSerializer);
-                                return mapper.Invoke(result);
-                            }
+                    if (mapper != null)
+                    {
+                        var result = jToken.ToObject<TSource>(jsonSerializer);
+                        return mapper.Invoke(result);
+                    }
 
-                            return jToken.ToObject<T>(jsonSerializer);
-                        });
+                    return jToken.ToObject<T>(jsonSerializer);
+                });
 
             return enumerable;
         }
 
-        private string DownloadJson()
+        private async Task<string> DownloadJson(HttpClient httpClient)
         {
-            WebRequest.DefaultWebProxy.Credentials = CredentialCache.DefaultCredentials;
-
-            using (var webClient = new WebClient { Proxy = WebRequest.DefaultWebProxy })
+            try
             {
-                webClient.Headers.Add(HttpRequestHeader.ContentType, "application/json");
-
-                if (!string.IsNullOrEmpty(authorization))
-                {
-                    webClient.Headers.Add(HttpRequestHeader.Authorization, authorization);
-                }
-
-                try
-                {
-                    return webClient.UploadString(baseUrl, query);
-                }
-                catch (WebException exception)
-                {
-                    using (var responseStream = exception.Response?.GetResponseStream())
-                    {
-                        using (var streamReader = new StreamReader(responseStream))
-                        {
-                            return streamReader.ReadToEnd();
-                        }
-                    }
-                }
+                var content = new StringContent(query, Encoding.UTF8, "application/json");
+                var response = await httpClient.PostAsync("", content);
+                return await response.Content.ReadAsStringAsync();
+            }
+            catch (Exception exception)
+            {
+                throw;
             }
         }
 
-        [ExcludeFromCodeCoverage]
-        public void Reset()
+        public async Task<IEnumerable<T>> Execute()
         {
-            throw new NotImplementedException();
+            var enumerable = await DownloadData();
+
+            return enumerable;
         }
-
-        public T Current => listEnumerator.Current;
-
-        [ExcludeFromCodeCoverage]
-        object IEnumerator.Current => Current;
     }
 }

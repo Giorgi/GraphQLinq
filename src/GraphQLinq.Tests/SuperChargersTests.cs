@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using NUnit.Framework;
 
 namespace GraphQLinq.Tests
@@ -12,52 +13,52 @@ namespace GraphQLinq.Tests
         readonly SuperChargersGraphContext superChargersContext = new SuperChargersGraphContext("https://www.superchargers.io/graphql");
 
         [Test]
-        public void SelectingCitiesReturnsListOfCities()
+        public async Task SelectingCitiesReturnsListOfCities()
         {   
             var query = superChargersContext.Locations(type: locationTypes).Select(l => l.city);
 
-            var locations = query.ToList();
+            var locations = await query.ToArray();
 
             CollectionAssert.IsNotEmpty(locations);
             CollectionAssert.AllItemsAreNotNull(locations);
         }
 
         [Test]
-        public void SelectingLocationsDoesNotReturnPhones()
+        public async Task SelectingLocationsDoesNotReturnPhones()
         {
             var query = superChargersContext.Locations(type: locationTypes);
 
-            var locations = query.ToList();
+            var locations = await query.ToArray();
             Assert.That(locations, Is.All.Matches<Location>(l => l.salesPhone == null));
         }
 
         [Test]
-        public void SelectingLocationsAndIncludingPhonesReturnsPhones()
+        public async Task SelectingLocationsAndIncludingPhonesReturnsPhones()
         {
             var query = superChargersContext.Locations(type: locationTypes).Include(location => location.salesPhone);
 
-            var locations = query.ToList();
+            var locations = await query.ToArray();
 
             Assert.That(locations, Is.All.Matches<Location>(l => l.salesPhone != null));
         }
 
         [Test]
-        public void SelectingCitiesAndPhonesReturnsPhones()
+        public async Task SelectingCitiesAndPhonesReturnsPhones()
         {
             var query = superChargersContext.Locations(type: locationTypes).Select(location => new { location.city, location.salesPhone });
 
-            var locations = query.ToList();
+            var locations = await query.ToArray();
 
             var locationsWithNullPhones = locations.Where(location => location.salesPhone == null).ToList();
             CollectionAssert.IsEmpty(locationsWithNullPhones);
         }
 
         [Test]
-        public void SelectingCitiesWithAliasAndPhonesReturnsPhonesAndCities()
+        public async Task SelectingCitiesWithAliasAndPhonesReturnsPhonesAndCities()
         {
             var query = superChargersContext.Locations(type: locationTypes).Select(location => new { CityName = location.city, location.salesPhone });
 
-            var locations = query.ToList();
+            var locations = await query.ToArray();
 
             var locationsWithNullPhones = locations.Where(location => location.salesPhone == null).ToList();
             var locationsWithNullCity = locations.Where(location => location.CityName == null).ToList();

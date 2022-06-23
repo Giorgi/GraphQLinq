@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace GraphQLinq
 {
@@ -158,7 +157,7 @@ namespace GraphQLinq
             return graphQuery;
         }
 
-        internal IEnumerator<T> BuildEnumerator<TSource>(QueryType queryType)
+        internal IGraphQueryEnumerator<T> BuildEnumerator<TSource>(QueryType queryType)
         {
             var query = lazyQuery.Value;
 
@@ -182,20 +181,14 @@ namespace GraphQLinq
             return (GraphItemQuery<TResult>)BuildSelect(resultSelector);
         }
 
-        public abstract T ToItem();
+        public abstract Task<T> ToItem();
     }
 
-    public abstract class GraphCollectionQuery<T> : GraphQuery<T>, IEnumerable<T>
+    public abstract class GraphCollectionQuery<T> : GraphQuery<T>
     {
         protected GraphCollectionQuery(GraphContext graphContext, string queryName) : base(graphContext, queryName) { }
 
-        public abstract IEnumerator<T> GetEnumerator();
-
-        [ExcludeFromCodeCoverage]
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        public abstract Task<IEnumerable<T>> ToArray();
 
         public GraphCollectionQuery<T> Include<TProperty>(Expression<Func<T, TProperty>> path)
         {
@@ -214,13 +207,10 @@ namespace GraphQLinq
         {
         }
 
-        public override T ToItem()
+        public override async Task<T> ToItem()
         {
-            using (var enumerator = BuildEnumerator<TSource>(QueryType.Item))
-            {
-                enumerator.MoveNext();
-                return enumerator.Current;
-            }
+            var enumerator = await BuildEnumerator<TSource>(QueryType.Item).Execute();
+            return enumerator.First();
         }
     }
 
@@ -230,9 +220,10 @@ namespace GraphQLinq
         {
         }
 
-        public override IEnumerator<T> GetEnumerator()
+        public override async Task<IEnumerable<T>> ToArray()
         {
-            return BuildEnumerator<TSource>(QueryType.Collection);
+            var enumerator = await BuildEnumerator<TSource>(QueryType.Collection).Execute();
+            return enumerator;
         }
     }
 
