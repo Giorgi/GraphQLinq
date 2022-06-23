@@ -13,7 +13,7 @@ namespace GraphQLinq.Scaffolding
 {
     class GraphQLClassesGenerator
     {
-        List<string> usings = new() { "System", "System.Collections.Generic" };
+        List<string> usings = new() { "System", "System.Collections.Generic", "System.Net.Http" };
 
         private Dictionary<string, string> renamedClasses = new();
         private readonly CodeGenerationOptions options;
@@ -48,18 +48,22 @@ namespace GraphQLinq.Scaffolding
             this.options = options;
         }
 
-        public string GenerateClient(Schema schema, string endpointUrl)
+        public string GenerateClient(Schema schema)
         {
             var queryType = schema.QueryType.Name;
             var mutationType = schema.MutationType?.Name;
             var subscriptionType = schema.SubscriptionType?.Name;
 
             var types = schema.Types.Where(type => !type.Name.StartsWith("__")
-                                                                && !BuiltInTypes.Contains(type.Name)
-                                                                && queryType != type.Name && mutationType != type.Name && subscriptionType != type.Name).ToList();
+                                                   && !BuiltInTypes.Contains(type.Name)
+                                                   && queryType != type.Name && mutationType != type.Name && subscriptionType != type.Name).ToList();
 
             var enums = types.Where(type => type.Kind == TypeKind.Enum);
-            var classes = types.Where(type => type.Kind == TypeKind.Object || type.Kind == TypeKind.InputObject || type.Kind == TypeKind.Union).OrderBy(type => type.Name);
+            var classes = types
+                .Where(type => type.Kind is TypeKind.Object or TypeKind.InputObject or TypeKind.Union)
+                .OrderBy(type => type.Name)
+                .ToArray();
+
             var interfaces = types.Where(type => type.Kind == TypeKind.Interface);
 
             AnsiConsole.WriteLine("Scaffolding enums ...");
@@ -92,7 +96,7 @@ namespace GraphQLinq.Scaffolding
             var queryClass = schema.Types.Single(type => type.Name == queryType);
 
             AnsiConsole.WriteLine("Scaffolding GraphQLContext ...");
-            var graphContext = GenerateGraphContext(queryClass, endpointUrl);
+            var graphContext = GenerateGraphContext(queryClass);
             FormatAndWriteToFile(graphContext, $"{options.ContextName}Context");
 
             return $"{options.ContextName}Context";
@@ -123,7 +127,7 @@ namespace GraphQLinq.Scaffolding
             var className = classInfo.Name.NormalizeIfNeeded(options);
 
             var declaration = ClassDeclaration(className)
-                                .AddModifiers(Token(SyntaxKind.PublicKeyword), Token(SyntaxKind.PartialKeyword));
+                .AddModifiers(Token(SyntaxKind.PublicKeyword), Token(SyntaxKind.PartialKeyword));
 
             foreach (var @interface in classInfo.Interfaces ?? new List<GraphqlType>())
             {
@@ -148,13 +152,13 @@ namespace GraphQLinq.Scaffolding
                 }
 
                 var property = PropertyDeclaration(ParseTypeName(fieldTypeName), fieldName)
-                                            .AddModifiers(Token(SyntaxKind.PublicKeyword));
+                    .AddModifiers(Token(SyntaxKind.PublicKeyword));
 
                 property = property.AddAccessorListAccessors(AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
-                                   .WithSemicolonToken(semicolonToken));
+                    .WithSemicolonToken(semicolonToken));
 
                 property = property.AddAccessorListAccessors(AccessorDeclaration(SyntaxKind.SetAccessorDeclaration)
-                                   .WithSemicolonToken(semicolonToken));
+                    .WithSemicolonToken(semicolonToken));
 
                 declaration = declaration.AddMembers(property);
             }
@@ -193,10 +197,10 @@ namespace GraphQLinq.Scaffolding
                 var property = PropertyDeclaration(ParseTypeName(fieldTypeName), fieldName);
 
                 property = property.AddAccessorListAccessors(AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
-                                   .WithSemicolonToken(semicolonToken));
+                    .WithSemicolonToken(semicolonToken));
 
                 property = property.AddAccessorListAccessors(AccessorDeclaration(SyntaxKind.SetAccessorDeclaration)
-                                   .WithSemicolonToken(semicolonToken));
+                    .WithSemicolonToken(semicolonToken));
 
                 declaration = declaration.AddMembers(property);
             }
@@ -219,7 +223,7 @@ namespace GraphQLinq.Scaffolding
             var topLevelDeclaration = RoslynUtilities.GetTopLevelNode(options.Namespace);
 
             var declaration = ClassDeclaration("QueryExtensions")
-                                            .AddModifiers(Token(SyntaxKind.PublicKeyword), Token(SyntaxKind.StaticKeyword));
+                .AddModifiers(Token(SyntaxKind.PublicKeyword), Token(SyntaxKind.StaticKeyword));
 
             foreach (var @class in classesWithArgFields)
             {
@@ -230,13 +234,13 @@ namespace GraphQLinq.Scaffolding
                     var fieldName = field.Name.NormalizeIfNeeded(options);
 
                     var methodDeclaration = MethodDeclaration(ParseTypeName(fieldTypeName), fieldName)
-                                            .AddModifiers(Token(SyntaxKind.PublicKeyword), Token(SyntaxKind.StaticKeyword));
+                        .AddModifiers(Token(SyntaxKind.PublicKeyword), Token(SyntaxKind.StaticKeyword));
 
                     var identifierName = EscapeIdentifierName(@class.Name.ToCamelCase());
 
                     var thisParameter = Parameter(Identifier(identifierName))
-                                             .WithType(ParseTypeName(@class.Name.NormalizeIfNeeded(options)))
-                                             .WithModifiers(TokenList(Token(SyntaxKind.ThisKeyword)));
+                        .WithType(ParseTypeName(@class.Name.NormalizeIfNeeded(options)))
+                        .WithModifiers(TokenList(Token(SyntaxKind.ThisKeyword)));
 
                     var methodParameters = new List<ParameterSyntax> { thisParameter };
 
@@ -251,7 +255,7 @@ namespace GraphQLinq.Scaffolding
                     }
 
                     methodDeclaration = methodDeclaration.AddParameterListParameters(methodParameters.ToArray())
-                                             .WithBody(Block(notImplemented));
+                        .WithBody(Block(notImplemented));
 
                     declaration = declaration.AddMembers(methodDeclaration);
                 }
@@ -267,7 +271,7 @@ namespace GraphQLinq.Scaffolding
             return topLevelDeclaration;
         }
 
-        private SyntaxNode GenerateGraphContext(GraphqlType queryInfo, string endpointUrl)
+        private SyntaxNode GenerateGraphContext(GraphqlType queryInfo)
         {
             var topLevelDeclaration = RoslynUtilities.GetTopLevelNode(options.Namespace).AddUsings(UsingDirective(IdentifierName("GraphQLinq")));
 
@@ -276,25 +280,16 @@ namespace GraphQLinq.Scaffolding
                 .AddModifiers(Token(SyntaxKind.PublicKeyword))
                 .AddBaseListTypes(SimpleBaseType(ParseTypeName("GraphContext")));
 
-            var thisInitializer = ConstructorInitializer(SyntaxKind.ThisConstructorInitializer)
-                                    .AddArgumentListArguments(Argument(LiteralExpression(SyntaxKind.StringLiteralExpression, Literal(endpointUrl))));
-
-            var defaultConstructorDeclaration = ConstructorDeclaration(className)
-                .AddModifiers(Token(SyntaxKind.PublicKeyword))
-                .WithInitializer(thisInitializer)
-                .WithBody(Block());
-
             var baseInitializer = ConstructorInitializer(SyntaxKind.BaseConstructorInitializer)
-                                    .AddArgumentListArguments(Argument(IdentifierName("baseUrl")),
-                                                              Argument(LiteralExpression(SyntaxKind.StringLiteralExpression, Literal(""))));
+                .AddArgumentListArguments(Argument(IdentifierName("httpClient")));
 
             var constructorDeclaration = ConstructorDeclaration(className)
-                                    .AddModifiers(Token(SyntaxKind.PublicKeyword))
-                                    .AddParameterListParameters(Parameter(Identifier("baseUrl")).WithType(ParseTypeName("string")))
-                                    .WithInitializer(baseInitializer)
-                                    .WithBody(Block());
+                .AddModifiers(Token(SyntaxKind.PublicKeyword))
+                .AddParameterListParameters(Parameter(Identifier("httpClient")).WithType(ParseTypeName("HttpClient")))
+                .WithInitializer(baseInitializer)
+                .WithBody(Block());
 
-            declaration = declaration.AddMembers(defaultConstructorDeclaration, constructorDeclaration);
+            declaration = declaration.AddMembers(constructorDeclaration);
 
             foreach (var field in queryInfo.Fields)
             {
@@ -306,12 +301,12 @@ namespace GraphQLinq.Scaffolding
                 var (fieldTypeName, fieldType) = GetSharpTypeName(field.Type.Kind == TypeKind.NonNull ? field.Type.OfType : field.Type, true);
 
                 var baseMethodName = fieldTypeName.Replace("GraphItemQuery", "BuildItemQuery")
-                                         .Replace("GraphCollectionQuery", "BuildCollectionQuery");
+                    .Replace("GraphCollectionQuery", "BuildCollectionQuery");
 
                 var fieldName = field.Name.NormalizeIfNeeded(options);
 
                 var methodDeclaration = MethodDeclaration(ParseTypeName(fieldTypeName), fieldName)
-                                            .AddModifiers(Token(SyntaxKind.PublicKeyword));
+                    .AddModifiers(Token(SyntaxKind.PublicKeyword));
 
                 var methodParameters = new List<ParameterSyntax>();
 
@@ -335,17 +330,17 @@ namespace GraphQLinq.Scaffolding
                 var paramsArray = ArrayCreationExpression(ArrayType(ParseTypeName("object[]")), initializer);
 
                 var parametersDeclaration = LocalDeclarationStatement(VariableDeclaration(IdentifierName("var"))
-                                            .WithVariables(SingletonSeparatedList(VariableDeclarator(Identifier("parameterValues"))
-                                            .WithInitializer(EqualsValueClause(paramsArray)))));
+                    .WithVariables(SingletonSeparatedList(VariableDeclarator(Identifier("parameterValues"))
+                        .WithInitializer(EqualsValueClause(paramsArray)))));
 
                 var parametersArgument = Argument(IdentifierName("parameterValues"));
                 var argumentSyntax = Argument(LiteralExpression(SyntaxKind.StringLiteralExpression, Literal($"{field.Name}")));
-                
+
                 var returnStatement = ReturnStatement(InvocationExpression(IdentifierName(baseMethodName))
-                                            .WithArgumentList(ArgumentList(SeparatedList(new List<ArgumentSyntax> { parametersArgument, argumentSyntax }))));
+                    .WithArgumentList(ArgumentList(SeparatedList(new List<ArgumentSyntax> { parametersArgument, argumentSyntax }))));
 
                 methodDeclaration = methodDeclaration.AddParameterListParameters(methodParameters.ToArray())
-                                                        .WithBody(Block(parametersDeclaration, returnStatement));
+                    .WithBody(Block(parametersDeclaration, returnStatement));
 
                 declaration = declaration.AddMembers(methodDeclaration);
             }
@@ -402,11 +397,11 @@ namespace GraphQLinq.Scaffolding
                 switch (fieldType.Kind)
                 {
                     case TypeKind.List:
-                        {
-                            var type = GetSharpTypeName(fieldType.OfType).typeName;
-                            typeName = wrapWithGraphTypes ? $"GraphCollectionQuery<{type}>" : $"List<{type}>";
-                            return (typeName, null);
-                        }
+                    {
+                        var type = GetSharpTypeName(fieldType.OfType).typeName;
+                        typeName = wrapWithGraphTypes ? $"GraphCollectionQuery<{type}>" : $"List<{type}>";
+                        return (typeName, null);
+                    }
                     case TypeKind.NonNull when fieldType.OfType?.Name?.ToUpper() == "ID":
                         (typeName, resultType) = GetMappedType("string");
                         break;

@@ -1,3 +1,5 @@
+using System.Net.Http;
+
 namespace SpaceX
 {
     using GraphQLinq;
@@ -6,11 +8,7 @@ namespace SpaceX
 
     public class QueryContext : GraphContext
     {
-        public QueryContext() : this("https://api.spacex.land/graphql")
-        {
-        }
-
-        public QueryContext(string baseUrl) : base(baseUrl, "")
+        public QueryContext(HttpClient httpClient) : base(httpClient)
         {
         }
 

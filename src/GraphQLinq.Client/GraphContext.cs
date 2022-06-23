@@ -15,23 +15,9 @@ namespace GraphQLinq
             get;
         }
 
-        protected GraphContext(HttpClient httpClient)
+        public GraphContext(HttpClient httpClient)
         {
             HttpClient = httpClient;
-            ContractResolver = new DefaultContractResolver();
-        }
-
-        protected GraphContext(string url, string authorization)
-        {
-            HttpClient = new HttpClient();
-            if (!string.IsNullOrEmpty(url))
-            {
-                HttpClient.BaseAddress = new Uri(url);
-            }
-            if (!string.IsNullOrEmpty(authorization))
-            {
-                HttpClient.DefaultRequestHeaders.Add("Authorization", authorization);
-            }
             ContractResolver = new DefaultContractResolver();
         }
 

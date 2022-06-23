@@ -158,7 +158,7 @@ namespace GraphQLinq.Scaffolding
                 };
 
                 var graphQLClassesGenerator = new GraphQLClassesGenerator(codeGenerationOptions);
-                return graphQLClassesGenerator.GenerateClient(schema.Data.Schema, endpoint.AbsoluteUri);
+                return graphQLClassesGenerator.GenerateClient(schema.Data.Schema);
             });
 
             AnsiConsole.WriteLine();

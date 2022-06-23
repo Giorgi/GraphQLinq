@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Threading.Tasks;
+using GraphQLinq.Tests.Tools;
 using HSL;
 using NUnit.Framework;
 
@@ -10,7 +11,7 @@ namespace GraphQLinq.Tests
     [Category("Integration tests")]
     class CollectionQueryTests
     {
-        readonly HslGraphContext hslGraphContext = new HslGraphContext("https://api.digitransit.fi/routing/v1/routers/finland/index/graphql");
+        readonly HslGraphContext hslGraphContext = new HslGraphContext(HttpClientHelper.Create("https://api.digitransit.fi/routing/v1/routers/finland/index/graphql"));
 
         [Test]
         public async Task SelectingNamesReturnsListOfNames()

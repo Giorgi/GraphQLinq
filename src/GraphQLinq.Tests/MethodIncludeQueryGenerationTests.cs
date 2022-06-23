@@ -1,4 +1,5 @@
 using System.Linq;
+using GraphQLinq.Tests.Tools;
 using HSL;
 using NUnit.Framework;
 
@@ -7,7 +8,7 @@ namespace GraphQLinq.Tests
     [TestFixture(Category = "Query generation tests")]
     public class MethodIncludeQueryGenerationTests
     {
-        HslGraphContext hslGraphContext = new HslGraphContext("");
+        HslGraphContext hslGraphContext = new HslGraphContext(HttpClientHelper.Stub);
 
 
         [Test]

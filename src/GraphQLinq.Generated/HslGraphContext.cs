@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using HSL;
 
 namespace GraphQLinq
 {
     public class HslGraphContext : GraphContext
     {
-        public HslGraphContext(string baseUrl) : base(baseUrl, "") { }
-        public HslGraphContext(string baseUrl, string authorization) : base(baseUrl, authorization) { }
+        public HslGraphContext(HttpClient httpClient) : base(httpClient)
+        {
+        }
 
         public GraphItemQuery<Trip> Trip(string id)
         {

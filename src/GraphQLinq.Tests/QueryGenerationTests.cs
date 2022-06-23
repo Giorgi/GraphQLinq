@@ -1,14 +1,15 @@
 ﻿using NUnit.Framework;
 using System.Collections.Generic;
 using System.Linq;
+using GraphQLinq.Tests.Tools;
 
 namespace GraphQLinq.Tests
 {
     [TestFixture(Category = "Query generation tests")]
     public class QueryGenerationTests
     {
-        SuperChargersGraphContext context = new SuperChargersGraphContext("");
-        HslGraphContext hslGraphContext = new HslGraphContext("");
+        SuperChargersGraphContext context = new SuperChargersGraphContext(HttpClientHelper.Stub);
+        HslGraphContext hslGraphContext = new HslGraphContext(HttpClientHelper.Stub);
 
         [Test]
         public void SelectingSinglePropertyQueryIncludesSelectedProperty()

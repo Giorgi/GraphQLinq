@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using GraphQLinq.Tests.Tools;
 using HSL;
 using NUnit.Framework;
 
@@ -14,7 +15,7 @@ namespace GraphQLinq.Tests
         const string AgencyId = "LINKKI:54836";
         const string TripId = "OULU:0000880601314021";
 
-        readonly HslGraphContext hslGraphContext = new HslGraphContext("https://api.digitransit.fi/routing/v1/routers/finland/index/graphql");
+        readonly HslGraphContext hslGraphContext = new HslGraphContext(HttpClientHelper.Create("https://api.digitransit.fi/routing/v1/routers/finland/index/graphql"));
 
         [Test]
         public void SelectingSingleTripIdIsNotNull()

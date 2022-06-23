@@ -1,14 +1,25 @@
 ﻿using System.Collections.Generic;
+using System.Net.Http;
 
 namespace GraphQLinq
 {
     public class SuperChargersGraphContext : GraphContext
     {
-        public SuperChargersGraphContext(string baseUrl) : base(baseUrl, "") { }
-        public SuperChargersGraphContext(string baseUrl, string authorization) : base(baseUrl, authorization) { }
+        public SuperChargersGraphContext(HttpClient httpClient)
+            : base(httpClient)
+        {
+        }
 
-        public GraphCollectionQuery<Location> Locations(string before = null, string after = null, bool? openSoon = null, bool? isGallery = null, float? boundingBox = null,
-            int? first = null, int? last = null, List<LocationType> type = null, Region? region = null, Country? country = null)
+        public GraphCollectionQuery<Location> Locations(string before = null,
+            string after = null,
+            bool? openSoon = null,
+            bool? isGallery = null,
+            float? boundingBox = null,
+            int? first = null,
+            int? last = null,
+            List<LocationType> type = null,
+            Region? region = null,
+            Country? country = null)
         {
             var parameterValues = new object[] { before, after, openSoon, isGallery, boundingBox, first, last, type, region, country };
 

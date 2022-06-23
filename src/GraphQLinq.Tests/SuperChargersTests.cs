@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using GraphQLinq.Tests.Tools;
 using NUnit.Framework;
 
 namespace GraphQLinq.Tests
@@ -10,7 +11,7 @@ namespace GraphQLinq.Tests
     class SuperChargersTests
     {
         readonly List<LocationType> locationTypes = new List<LocationType> { LocationType.STORE, LocationType.SERVICE };
-        readonly SuperChargersGraphContext superChargersContext = new SuperChargersGraphContext("https://www.superchargers.io/graphql");
+        readonly SuperChargersGraphContext superChargersContext = new SuperChargersGraphContext(HttpClientHelper.Create("https://www.superchargers.io/graphql"));
 
         [Test]
         public async Task SelectingCitiesReturnsListOfCities()
