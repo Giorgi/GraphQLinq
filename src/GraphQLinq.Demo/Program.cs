@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -21,7 +22,9 @@ namespace GraphQLinq.Demo
 
         private static async Task SpaceXQueryExamples()
         {
-            var spaceXContext = new QueryContext();
+            var httpClient = new HttpClient();
+            httpClient.BaseAddress = new Uri("https://api.spacex.land/graphql");
+            var spaceXContext = new QueryContext(httpClient);
 
             #region Company details
             var company = await spaceXContext.Company().ToItem();
