@@ -3,14 +3,11 @@ namespace TestServer
     using GraphQLinq;
     using System;
     using System.Collections.Generic;
+    using System.Net.Http;
 
     public class QueryContext : GraphContext
     {
-        public QueryContext() : this("http://localhost:10000/graphql")
-        {
-        }
-
-        public QueryContext(string baseUrl) : base(baseUrl, "")
+        public QueryContext(HttpClient httpClient) : base(httpClient)
         {
         }
 

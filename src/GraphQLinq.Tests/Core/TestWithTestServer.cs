@@ -2,15 +2,18 @@
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using GraphQLinq.Tests.Tools;
 using NUnit.Framework;
 
 namespace GraphQLinq.Tests
 {
     public class TestWithTestServer
     {
+        public const string TEST_SERVER_URL = "http://localhost:10000/graphql?sdl";
+        
         public TestWithTestServer()
         {
-            Context = new TestServer.QueryContext();
+            Context = new TestServer.QueryContext(HttpClientHelper.Create(TEST_SERVER_URL));
         }
 
         public TestServer.QueryContext Context
@@ -28,7 +31,7 @@ namespace GraphQLinq.Tests
             {
                 try
                 {
-                    var response = await httpClient.GetAsync("http://localhost:10000/graphql?sdl");
+                    var response = await httpClient.GetAsync(TEST_SERVER_URL);
                     if (response.StatusCode == HttpStatusCode.OK)
                     {
                         return;
