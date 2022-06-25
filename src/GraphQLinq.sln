@@ -22,6 +22,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "_build", "build\_build.csproj", "{F2ACC472-9FB9-4688-BC06-5C202F7C20E5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestServer", "GraphQLinq.TestServer\TestServer.csproj", "{24253353-E33C-48AD-97B7-F1958FEC3F59}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -50,6 +52,8 @@ Global
 		{B16D1D38-3CC3-4F8E-BC7D-5620370662AE}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F2ACC472-9FB9-4688-BC06-5C202F7C20E5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F2ACC472-9FB9-4688-BC06-5C202F7C20E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24253353-E33C-48AD-97B7-F1958FEC3F59}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24253353-E33C-48AD-97B7-F1958FEC3F59}.Debug|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
