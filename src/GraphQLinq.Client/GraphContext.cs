@@ -8,7 +8,7 @@ using Newtonsoft.Json.Serialization;
 
 namespace GraphQLinq
 {
-    public class GraphContext
+    public class GraphContext : IDisposable
     {
         public HttpClient HttpClient
         {
@@ -40,6 +40,11 @@ namespace GraphQLinq
             var parameters = GetType().GetMethod(queryName, BindingFlags.Public | BindingFlags.IgnoreCase | BindingFlags.Instance).GetParameters();
             var arguments = parameters.Zip(parameterValues, (info, value) => new { info.Name, Value = value }).ToDictionary(arg => arg.Name, arg => arg.Value);
             return arguments;
+        }
+
+        public void Dispose()
+        {
+            HttpClient?.Dispose();
         }
     }
 }
