@@ -32,6 +32,7 @@ namespace GraphQLinq
         }
 
         public string Query => lazyQuery.Value.Query;
+
         public IReadOnlyDictionary<string, object> QueryVariables => lazyQuery.Value.Variables;
 
         protected GraphQuery<TR> Clone<TR>()
@@ -157,13 +158,13 @@ namespace GraphQLinq
             return graphQuery;
         }
 
-        internal IGraphQueryEnumerator<T> BuildEnumerator<TSource>(QueryType queryType)
+        internal IGraphQueryExecutor<T> BuildExecutor<TSource>(QueryType queryType)
         {
             var query = lazyQuery.Value;
 
             var mapper = (Func<TSource, T>)Selector?.Compile();
 
-            return new GraphQueryEnumerator<T, TSource>(context, query.FullQuery, queryType, mapper);
+            return new GraphQueryExecutor<T, TSource>(context, query.FullQuery, queryType, mapper);
         }
     }
 
@@ -209,7 +210,7 @@ namespace GraphQLinq
 
         public override async Task<T> ToItem()
         {
-            var enumerator = await BuildEnumerator<TSource>(QueryType.Item).Execute();
+            var enumerator = await BuildExecutor<TSource>(QueryType.Item).Execute();
             return enumerator.First();
         }
     }
@@ -222,7 +223,7 @@ namespace GraphQLinq
 
         public override async Task<IEnumerable<T>> ToArray()
         {
-            var enumerator = await BuildEnumerator<TSource>(QueryType.Collection).Execute();
+            var enumerator = await BuildExecutor<TSource>(QueryType.Collection).Execute();
             return enumerator;
         }
     }
@@ -239,6 +240,7 @@ namespace GraphQLinq
         {
 
         }
+
         public IncludeDetails(IEnumerable<IncludeMethodDetails> methodIncludes)
         {
             MethodIncludes = methodIncludes.ToList();
