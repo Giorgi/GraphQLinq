@@ -164,8 +164,6 @@ namespace GraphQLinq.Scaffolding
             AnsiConsole.WriteLine();
             AnsiConsole.MarkupLine("[bold]Scaffolding complete[/]");
             AnsiConsole.MarkupLine("Use [bold]{0}[/] to run strongly typed LINQ queries", contextClassFullName);
-
-            Console.ReadKey();
         }
     }
 
