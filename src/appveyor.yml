@@ -16,11 +16,11 @@
 
 image:
 
+  - Visual Studio 2022
+  
 before_build:
 
 - cmd: cd src
-
-  - Visual Studio 2022
 
 build_script:
   - cmd: .\build.cmd Test
