@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Newtonsoft.Json.Serialization;
@@ -8,15 +10,31 @@ namespace GraphQLinq
 {
     public class GraphContext
     {
-        protected GraphContext(string baseUrl, string authorization)
+        public HttpClient HttpClient
         {
-            BaseUrl = baseUrl;
-            Authorization = authorization;
+            get;
+        }
+
+        protected GraphContext(HttpClient httpClient)
+        {
+            HttpClient = httpClient;
             ContractResolver = new DefaultContractResolver();
         }
 
-        public string BaseUrl { get; }
-        public string Authorization { get; }
+        protected GraphContext(string url, string authorization)
+        {
+            HttpClient = new HttpClient();
+            if (!string.IsNullOrEmpty(url))
+            {
+                HttpClient.BaseAddress = new Uri(url);
+            }
+            if (!string.IsNullOrEmpty(authorization))
+            {
+                HttpClient.DefaultRequestHeaders.Add("Authorization", authorization);
+            }
+            ContractResolver = new DefaultContractResolver();
+        }
+
         public IContractResolver ContractResolver { get; set; }
 
         protected GraphCollectionQuery<T> BuildCollectionQuery<T>(object[] parameterValues, [CallerMemberName] string queryName = null)

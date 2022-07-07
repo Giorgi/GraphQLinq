@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
@@ -13,17 +14,17 @@ namespace GraphQLinq.Demo
 {
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            SpaceXQueryExamples();
+            await SpaceXQueryExamples();
         }
 
-        private static void SpaceXQueryExamples()
+        private static async Task SpaceXQueryExamples()
         {
             var spaceXContext = new QueryContext();
 
             #region Company details
-            var company = spaceXContext.Company().ToItem();
+            var company = await spaceXContext.Company().ToItem();
 
             RenderCompanyDetails(company);
             #endregion
@@ -33,7 +34,7 @@ namespace GraphQLinq.Demo
             var companySummaryAnonymous = spaceXContext.Company().Select(c => new { c.Ceo, c.Name, c.Headquarters }).ToItem();
 
             //Use data class to select specific properties
-            var companySummary = spaceXContext.Company().Select(c => new CompanySummary
+            var companySummary = await spaceXContext.Company().Select(c => new CompanySummary
             {
                 Ceo = c.Ceo,
                 Name = c.Name,
@@ -44,7 +45,7 @@ namespace GraphQLinq.Demo
             #endregion
 
             #region Include navigation properties
-            var companyWithHeadquartersAndLinks = spaceXContext.Company()
+            var companyWithHeadquartersAndLinks = await spaceXContext.Company()
                                                                 .Include(info => info.Headquarters)
                                                                 .Include(info => info.Links).ToItem();
 
@@ -54,11 +55,11 @@ namespace GraphQLinq.Demo
             #region Filter missions, compose queries
             var missionsQuery = spaceXContext.Missions(new MissionsFind { Manufacturer = "Orbital ATK" }, null, null)
                                                  .Include(mission => mission.Manufacturers);
-            var missions = missionsQuery.ToList();
+            var missions = await missionsQuery.ToArray();
 
             RenderMissions(missions);
 
-            var missionsWithPayloads = missionsQuery.Include(mission => mission.Payloads).ToList();
+            var missionsWithPayloads = await missionsQuery.Include(mission => mission.Payloads).ToArray();
 
             RenderMissions(missionsWithPayloads, true);
             #endregion
@@ -67,17 +68,17 @@ namespace GraphQLinq.Demo
             //Launch_date_unix and Static_fire_date_unix need custom converter
             spaceXContext.ContractResolver = new SpaceXContractResolver();
 
-            var launches = spaceXContext.Launches(null, 10, 0, null, null)
+            var launches = await spaceXContext.Launches(null, 10, 0, null, null)
                                         .Include(launch => launch.Links)
                                         .Include(launch => launch.Rocket)
                                         .Include(launch => launch.Rocket.Second_stage.Payloads.Select(payload => payload.Manufacturer))
-                                        .ToList();
+                                        .ToArray();
 
             RenderLaunches(launches);
             #endregion
         }
 
-        private static void RenderLaunches(List<Launch> launches)
+        private static void RenderLaunches(IEnumerable<Launch> launches)
         {
             var table = new Table().Title("Launches");
             table.AddColumn(nameof(Launch.Mission_name), column => column.Width = 12).AddColumn(nameof(Launch.Launch_date_utc), column => column.Width = 15)
@@ -107,7 +108,7 @@ namespace GraphQLinq.Demo
             AnsiConsole.MarkupLine("");
         }
 
-        private static void RenderMissions(List<Mission> missions, bool showPayload = false)
+        private static void RenderMissions(IEnumerable<Mission> missions, bool showPayload = false)
         {
             var table = new Table().Title(showPayload ? "Missions with Payload" : "Missions");
 
