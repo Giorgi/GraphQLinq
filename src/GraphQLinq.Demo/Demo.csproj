@@ -8,8 +8,8 @@
     <ProjectReference Include="..\GraphQLinq.Generated\Generated.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Spectre.Console" Version="0.38.0" />
+    <PackageReference Include="System.Text.Json" Version="6.0.5" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="HSL\Agency.cs" />

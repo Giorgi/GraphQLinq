@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json.Serialization;
 using SpaceX;
 using Spectre.Console;
 using Spectre.Console.Rendering;
@@ -22,6 +20,8 @@ namespace GraphQLinq.Demo
         private static async Task SpaceXQueryExamples()
         {
             var spaceXContext = new QueryContext();
+            //Launch_date_unix and Static_fire_date_unix need custom converter
+            spaceXContext.JsonSerializerOptions.Converters.Add(new UnixEpochDateTimeConverter());
 
             #region Company details
             var company = await spaceXContext.Company().ToItem();
@@ -65,8 +65,6 @@ namespace GraphQLinq.Demo
             #endregion
 
             #region Multiple levels of Includes
-            //Launch_date_unix and Static_fire_date_unix need custom converter
-            spaceXContext.ContractResolver = new SpaceXContractResolver();
 
             var launches = await spaceXContext.Launches(null, 10, 0, null, null)
                                         .Include(launch => launch.Links)
@@ -83,7 +81,7 @@ namespace GraphQLinq.Demo
             var table = new Table().Title("Launches");
             table.AddColumn(nameof(Launch.Mission_name), column => column.Width = 12).AddColumn(nameof(Launch.Launch_date_utc), column => column.Width = 15)
                  .AddColumn(nameof(Launch.Rocket.Rocket_name)).AddColumn(nameof(Launch.Links)).AddColumn(
-                     $"{nameof(Launch.Rocket.Second_stage.Payloads)}  {nameof(Payload.Manufacturer)}", column => column.Width=12);
+                     $"{nameof(Launch.Rocket.Second_stage.Payloads)}  {nameof(Payload.Manufacturer)}", column => column.Width = 12);
 
             foreach (var launch in launches)
             {
@@ -214,20 +212,22 @@ namespace GraphQLinq.Demo
         public string Name { get; set; }
         public AddressType Headquarters { get; set; }
     }
-
-    public class SpaceXContractResolver : DefaultContractResolver
+    
+    class UnixEpochDateTimeConverter : JsonConverter<DateTime>
     {
-        protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
+        public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            var property = base.CreateProperty(member, memberSerialization);
-
-            var isDate = property.PropertyType == typeof(DateTime) || property.PropertyType == typeof(DateTime?);
-            if (isDate && property.PropertyName.Contains("unix"))
+            if (reader.TokenType == JsonTokenType.Number)
             {
-                property.Converter = new UnixDateTimeConverter();
+                return DateTime.UnixEpoch.AddSeconds(reader.GetInt64());
             }
 
-            return property;
+            return JsonSerializer.Deserialize<DateTime>(ref reader, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        }
+
+        public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
+        {
+            throw new NotImplementedException();
         }
     }
 }

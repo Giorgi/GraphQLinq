@@ -4,7 +4,8 @@ using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Newtonsoft.Json.Serialization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace GraphQLinq
 {
@@ -15,7 +16,6 @@ namespace GraphQLinq
         protected GraphContext(HttpClient httpClient)
         {
             HttpClient = httpClient;
-            ContractResolver = new DefaultContractResolver();
         }
 
         protected GraphContext(string url, string authorization)
@@ -29,10 +29,12 @@ namespace GraphQLinq
             {
                 HttpClient.DefaultRequestHeaders.Add("Authorization", authorization);
             }
-            ContractResolver = new DefaultContractResolver();
         }
-
-        public IContractResolver ContractResolver { get; set; }
+        
+        public JsonSerializerOptions JsonSerializerOptions { get; set; } = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+        {
+            Converters = { new JsonStringEnumConverter() },
+        };
 
         protected GraphCollectionQuery<T> BuildCollectionQuery<T>(object[] parameterValues, [CallerMemberName] string queryName = null)
         {
