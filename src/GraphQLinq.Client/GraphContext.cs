@@ -10,10 +10,7 @@ namespace GraphQLinq
 {
     public class GraphContext
     {
-        public HttpClient HttpClient
-        {
-            get;
-        }
+        public HttpClient HttpClient { get; }
 
         protected GraphContext(HttpClient httpClient)
         {

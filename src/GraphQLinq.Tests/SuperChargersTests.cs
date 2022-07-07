@@ -17,7 +17,7 @@ namespace GraphQLinq.Tests
         {   
             var query = superChargersContext.Locations(type: locationTypes).Select(l => l.city);
 
-            var locations = await query.ToArray();
+            var locations = await query.ToEnumerable();
 
             CollectionAssert.IsNotEmpty(locations);
             CollectionAssert.AllItemsAreNotNull(locations);
@@ -28,7 +28,7 @@ namespace GraphQLinq.Tests
         {
             var query = superChargersContext.Locations(type: locationTypes);
 
-            var locations = await query.ToArray();
+            var locations = await query.ToEnumerable();
             Assert.That(locations, Is.All.Matches<Location>(l => l.salesPhone == null));
         }
 
@@ -37,7 +37,7 @@ namespace GraphQLinq.Tests
         {
             var query = superChargersContext.Locations(type: locationTypes).Include(location => location.salesPhone);
 
-            var locations = await query.ToArray();
+            var locations = await query.ToEnumerable();
 
             Assert.That(locations, Is.All.Matches<Location>(l => l.salesPhone != null));
         }
@@ -47,7 +47,7 @@ namespace GraphQLinq.Tests
         {
             var query = superChargersContext.Locations(type: locationTypes).Select(location => new { location.city, location.salesPhone });
 
-            var locations = await query.ToArray();
+            var locations = await query.ToEnumerable();
 
             var locationsWithNullPhones = locations.Where(location => location.salesPhone == null).ToList();
             CollectionAssert.IsEmpty(locationsWithNullPhones);
@@ -58,7 +58,7 @@ namespace GraphQLinq.Tests
         {
             var query = superChargersContext.Locations(type: locationTypes).Select(location => new { CityName = location.city, location.salesPhone });
 
-            var locations = await query.ToArray();
+            var locations = await query.ToEnumerable();
 
             var locationsWithNullPhones = locations.Where(location => location.salesPhone == null).ToList();
             var locationsWithNullCity = locations.Where(location => location.CityName == null).ToList();

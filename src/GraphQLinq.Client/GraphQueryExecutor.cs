@@ -11,12 +11,7 @@ using Newtonsoft.Json.Serialization;
 
 namespace GraphQLinq
 {
-    public interface IGraphQueryExecutor<T>
-    {
-        Task<IEnumerable<T>> Execute();
-    }
-
-    class GraphQueryExecutor<T, TSource> : IGraphQueryExecutor<T>
+    class GraphQueryExecutor<T, TSource>
     {
         private readonly GraphContext context;
         private readonly string query;
@@ -45,13 +40,23 @@ namespace GraphQLinq
                 {
                     var jObject = await JObject.LoadAsync(jsonReader);
 
-                    if (jObject.SelectToken(ErrorPathPropertyName) != null)
+                    var errorToken = jObject[ErrorPathPropertyName];
+
+                    if (errorToken != null)
                     {
-                        var errors = jObject[ErrorPathPropertyName].ToObject<List<GraphQueryError>>();
+                        var errors = errorToken.ToObject<List<GraphQueryError>>();
                         throw new GraphQueryExecutionException(errors, query);
                     }
 
-                    var enumerable = jObject[DataPathPropertyName][GraphQueryBuilder<T>.ResultAlias]
+                    var dataToken = jObject[DataPathPropertyName];
+                    var resultToken = dataToken?[GraphQueryBuilder<T>.ResultAlias];
+
+                    if (resultToken == null)
+                    {
+                        throw new GraphQueryExecutionException(query);
+                    }
+                    
+                    var enumerable = resultToken
                         .Select(token =>
                         {
                             var jsonSerializer = new JsonSerializer { ContractResolver = resolver };

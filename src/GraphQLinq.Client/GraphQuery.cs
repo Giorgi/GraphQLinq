@@ -158,7 +158,7 @@ namespace GraphQLinq
             return graphQuery;
         }
 
-        internal IGraphQueryExecutor<T> BuildExecutor<TSource>(QueryType queryType)
+        internal GraphQueryExecutor<T, TSource> BuildExecutor<TSource>(QueryType queryType)
         {
             var query = lazyQuery.Value;
 
@@ -189,7 +189,7 @@ namespace GraphQLinq
     {
         protected GraphCollectionQuery(GraphContext graphContext, string queryName) : base(graphContext, queryName) { }
 
-        public abstract Task<IEnumerable<T>> ToArray();
+        public abstract Task<IEnumerable<T>> ToEnumerable();
 
         public GraphCollectionQuery<T> Include<TProperty>(Expression<Func<T, TProperty>> path)
         {
@@ -221,7 +221,7 @@ namespace GraphQLinq
         {
         }
 
-        public override async Task<IEnumerable<T>> ToArray()
+        public override async Task<IEnumerable<T>> ToEnumerable()
         {
             var enumerator = await BuildExecutor<TSource>(QueryType.Collection).Execute();
             return enumerator;

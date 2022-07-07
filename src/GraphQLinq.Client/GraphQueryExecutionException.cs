@@ -5,8 +5,13 @@ namespace GraphQLinq
 {
     public class GraphQueryExecutionException : Exception
     {
+        public GraphQueryExecutionException(string query) : base("Unexpected error response received from server.")
+        {
+            GraphQLQuery = query;
+        }
+
         public GraphQueryExecutionException(IEnumerable<GraphQueryError> errors, string query)
-            : base($"One or more errors occured during query execution. Check {nameof(Errors)} property for details")
+            : base($"One or more errors occurred during query execution. Check {nameof(Errors)} property for details")
         {
             Errors = errors;
             GraphQLQuery = query;

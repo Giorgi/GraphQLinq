@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30711.63
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32228.430
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Demo", "GraphQLinq.Demo\Demo.csproj", "{D7CE01EE-342B-4836-BD9E-9BBF09A25263}"
 EndProject
@@ -22,7 +22,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "_build", "build\_build.csproj", "{F2ACC472-9FB9-4688-BC06-5C202F7C20E5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestServer", "GraphQLinq.TestServer\TestServer.csproj", "{24253353-E33C-48AD-97B7-F1958FEC3F59}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestServer", "GraphQLinq.TestServer\TestServer.csproj", "{24253353-E33C-48AD-97B7-F1958FEC3F59}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -54,6 +54,8 @@ Global
 		{F2ACC472-9FB9-4688-BC06-5C202F7C20E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{24253353-E33C-48AD-97B7-F1958FEC3F59}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{24253353-E33C-48AD-97B7-F1958FEC3F59}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24253353-E33C-48AD-97B7-F1958FEC3F59}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24253353-E33C-48AD-97B7-F1958FEC3F59}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

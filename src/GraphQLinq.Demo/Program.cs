@@ -55,11 +55,11 @@ namespace GraphQLinq.Demo
             #region Filter missions, compose queries
             var missionsQuery = spaceXContext.Missions(new MissionsFind { Manufacturer = "Orbital ATK" }, null, null)
                                                  .Include(mission => mission.Manufacturers);
-            var missions = await missionsQuery.ToArray();
+            var missions = await missionsQuery.ToEnumerable();
 
             RenderMissions(missions);
 
-            var missionsWithPayloads = await missionsQuery.Include(mission => mission.Payloads).ToArray();
+            var missionsWithPayloads = await missionsQuery.Include(mission => mission.Payloads).ToEnumerable();
 
             RenderMissions(missionsWithPayloads, true);
             #endregion
@@ -72,7 +72,7 @@ namespace GraphQLinq.Demo
                                         .Include(launch => launch.Links)
                                         .Include(launch => launch.Rocket)
                                         .Include(launch => launch.Rocket.Second_stage.Payloads.Select(payload => payload.Manufacturer))
-                                        .ToArray();
+                                        .ToEnumerable();
 
             RenderLaunches(launches);
             #endregion
