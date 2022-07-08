@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -44,7 +43,7 @@ namespace GraphQLinq
             }
         }
 
-        internal async Task<IEnumerable<T>> Execute()
+        internal async Task<(T Item, IEnumerable<T> Enumerable)> Execute()
         {
             using (var content = new StringContent(query, Encoding.UTF8, "application/json"))
             {
@@ -78,10 +77,10 @@ namespace GraphQLinq
 
                         if (queryType == QueryType.Item)
                         {
-                            return Enumerable.Repeat(JsonElementToItem(resultElement), 1);
+                            return (JsonElementToItem(resultElement), null);
                         }
 
-                        return resultElement.EnumerateArray().Select(JsonElementToItem);
+                        return (default, resultElement.EnumerateArray().Select(JsonElementToItem));
                     }
                 }
             }

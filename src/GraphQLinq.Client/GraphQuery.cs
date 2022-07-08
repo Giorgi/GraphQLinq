@@ -210,8 +210,8 @@ namespace GraphQLinq
 
         public override async Task<T> ToItem()
         {
-            var enumerator = await BuildExecutor<TSource>(QueryType.Item).Execute();
-            return enumerator.First();
+            var (item, _) = await BuildExecutor<TSource>(QueryType.Item).Execute();
+            return item;
         }
     }
 
@@ -223,8 +223,8 @@ namespace GraphQLinq
 
         public override async Task<IEnumerable<T>> ToEnumerable()
         {
-            var enumerator = await BuildExecutor<TSource>(QueryType.Collection).Execute();
-            return enumerator;
+            var (_, enumerable) = await BuildExecutor<TSource>(QueryType.Collection).Execute();
+            return enumerable;
         }
     }
 
