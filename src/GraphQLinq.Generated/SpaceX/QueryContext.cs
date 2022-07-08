@@ -3,6 +3,7 @@ namespace SpaceX
     using GraphQLinq;
     using System;
     using System.Collections.Generic;
+    using System.Net.Http;
 
     public partial class QueryContext : GraphContext
     {
@@ -11,6 +12,10 @@ namespace SpaceX
         }
 
         public QueryContext(string baseUrl) : base(baseUrl, "")
+        {
+        }
+
+        public QueryContext(HttpClient httpClient) : base(httpClient)
         {
         }
 

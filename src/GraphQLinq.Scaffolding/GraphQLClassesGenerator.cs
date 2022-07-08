@@ -288,13 +288,22 @@ namespace GraphQLinq.Scaffolding
                                     .AddArgumentListArguments(Argument(IdentifierName("baseUrl")),
                                                               Argument(LiteralExpression(SyntaxKind.StringLiteralExpression, Literal(""))));
 
-            var constructorDeclaration = ConstructorDeclaration(className)
+            var baseUrlConstructorDeclaration = ConstructorDeclaration(className)
                                     .AddModifiers(Token(SyntaxKind.PublicKeyword))
                                     .AddParameterListParameters(Parameter(Identifier("baseUrl")).WithType(ParseTypeName("string")))
                                     .WithInitializer(baseInitializer)
                                     .WithBody(Block());
 
-            declaration = declaration.AddMembers(defaultConstructorDeclaration, constructorDeclaration);
+            var baseHttpClientInitializer = ConstructorInitializer(SyntaxKind.BaseConstructorInitializer)
+                                    .AddArgumentListArguments(Argument(IdentifierName("httpClient")));
+
+            var httpClientConstructorDeclaration = ConstructorDeclaration(className)
+                                    .AddModifiers(Token(SyntaxKind.PublicKeyword))
+                                    .AddParameterListParameters(Parameter(Identifier("httpClient")).WithType(ParseTypeName("HttpClient")))
+                                    .WithInitializer(baseHttpClientInitializer)
+                                    .WithBody(Block());
+
+            declaration = declaration.AddMembers(defaultConstructorDeclaration, baseUrlConstructorDeclaration, httpClientConstructorDeclaration);
 
             foreach (var field in queryInfo.Fields)
             {
@@ -340,7 +349,7 @@ namespace GraphQLinq.Scaffolding
 
                 var parametersArgument = Argument(IdentifierName("parameterValues"));
                 var argumentSyntax = Argument(LiteralExpression(SyntaxKind.StringLiteralExpression, Literal($"{field.Name}")));
-                
+
                 var returnStatement = ReturnStatement(InvocationExpression(IdentifierName(baseMethodName))
                                             .WithArgumentList(ArgumentList(SeparatedList(new List<ArgumentSyntax> { parametersArgument, argumentSyntax }))));
 
@@ -354,6 +363,7 @@ namespace GraphQLinq.Scaffolding
             {
                 topLevelDeclaration = topLevelDeclaration.AddUsings(UsingDirective(IdentifierName(@using)));
             }
+            topLevelDeclaration = topLevelDeclaration.AddUsings(UsingDirective(IdentifierName("System.Net.Http")));
 
             topLevelDeclaration = topLevelDeclaration.AddMembers(declaration);
 

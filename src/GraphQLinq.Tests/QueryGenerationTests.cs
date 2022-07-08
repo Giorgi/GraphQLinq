@@ -7,8 +7,8 @@ namespace GraphQLinq.Tests
     [TestFixture(Category = "Query generation tests")]
     public class QueryGenerationTests
     {
-        SuperChargersGraphContext context = new SuperChargersGraphContext("");
-        HslGraphContext hslGraphContext = new HslGraphContext("");
+        SuperChargersGraphContext context = new SuperChargersGraphContext("http://example.com");
+        HslGraphContext hslGraphContext = new HslGraphContext("http://example.com");
 
         [Test]
         public void SelectingSinglePropertyQueryIncludesSelectedProperty()

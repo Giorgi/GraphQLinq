@@ -7,7 +7,7 @@ namespace GraphQLinq.Tests
     [TestFixture(Category = "Query generation tests")]
     public class MethodIncludeQueryGenerationTests
     {
-        HslGraphContext hslGraphContext = new HslGraphContext("");
+        HslGraphContext hslGraphContext = new HslGraphContext("http://example.com");
 
 
         [Test]
