@@ -273,7 +273,7 @@ namespace GraphQLinq.Scaffolding
 
             var className = $"{options.ContextName}Context";
             var declaration = ClassDeclaration(className)
-                .AddModifiers(Token(SyntaxKind.PublicKeyword))
+                .AddModifiers(Token(SyntaxKind.PublicKeyword), Token(SyntaxKind.PartialKeyword))
                 .AddBaseListTypes(SimpleBaseType(ParseTypeName("GraphContext")));
 
             var thisInitializer = ConstructorInitializer(SyntaxKind.ThisConstructorInitializer)

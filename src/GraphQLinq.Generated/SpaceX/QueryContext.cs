@@ -4,7 +4,7 @@ namespace SpaceX
     using System;
     using System.Collections.Generic;
 
-    public class QueryContext : GraphContext
+    public partial class QueryContext : GraphContext
     {
         public QueryContext() : this("https://api.spacex.land/graphql")
         {
