@@ -30,13 +30,6 @@ namespace GraphQLinq
             jsonSerializerOptions = context.JsonSerializerOptions;
         }
 
-        private async Task<Stream> DownloadJson(HttpClient httpClient)
-        {
-            var content = new StringContent(query, Encoding.UTF8, "application/json");
-            var response = await httpClient.PostAsync("", content);
-            return await response.Content.ReadAsStreamAsync();
-        }
-
         private T JsonElementToItem(JsonElement jsonElement)
         {
             if (mapper != null)
@@ -53,38 +46,44 @@ namespace GraphQLinq
 
         internal async Task<IEnumerable<T>> Execute()
         {
-            using (var stream = await DownloadJson(context.HttpClient))
+            using (var content = new StringContent(query, Encoding.UTF8, "application/json"))
             {
-                var document = await JsonDocument.ParseAsync(stream);
-
-                var hasError = document.RootElement.TryGetProperty(ErrorPathPropertyName, out var errorElement);
-
-                if (hasError)
+                using (var response = await context.HttpClient.PostAsync("", content))
                 {
-                    var errors = errorElement.Deserialize<List<GraphQueryError>>();
-                    throw new GraphQueryExecutionException(errors, query);
+                    using (var stream = await response.Content.ReadAsStreamAsync())
+                    {
+                        var document = await JsonDocument.ParseAsync(stream);
+
+                        var hasError = document.RootElement.TryGetProperty(ErrorPathPropertyName, out var errorElement);
+
+                        if (hasError)
+                        {
+                            var errors = errorElement.Deserialize<List<GraphQueryError>>();
+                            throw new GraphQueryExecutionException(errors, query);
+                        }
+
+                        var hasData = document.RootElement.TryGetProperty(DataPathPropertyName, out var dataElement);
+
+                        if (!hasData)
+                        {
+                            throw new GraphQueryExecutionException(query);
+                        }
+
+                        var hasResult = dataElement.TryGetProperty(GraphQueryBuilder<T>.ResultAlias, out var resultElement);
+
+                        if (!hasResult)
+                        {
+                            throw new GraphQueryExecutionException(query);
+                        }
+
+                        if (queryType == QueryType.Item)
+                        {
+                            return Enumerable.Repeat(JsonElementToItem(resultElement), 1);
+                        }
+
+                        return resultElement.EnumerateArray().Select(JsonElementToItem);
+                    }
                 }
-
-                var hasData = document.RootElement.TryGetProperty(DataPathPropertyName, out var dataElement);
-
-                if (!hasData)
-                {
-                    throw new GraphQueryExecutionException(query);
-                }
-
-                var hasResult = dataElement.TryGetProperty(GraphQueryBuilder<T>.ResultAlias, out var resultElement);
-
-                if (!hasResult)
-                {
-                    throw new GraphQueryExecutionException(query);
-                }
-
-                if (queryType == QueryType.Item)
-                {
-                    return Enumerable.Repeat(JsonElementToItem(resultElement), 1);
-                }
-
-                return resultElement.EnumerateArray().Select(JsonElementToItem);
             }
         }
     }
