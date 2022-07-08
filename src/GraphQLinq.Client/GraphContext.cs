@@ -4,24 +4,37 @@ using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Newtonsoft.Json.Serialization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace GraphQLinq
 {
     public class GraphContext : IDisposable
     {
-        public HttpClient HttpClient
-        {
-            get;
-        }
+        public HttpClient HttpClient { get; }
 
         public GraphContext(HttpClient httpClient)
         {
             HttpClient = httpClient;
-            ContractResolver = new DefaultContractResolver();
         }
 
-        public IContractResolver ContractResolver { get; set; }
+        protected GraphContext(string url, string authorization)
+        {
+            HttpClient = new HttpClient();
+            if (!string.IsNullOrEmpty(url))
+            {
+                HttpClient.BaseAddress = new Uri(url);
+            }
+            if (!string.IsNullOrEmpty(authorization))
+            {
+                HttpClient.DefaultRequestHeaders.Add("Authorization", authorization);
+            }
+        }
+        
+        public JsonSerializerOptions JsonSerializerOptions { get; set; } = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+        {
+            Converters = { new JsonStringEnumConverter() },
+        };
 
         protected GraphCollectionQuery<T> BuildCollectionQuery<T>(object[] parameterValues, [CallerMemberName] string queryName = null)
         {

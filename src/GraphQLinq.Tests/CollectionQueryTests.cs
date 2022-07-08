@@ -18,7 +18,7 @@ namespace GraphQLinq.Tests
         {
             var query = hslGraphContext.Stations().Select(l => l.name);
 
-            var names = await query.ToArray();
+            var names = await query.ToEnumerable();
 
             Assert.Multiple(() =>
             {
@@ -32,7 +32,7 @@ namespace GraphQLinq.Tests
         {
             var query = hslGraphContext.Stations();
 
-            var stations = await query.ToArray();
+            var stations = await query.ToEnumerable();
 
             Assert.That(stations, Is.All.Matches<Stop>(l => l.stops == null));
         }
@@ -42,7 +42,7 @@ namespace GraphQLinq.Tests
         {
             var query = hslGraphContext.Stations().Include(s => s.stops);
 
-            var stations = await query.ToArray();
+            var stations = await query.ToEnumerable();
 
             Assert.That(stations, Is.All.Matches<Stop>(s => s.stops != null));
         }
@@ -52,7 +52,7 @@ namespace GraphQLinq.Tests
         {
             var query = hslGraphContext.Stations().Select(location => new { location.name, location.stops });
 
-            var stations = await query.ToArray();
+            var stations = await query.ToEnumerable();
 
             var stationsWithNullStops = stations.Where(s => s.stops == null).ToList();
             CollectionAssert.IsEmpty(stationsWithNullStops);
@@ -63,7 +63,7 @@ namespace GraphQLinq.Tests
         {
             var query = hslGraphContext.Stations().Select(location => new { StationName = location.name, location.stops });
 
-            var stations = await query.ToArray();
+            var stations = await query.ToEnumerable();
 
             var stationsWithNullStops = stations.Where(s => s.stops == null).ToList();
             var stationsWithNullCity = stations.Where(s => s.StationName == null).ToList();

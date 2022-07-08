@@ -17,9 +17,8 @@ using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.Tools.CoverallsNet.CoverallsNetTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 
-[CheckBuildProjectConfigurations]
 [ShutdownDotNetAfterServerBuild]
-[AppVeyor(AppVeyorImage.VisualStudio2019, InvokedTargets = new[] { nameof(Test) }, Secrets = new[] { "COVERALLS_REPO_TOKEN:0wXxQdMQF5yHgpUe3heAG5zY2YYNBZYEF9FmgqoQi6b6IC0JibAA+idcnOkwTeEg" })]
+[AppVeyor(AppVeyorImage.VisualStudio2022, InvokedTargets = new[] { nameof(Test) }, Secrets = new[] { "COVERALLS_REPO_TOKEN:0wXxQdMQF5yHgpUe3heAG5zY2YYNBZYEF9FmgqoQi6b6IC0JibAA+idcnOkwTeEg" })]
 class Build : NukeBuild
 {
     /// Support plugins are available for:
@@ -95,7 +94,7 @@ class Build : NukeBuild
             DotNetTest(s => s
                 .SetProjectFile(TestDirectory / "Tests.csproj")
                 .SetResultsDirectory(TestResultsDirectory)
-                .SetLogger("trx")
+                .AddLoggers("trx")
                 .EnableCollectCoverage()
                 .SetCoverletOutputFormat(CoverletOutputFormat.opencover)
                 .SetCoverletOutput("../TestResults/")
