@@ -2,7 +2,9 @@
 
 LINQ to GraphQL - Strongly typed GraphQL queries with LINQ query syntax.
 
-![Project Icon](docs/Images/Icon.png "GraphQLinq Project Icon")
+> You **must regenerate** your client code with GraphQLinq.Scaffolding after updating GraphQLinq.Client to a newer version
+
+![Project Icon](https://github.com/Giorgi/GraphQLinq/raw/main/docs/Images/Icon.png "GraphQLinq Project Icon")
 
 - [About The Project](#about-the-project)
 - [Getting Started](#getting-started)
@@ -40,7 +42,7 @@ Before you starting writing queries, you need to generate classes from GraphQL t
 To get the tool, open your favourite command shell and run
 
 ```sh
-dotnet tool install --global --version 1.0.0-beta GraphQLinq.Scaffolding
+dotnet tool install --global --version 1.1.0-beta GraphQLinq.Scaffolding
 ```
 
 Running this command will install the `GraphQLinq.Scaffolding` tool and make it available globally for all projects.
@@ -55,14 +57,14 @@ graphqlinq-scaffold https://api.spacex.land/graphql -o SpaceX -n SpaceX
 
 The `o` option specifies the output directory for generated classes, and `n` specifies the namespace of the classes.
 
-![Scaffolding](docs/Images/Scaffolding.gif "Scaffolding GraphQL Client")
+![Scaffolding](https://github.com/Giorgi/GraphQLinq/raw/main/docs/Images/Scaffolding.gif "Scaffolding GraphQL Client")
 
 ### Install GraphQLinq NuGet Package
 
 Before writing the queries, you need to install the LINQ to GraphQL client library from NuGet. Run the following command to install it in the current project:
 
 ```sh
-dotnet add package GraphQLinq.Client --version 1.0.0-beta
+dotnet add package GraphQLinq.Client --version 1.1.0-beta
 ```
 
 ## Running GraphQL Queries with LINQ
@@ -76,7 +78,7 @@ To query all properties of a type, simply run a query like this:
 ```cs
 var spaceXContext = new QueryContext();
 
-var company = spaceXContext.Company().ToItem();
+var company = await spaceXContext.Company().ToItem();
 
 RenderCompanyDetails(company);
 ```
@@ -88,10 +90,10 @@ This will query all primitive and string properties of `Company`, but it won't q
 If you want to query specific properties, including a navigation property, you can specify it with the `Select` method. You either map the projection to an existing type or an anonymous object (`Headquarters` is a nested property):
 
 ```cs
-var companySummaryAnonymous = spaceXContext.Company().Select(c => new { c.Ceo, c.Name, c.Headquarters }).ToItem();
+var companySummaryAnonymous = await spaceXContext.Company().Select(c => new { c.Ceo, c.Name, c.Headquarters }).ToItem();
 
 //Use data class to select specific properties
-var companySummary = spaceXContext.Company().Select(c => new CompanySummary
+var companySummary = await spaceXContext.Company().Select(c => new CompanySummary
 {
     Ceo = c.Ceo,
     Name = c.Name,
@@ -106,7 +108,7 @@ RenderCompanySummary(companySummary);
 You can also query navigation properties using the `Include` method. You can include several properties if you need, and you can also `Include` nested navigation properties:
 
 ```cs
-var companyWithHeadquartersAndLinks = spaceXContext.Company()
+var companyWithHeadquartersAndLinks = await spaceXContext.Company()
                                             .Include(info => info.Headquarters)
                                             .Include(info => info.Links).ToItem();
 
@@ -123,11 +125,11 @@ includes `Payloads` in the result.
 ```cs
 var missionsQuery = spaceXContext.Missions(new MissionsFind { Manufacturer = "Orbital ATK" }, null, null)
                                  .Include(mission => mission.Manufacturers);
-var missions = missionsQuery.ToList();
+var missions = missionsQuery.ToEnumerable();
 
 RenderMissions(missions);
 
-var missionsWithPayloads = missionsQuery.Include(mission => mission.Payloads).ToList();
+var missionsWithPayloads = await missionsQuery.Include(mission => mission.Payloads).ToEnumerable();
 
 RenderMissions(missionsWithPayloads, true);
 ```
@@ -138,13 +140,13 @@ The `Include` method allows quering for multi-level nested properties too. For e
 
 ```cs
 //Launch_date_unix and Static_fire_date_unix need custom converter
-spaceXContext.ContractResolver = new SpaceXContractResolver();
+spaceXContext.JsonSerializerOptions.Converters.Add(new UnixEpochDateTimeConverter());
 
-var launches = spaceXContext.Launches(null, 10, 0, null, null)
+var launches = await spaceXContext.Launches(null, 10, 0, null, null)
                             .Include(launch => launch.Links)
                             .Include(launch => launch.Rocket)
                             .Include(launch => launch.Rocket.Second_stage.Payloads.Select(payload => payload.Manufacturer))
-                            .ToList();
+                            .ToEnumerable();
 
 RenderLaunches(launches);
 ```
