@@ -8,22 +8,26 @@
     <ToolCommandName>GraphQLinq-Scaffold</ToolCommandName>
     <PackageOutputPath>./../output</PackageOutputPath>
     <Authors>Giorgi Dalakishvili</Authors>
-    <Copyright>Copyright (c) 2017 - 2021 Giorgi Dalakishvili</Copyright>
+    <Copyright>Copyright (c) 2017 - 2022 Giorgi Dalakishvili</Copyright>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
-    <AssemblyVersion>1.0.0.1</AssemblyVersion>
-    <FileVersion>1.0.0.1</FileVersion>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <FileVersion>1.1.0.0</FileVersion>
     <RepositoryType>git</RepositoryType>
     
     <Deterministic>true</Deterministic>
     <ContinuousIntegrationBuild Condition="'$(Configuration)'=='Release'">True</ContinuousIntegrationBuild>
-    <Version>1.0.1-beta</Version>
+    <Version>1.1.0-beta</Version>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageProjectUrl>https://github.com/Giorgi/GraphQLinq/</PackageProjectUrl>
     <PackageIcon>Icon.png</PackageIcon>
     <PackageReadmeFile>README-NuGet.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/Giorgi/GraphQLinq/</RepositoryUrl>
     <PackageTags>GraphQL LINQ json api</PackageTags>
-    <PackageReleaseNotes>Initial Release</PackageReleaseNotes>
+    <PackageReleaseNotes>
+      Added suppport for async/await.
+      Migrated from WebClient to HttpClient.
+      Migrated from Newtonsoft.Json to System.Text.Json
+    </PackageReleaseNotes>
     <Description>Generate classes from GraphQL endpoint and write strongly typed queries with LINQ.</Description>
     <PackageId>GraphQLinq.Scaffolding</PackageId>
   </PropertyGroup>
