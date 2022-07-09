@@ -17,9 +17,9 @@ namespace GraphQLinq.Tests
         readonly HslGraphContext hslGraphContext = new HslGraphContext("https://api.digitransit.fi/routing/v1/routers/finland/index/graphql");
 
         [Test]
-        public void SelectingSingleTripIdIsNotNull()
+        public async Task SelectingSingleTripIdIsNotNull()
         {
-            var tripId = hslGraphContext.Trip(TripId).Select(t => t.gtfsId).ToItem();
+            var tripId = await hslGraphContext.Trip(TripId).Select(t => t.gtfsId).ToItem();
 
             Assert.That(tripId, Is.Not.Null);
         }
@@ -83,7 +83,7 @@ namespace GraphQLinq.Tests
         }
 
         [Test]
-        public async Task SelectingListOfListNestedPropertyShouldCheckListTypeRecursively()
+        public void SelectingListOfListNestedPropertyShouldCheckListTypeRecursively()
         {
             Agency agency = null;
 

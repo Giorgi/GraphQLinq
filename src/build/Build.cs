@@ -18,7 +18,7 @@ using static Nuke.Common.Tools.CoverallsNet.CoverallsNetTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 
 [ShutdownDotNetAfterServerBuild]
-[AppVeyor(AppVeyorImage.VisualStudio2022, InvokedTargets = new[] { nameof(Test) }, Secrets = new[] { "COVERALLS_REPO_TOKEN:0wXxQdMQF5yHgpUe3heAG5zY2YYNBZYEF9FmgqoQi6b6IC0JibAA+idcnOkwTeEg" })]
+//[AppVeyor(AppVeyorImage.VisualStudio2022, InvokedTargets = new[] { nameof(Test) }, Secrets = new[] { "COVERALLS_REPO_TOKEN:0wXxQdMQF5yHgpUe3heAG5zY2YYNBZYEF9FmgqoQi6b6IC0JibAA+idcnOkwTeEg" })]
 class Build : NukeBuild
 {
     /// Support plugins are available for:
@@ -100,7 +100,10 @@ class Build : NukeBuild
                 .SetCoverletOutput("../TestResults/")
                 .EnableNoRestore());
 
-            CoverallsNet(s => s.EnableOpenCover().SetInput(TestResultsDirectory / "coverage.opencover.xml"));
+            if (IsServerBuild)
+            {
+                CoverallsNet(s => s.EnableOpenCover().SetInput(TestResultsDirectory / "coverage.opencover.xml")); 
+            }
         });
 
     Target Pack => _ => _
