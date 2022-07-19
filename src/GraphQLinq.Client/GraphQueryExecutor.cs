@@ -57,7 +57,7 @@ namespace GraphQLinq
 
                         if (hasError)
                         {
-                            var errors = errorElement.Deserialize<List<GraphQueryError>>();
+                            var errors = errorElement.Deserialize<List<GraphQueryError>>(jsonSerializerOptions);
                             throw new GraphQueryExecutionException(errors, query);
                         }
 
