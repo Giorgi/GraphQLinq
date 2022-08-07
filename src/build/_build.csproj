@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageDownload Include="coveralls.net" Version="[3.0.0]" />
+    <PackageDownload Include="coveralls.net" Version="[4.0.1]" />
   </ItemGroup>
 
 </Project>
