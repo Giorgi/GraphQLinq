@@ -72,12 +72,10 @@ public class Program
                 AnsiConsole.MarkupLine("[bold]Use the .query file within graphql playground to get the json text that this tool can convert to C# files[/]");
                 return;
             }
+
             RootSchemaObject schema = await SchemaLoader.Load(uri, basicAuthUsername, basicAuthPassword, saveJsonSchema, contextNamePath, headerKeys, headerValues);
 
             AnsiConsole.WriteLine();
-
-
-
 
             var contextClassFullName = AnsiConsole.Status().Start($"Scaffolding GraphQL client code {uri}", statusContext =>
             {
