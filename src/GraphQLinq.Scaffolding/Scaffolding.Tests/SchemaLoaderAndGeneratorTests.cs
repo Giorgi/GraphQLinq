@@ -238,8 +238,10 @@ public class SchemaLoaderAndGeneratorTests
             var folders = Directory.GetDirectories(directory);
 
             foreach (var folder in folders)
-                if (folder.EndsWith("Scaffolding"))
+            {
+                if (folder.EndsWith(@"\Scaffolding") || folder.EndsWith("/Scaffolding"))
                     scaffoldingDirectory = folder;
+            }
 
             directory = directoryInfo.FullName;
         }
