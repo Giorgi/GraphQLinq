@@ -59,6 +59,14 @@ The `o` option specifies the output directory for generated classes, and `n` spe
 
 ![Scaffolding](https://github.com/Giorgi/GraphQLinq/raw/main/docs/Images/Scaffolding.gif "Scaffolding GraphQL Client")
 
+#### Optional Arguments
+- `-u=abcd` specify a username for basic authentication
+- `-p=1234` specify a password for basic authentication
+- `-q=true` set to true if you want to only grab the Introspection Query so run the query in graphql yourself
+- `-f=spacex` set output file name, this will then store all types into one C# file
+- `-hk=accept;key` set header keys semi colon separated list
+- `-hv=application/json;abc123` set header values semi colon separated list
+
 ### Install GraphQLinq NuGet Package
 
 Before writing the queries, you need to install the LINQ to GraphQL client library from NuGet. Run the following command to install it in the current project:

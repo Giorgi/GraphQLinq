@@ -1,4 +1,5 @@
-# GraphQLinq
+
+ GraphQLinq
 
 LINQ to GraphQL - Strongly typed GraphQL queries with LINQ query syntax.
 

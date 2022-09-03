@@ -1,0 +1,67 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net6</TargetFramework>
+		<OutputType>Exe</OutputType>
+		<Nullable>enable</Nullable>
+
+		<PackAsTool>true</PackAsTool>
+		<ToolCommandName>GraphQLinq-Scaffold</ToolCommandName>
+		<PackageOutputPath>./../../output</PackageOutputPath>
+		<Authors>Giorgi Dalakishvili</Authors>
+		<Copyright>Copyright (c) 2017 - 2022 Giorgi Dalakishvili</Copyright>
+		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+		<AssemblyVersion>1.2.0.0</AssemblyVersion>
+		<FileVersion>1.2.0.0</FileVersion>
+		<RepositoryType>git</RepositoryType>
+
+		<Deterministic>true</Deterministic>
+		<ContinuousIntegrationBuild Condition="'$(Configuration)'=='Release'">True</ContinuousIntegrationBuild>
+		<Version>1.2.0</Version>
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+		<PackageProjectUrl>https://github.com/Giorgi/GraphQLinq/</PackageProjectUrl>
+		<PackageIcon>Icon.png</PackageIcon>
+		<PackageReadmeFile>README-NuGet.md</PackageReadmeFile>
+		<RepositoryUrl>https://github.com/Giorgi/GraphQLinq/</RepositoryUrl>
+		<PackageTags>GraphQL LINQ json api</PackageTags>
+		<PackageReleaseNotes>
+			Added suppport for async/await
+			Updated scaffolding tool to output types to one single c# file
+			Updated scaffolding tool to support taking a json schema file instead of graphql endpoint
+			Added argument to scaffolding tool which exports introspection query
+			Added arguments to scaffolding tool to support basic authentication
+			Updated scaffolding tool to prefix C# keywords with @
+		</PackageReleaseNotes>
+		<Description>Generate classes from GraphQL endpoint and write strongly typed queries with LINQ.</Description>
+		<PackageId>GraphQLinq.Scaffolding</PackageId>
+		<AssemblyName>$(MSBuildProjectName)</AssemblyName>
+		<Configurations>Release</Configurations>
+	</PropertyGroup>
+	<ItemGroup>
+		<Compile Remove="GraphQLinq.Scaffolding.Tests\**" />
+		<EmbeddedResource Remove="GraphQLinq.Scaffolding.Tests\**" />
+		<None Remove="GraphQLinq.Scaffolding.Tests\**" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Macross.Json.Extensions" Version="3.0.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.9.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="3.9.0" />
+		<PackageReference Include="Spectre.Console" Version="0.38.0" />
+		<PackageReference Include="System.CommandLine" Version="2.0.0-beta1.20574.7" />
+		<PackageReference Include="System.Net.Http.Json" Version="5.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="..\..\..\docs\Images\Icon.png">
+			<Pack>True</Pack>
+			<PackagePath></PackagePath>
+		</None>
+		<None Include="..\..\..\LICENSE.md">
+			<Pack>True</Pack>
+			<PackagePath></PackagePath>
+		</None>
+		<None Include="..\..\..\docs\README-NuGet.md">
+			<Pack>True</Pack>
+			<PackagePath></PackagePath>
+		</None>
+	</ItemGroup>
+</Project>
