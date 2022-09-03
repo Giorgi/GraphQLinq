@@ -63,6 +63,7 @@ The `o` option specifies the output directory for generated classes, and `n` spe
 - `-u=abcd` specify a username for basic authentication
 - `-p=1234` specify a password for basic authentication
 - `-q=true` set to true if you want to only grab the Introspection Query so run the query in graphql yourself
+- `-j=true` set to true if you want to save a copy of the json schema that the Introspection Query returned
 - `-f=spacex` set output file name, this will then store all types into one C# file
 - `-hk=accept;key` set header keys semi colon separated list
 - `-hv=application/json;abc123` set header values semi colon separated list
