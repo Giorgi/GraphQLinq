@@ -2,6 +2,8 @@
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
+using SystemLibrary.Common.Net.Extensions;
+
 namespace Scaffolding.Tests;
 
 //TODO: Update tests to support running in an async manner, they use the same output folder per now [one easy way, append 'a random number/curr time/guid" to folder output], in short: run in isolation
@@ -201,7 +203,7 @@ public class SchemaLoaderAndGeneratorTests
 
         var errors = reader.ReadToEnd();
         
-        Assert.IsTrue(errors == null || errors.Length < 1, errors);
+        Assert.IsTrue(errors.IsNot(), errors);
 
         Assert.IsTrue(exitCode == 0, "Exit code is not: " + exitCode + ". Run the test-command.cmd file to debug the Scaffolding.exe...");
 
@@ -275,21 +277,21 @@ public class SchemaLoaderAndGeneratorTests
         if (!Directory.Exists(outputFolder)) return;
 
         var files = Directory.GetFiles(outputFolder, "*.cs", SearchOption.TopDirectoryOnly);
-        if (files != null && files.Length > 0)
+        if (files.Is())
         {
             foreach (var file in files)
                 File.Delete(file);
         }
         Thread.Sleep(25);
         files = Directory.GetFiles(outputFolder, "*.query", SearchOption.TopDirectoryOnly);
-        if (files != null && files.Length > 0)
+        if (files.Is())
         {
             foreach (var file in files)
                 File.Delete(file);
         }
         Thread.Sleep(25);
         files = Directory.GetFiles(outputFolder, "*.json", SearchOption.TopDirectoryOnly);
-        if (files != null && files.Length > 0)
+        if (files.Is())
         {
             foreach (var file in files)
                 File.Delete(file);
