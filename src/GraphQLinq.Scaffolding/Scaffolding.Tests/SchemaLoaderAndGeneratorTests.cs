@@ -9,7 +9,8 @@ namespace Scaffolding.Tests;
 [TestClass]
 public class SchemaLoaderAndGeneratorTests
 {
-    # region Global settings default for all unit test methods
+    # region Global settings default for all unit test methods, capital first letter
+
     const string Uri = "https://api.spacex.land/graphql";
 
     const string U = "";            //username
