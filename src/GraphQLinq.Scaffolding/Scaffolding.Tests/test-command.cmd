@@ -1,3 +1,5 @@
+echo off
+
 REM Run this manually to test the exe file and to view its errors...
 
 set exe=..\Scaffolding\bin\Release\net6\Scaffolding.exe

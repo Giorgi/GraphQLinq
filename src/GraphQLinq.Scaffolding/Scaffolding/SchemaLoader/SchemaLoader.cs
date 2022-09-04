@@ -19,7 +19,7 @@ internal static class SchemaLoader
         {
             return await AnsiConsole.Status().StartAsync("Performing introspection", async ctx =>
             {
-                AnsiConsole.WriteLine("Running introspection query ...");
+                Log.Inf("Running introspection query ...");
 
                 string schemaJson = await GetJsonSchema(uri, basicAuthUsername, basicAuthPassword, headerKeys, headerValues);
 
@@ -27,14 +27,14 @@ internal static class SchemaLoader
                 {
                     if (saveJsonSchema)
                     {
-                        AnsiConsole.WriteLine("Argument: saveJsonSchema is true, but you read a local json file, you already have it");
+                        Log.Warn("Argument: saveJsonSchema is true, but you read a local json file, you already have it");
                     }
                 }
                 else if (saveJsonSchema)
                 {
                     System.Threading.Thread.Sleep(10);
                     File.WriteAllText(contextNamePath + ".json", schemaJson);
-                    AnsiConsole.WriteLine("SaveJsonSchema: completed...");
+                    Log.Success("Completed step: saving json schema");
                 }
 
                 return JsonSerializer.Deserialize<RootSchemaObject>(schemaJson, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
@@ -50,20 +50,21 @@ internal static class SchemaLoader
     {
         if (uri.IsFile && !uri.OriginalString.ToLower().StartsWith("http"))
         {
-            AnsiConsole.WriteLine("Reading and deserializing schema information from local file " + uri.OriginalString + "...");
+            Log.Inf("Reading schema information from local file " + uri.OriginalString + "...");
 
             return await File.ReadAllTextAsync(uri.OriginalString);
         }
 
         if(!uri.OriginalString.EndsWith("/graphql"))
         {
-            AnsiConsole.WriteLine("Warning: your uri " + uri.OriginalString + " does not end with /graphql, most graphql servers uses the '/graphql' endpoint as a listener for incoming queries");
+            Log.Warn("Warning: your uri " + uri.OriginalString + " does not end with /graphql, most graphql servers uses the '/graphql' endpoint as a listener for incoming queries");
+            Log.Warn("Warning: if you see an error 'NotFound', try add /graphql to the url");
         }
 
         using var httpClient = new HttpClient();
         if (usr != null && usr.Length > 0 && pwd != null && pwd.Length > 0)
         {
-            AnsiConsole.WriteLine("Schema will be queried with basic authorization, with user: " + usr);
+            Log.Inf("Schema will be queried with basic authorization, with user: " + usr);
 
             var basicToken = GetBasicAuthorization(usr, pwd);
             httpClient.DefaultRequestHeaders.Add("Authentication", basicToken);
@@ -71,7 +72,7 @@ internal static class SchemaLoader
 
         if(headerKeys != null && headerKeys.Count > 0)
         {
-            AnsiConsole.WriteLine("Schema will be queried with custom headers, amount of headers: " + headerKeys.Count);
+            Log.Inf("Schema will be queried with " + headerKeys.Count + " custom headers");
            
             for (int i = 0; i < headerKeys.Count; i++)
             {
@@ -81,22 +82,27 @@ internal static class SchemaLoader
             }
         }
 
-        AnsiConsole.WriteLine("Reading and deserializing schema information from url " + uri.OriginalString + "...");
+        Log.Inf("Reading schema information from query at url " + uri.OriginalString + "...");
 
         using var responseMessage = await httpClient.PostAsJsonAsync(uri, new { query = Globals.IntrospectionQuery });
 
-        if(!responseMessage.IsSuccessStatusCode)
-        {
-            var errorMsg = "Error reading schema from " + uri + "\nStatusCode: " + responseMessage.StatusCode + ", " + responseMessage.ReasonPhrase;
-
-            errorMsg += "\n" + await responseMessage.Content.ReadAsStringAsync();
-
-            AnsiConsole.WriteLine(errorMsg);
-        }
         var responseString = await responseMessage.Content.ReadAsStringAsync();
 
+        if (!responseMessage.IsSuccessStatusCode)
+        {
+            var errorMsg = "Error reading schema from " + uri + "\nStatusCode: " + responseMessage.StatusCode + ", " + responseMessage.ReasonPhrase;
+            Log.Err(errorMsg);
+            Log.Line();
+
+            Log.Warn("Http response is:");
+            Log.Warn(responseString);
+        }
+
         if (responseString.Contains("<title>"))
-            throw new Exception("Error reading schema from " + uri + " it returned html: " + responseString);
+        {
+            Log.Err("Response contains html, so endpoint responds, but it might be wrong path or port, or completely wrong endpoint (url/server) since it returned html");
+            throw new Exception("Cannot continue");
+        }
 
         return responseString;
     }

@@ -51,11 +51,10 @@ public class Program
 
         try
         {
-            AnsiConsole.MarkupLine("[bold]Welcome to GraphQL Client Scaffolding tool[/]");
-            AnsiConsole.WriteLine();
+            Log.Title("Welcome to GraphQL Client Scaffolding tool");
 
             var outputFolder = Path.IsPathRooted(outputDirectory) ? outputDirectory : Path.Combine(Environment.CurrentDirectory, outputDirectory);
-            AnsiConsole.MarkupLine("Scaffolding GraphQL client code for [bold]{0}[/] to [bold]{1}[/]", uri, outputFolder);
+            Log.Inf(string.Format("Scaffolding schema {0} to folder: {1}", uri, outputFolder));
 
             if (!Directory.Exists(outputFolder))
             {
@@ -67,17 +66,15 @@ public class Program
             if (saveGraphQlQuery)
             {
                 File.WriteAllText(contextNamePath + ".query", Globals.IntrospectionQuery);
-                AnsiConsole.MarkupLine("Wrote the .query file to: " + contextNamePath + ".query");
-                AnsiConsole.MarkupLine("[bold]Scaffolding complete[/]");
-                AnsiConsole.MarkupLine("[bold]Use the .query file within graphql playground to get the json text that this tool can convert to C# files[/]");
+                Log.Inf("Wrote .query file to: " + contextNamePath + ".query");
+                Log.Line();
+                Log.Success("Completed - use .query file inside graphql playground to get the json schema");
                 return;
             }
 
             RootSchemaObject schema = await SchemaLoader.Load(uri, basicAuthUsername, basicAuthPassword, saveJsonSchema, contextNamePath, headerKeys, headerValues);
 
-            AnsiConsole.WriteLine();
-
-            var contextClassFullName = AnsiConsole.Status().Start($"Scaffolding GraphQL client code {uri}", statusContext =>
+            var contextClassFullName = AnsiConsole.Status().Start($"Scaffolding {uri}", statusContext =>
             {
                 var options = new GeneratorOptions
                 {
@@ -94,14 +91,13 @@ public class Program
                 return generator.GenerateClient(schema.Data.Schema, uri.AbsoluteUri);
             });
 
-            AnsiConsole.WriteLine();
-            AnsiConsole.MarkupLine("[bold]Scaffolding complete[/]");
-            AnsiConsole.MarkupLine("Use [bold]{0}[/] to run strongly typed LINQ queries", contextClassFullName);
+            Log.Line();
+
+            Log.Success("Complete");
+            Log.Inf("Use " + contextClassFullName + " to run strongly typed LINQ queries in your C# code");
         }
         catch (Exception ex)
         {
-            AnsiConsole.Write(ex.ToString());
-
             throw;
         }
     }
