@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.Serialization;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace GraphQLinq.Scaffolding
 {
@@ -12,7 +12,7 @@ namespace GraphQLinq.Scaffolding
 
     public class Data
     {
-        [JsonPropertyName("__schema")]
+        [JsonProperty("__schema")]
         public Schema Schema { get; set; }
     }
 
@@ -33,7 +33,7 @@ namespace GraphQLinq.Scaffolding
         public List<GraphqlType> Interfaces { get; set; }
     }
 
-    [JsonConverter(typeof(JsonStringEnumMemberConverter))]
+    //[JsonConverter(typeof(JsonStringEnumMemberConverter))]
     public enum TypeKind
     {
         List,

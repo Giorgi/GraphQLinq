@@ -31,6 +31,10 @@
     <Description>Generate classes from GraphQL endpoint and write strongly typed queries with LINQ.</Description>
     <PackageId>GraphQLinq.Scaffolding</PackageId>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <WarningLevel>4</WarningLevel>
+    <AssemblyName>GraphQLinq.Scaffolding</AssemblyName>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Macross.Json.Extensions" Version="2.0.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.9.0" />
@@ -38,6 +42,12 @@
     <PackageReference Include="Spectre.Console" Version="0.38.0" />
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.20574.7" />
     <PackageReference Include="System.Net.Http.Json" Version="5.0.0" />
+    <PackageReference Include="GraphQL.Client" Version="5.1.0" />
+    <PackageReference Include="GraphQL.Client.Serializer.Newtonsoft" Version="5.1.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="GraphQL.Client" />
+    <None Remove="GraphQL.Client.Serializer.Newtonsoft" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\docs\Images\Icon.png">
