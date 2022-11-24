@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using GraphQL;
 using GraphQL.Client.Http;
 using GraphQL.Client.Serializer.Newtonsoft;
-using Scaffolding;
 using Spectre.Console;
 
 namespace GraphQLinq.Scaffolding
@@ -146,14 +145,12 @@ namespace GraphQLinq.Scaffolding
 
                     AnsiConsole.WriteLine("Running introspection query ...");
                     //using var httpClient = new HttpClient();
-                    GraphQLHttpClient client = new GraphQLHttpClient(endpoint, new MySerializer());
+                    GraphQLHttpClient client = new GraphQLHttpClient(endpoint, new NewtonsoftJsonSerializer());
                     var request = new GraphQLRequest
                     {
                         Query = IntrospectionQuery
                     };
                     var responseMessage = await client.SendQueryAsync<Data>(request);
-                    //using var responseMessage = await httpClient.GetAsync(endpoint.ToString(), JsonContent.Create(new { query = IntrospectionQuery }));
-                    //using var responseMessage = await httpClient.PostAsJsonAsync(endpoint, new { query = IntrospectionQuery });
 
                     AnsiConsole.WriteLine("Reading and deserializing schema information ...");
                     return responseMessage.Data;
