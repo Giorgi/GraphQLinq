@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net6</TargetFramework>
+    <TargetFramework>net7</TargetFramework>
     <OutputType>Exe</OutputType>
     <Nullable>enable</Nullable>
 
@@ -43,11 +43,12 @@
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.20574.7" />
     <PackageReference Include="System.Net.Http.Json" Version="5.0.0" />
     <PackageReference Include="GraphQL.Client" Version="5.1.0" />
-    <PackageReference Include="GraphQL.Client.Serializer.Newtonsoft" Version="5.1.0" />
+    <PackageReference Include="GraphQL.Client.Serializer.SystemTextJson" Version="5.1.0" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="GraphQL.Client" />
     <None Remove="GraphQL.Client.Serializer.Newtonsoft" />
+    <None Remove="GraphQL.Client.Serializer.SystemTextJson" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\docs\Images\Icon.png">

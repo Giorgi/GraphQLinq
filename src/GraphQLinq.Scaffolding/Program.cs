@@ -5,10 +5,11 @@ using System.IO;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using GraphQL;
 using GraphQL.Client.Http;
-using GraphQL.Client.Serializer.Newtonsoft;
+using GraphQL.Client.Serializer.SystemTextJson;
 using Spectre.Console;
 
 namespace GraphQLinq.Scaffolding
@@ -144,8 +145,7 @@ namespace GraphQLinq.Scaffolding
                 {
 
                     AnsiConsole.WriteLine("Running introspection query ...");
-                    //using var httpClient = new HttpClient();
-                    GraphQLHttpClient client = new GraphQLHttpClient(endpoint, new NewtonsoftJsonSerializer());
+                    GraphQLHttpClient client = new GraphQLHttpClient(endpoint, new SystemTextJsonSerializer());
                     var request = new GraphQLRequest
                     {
                         Query = IntrospectionQuery
