@@ -96,13 +96,16 @@ class Build : NukeBuild
                 .SetResultsDirectory(TestResultsDirectory)
                 .AddLoggers("trx")
                 .EnableCollectCoverage()
+                .SetProcessEnvironmentVariable("CollectCoverage", "true")
                 .SetCoverletOutputFormat(CoverletOutputFormat.opencover)
+                .SetProcessEnvironmentVariable("CoverletOutputFormat", "opencover")
                 .SetCoverletOutput("../TestResults/")
+                .SetProcessEnvironmentVariable("CoverletOutput", "../TestResults/")
                 .EnableNoRestore());
 
             if (IsServerBuild)
             {
-                CoverallsNet(s => s.EnableOpenCover().SetInput(TestResultsDirectory / "coverage.opencover.xml")); 
+                CoverallsNet(s => s.EnableOpenCover().SetInput(TestResultsDirectory / "coverage.opencover.xml"));
             }
         });
 
