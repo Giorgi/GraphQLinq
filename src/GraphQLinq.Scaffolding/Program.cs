@@ -5,7 +5,11 @@ using System.IO;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using GraphQL;
+using GraphQL.Client.Http;
+using GraphQL.Client.Serializer.SystemTextJson;
 using Spectre.Console;
 
 namespace GraphQLinq.Scaffolding
@@ -135,15 +139,28 @@ namespace GraphQLinq.Scaffolding
 
             AnsiConsole.MarkupLine("Scaffolding GraphQL client code for [bold]{0}[/] to [bold]{1}[/]", endpoint, outputFolder);
 
-            var schema = await AnsiConsole.Status().StartAsync("Performing introspection", async ctx =>
+            var data = await AnsiConsole.Status().StartAsync("Performing introspection", async ctx =>
             {
-                AnsiConsole.WriteLine("Running introspection query ...");
-                using var httpClient = new HttpClient();
-                using var responseMessage = await httpClient.PostAsJsonAsync(endpoint, new { query = IntrospectionQuery });
+                try
+                {
 
-                AnsiConsole.WriteLine("Reading and deserializing schema information ...");
-                var schemaJson = await responseMessage.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<RootSchemaObject>(schemaJson, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+                    AnsiConsole.WriteLine("Running introspection query ...");
+                    GraphQLHttpClient client = new GraphQLHttpClient(endpoint, new SystemTextJsonSerializer());
+                    var request = new GraphQLRequest
+                    {
+                        Query = IntrospectionQuery
+                    };
+                    var responseMessage = await client.SendQueryAsync<Data>(request);
+
+                    AnsiConsole.WriteLine("Reading and deserializing schema information ...");
+                    return responseMessage.Data;
+                    //var schemaJson = await responseMessage;
+                    //return JsonSerializer.Deserialize<RootSchemaObject>(schemaJson, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
             });
             AnsiConsole.WriteLine();
 
@@ -158,7 +175,7 @@ namespace GraphQLinq.Scaffolding
                 };
 
                 var graphQLClassesGenerator = new GraphQLClassesGenerator(codeGenerationOptions);
-                return graphQLClassesGenerator.GenerateClient(schema.Data.Schema, endpoint.AbsoluteUri);
+                return graphQLClassesGenerator.GenerateClient(data.Schema, endpoint.AbsoluteUri);
             });
 
             AnsiConsole.WriteLine();

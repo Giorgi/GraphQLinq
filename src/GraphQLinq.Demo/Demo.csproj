@@ -3,6 +3,9 @@
     <TargetFramework>net6</TargetFramework>
     <OutputType>Exe</OutputType>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <AssemblyName>GraphQLinq.Demo</AssemblyName>
+  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\GraphQLinq.Client\Client.csproj" />
     <ProjectReference Include="..\GraphQLinq.Generated\Generated.csproj" />

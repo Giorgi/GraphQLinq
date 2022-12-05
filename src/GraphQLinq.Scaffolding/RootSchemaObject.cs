@@ -36,13 +36,19 @@ namespace GraphQLinq.Scaffolding
     [JsonConverter(typeof(JsonStringEnumMemberConverter))]
     public enum TypeKind
     {
+        [EnumMember(Value = "LIST")]
         List,
         [EnumMember(Value = "NON_NULL")]
         NonNull,
+        [EnumMember(Value = "SCALAR")]
         Scalar,
+        [EnumMember(Value = "OBJECT")]
         Object,
+        [EnumMember(Value = "INTERFACE")]
         Interface,
+        [EnumMember(Value = "UNION")]
         Union,
+        [EnumMember(Value = "ENUM")]
         Enum,
         [EnumMember(Value = "INPUT_OBJECT")]
         InputObject
