@@ -15,35 +15,31 @@ internal static class SchemaLoader
 {
     internal static async Task<RootSchemaObject> Load(Uri uri, string basicAuthUsername, string basicAuthPassword, bool saveJsonSchema, string contextNamePath, List<string> headerKeys, List<string> headerValues)
     {
-        try
+        return await AnsiConsole.Status().StartAsync("Performing introspection", async ctx =>
         {
-            return await AnsiConsole.Status().StartAsync("Performing introspection", async ctx =>
+            Log.Inf("Running introspection query ...");
+
+            string schemaJson = await GetJsonSchema(uri, basicAuthUsername, basicAuthPassword, headerKeys, headerValues);
+
+            if (uri.IsFile && !uri.OriginalString.ToLower().StartsWith("http"))
             {
-                Log.Inf("Running introspection query ...");
-
-                string schemaJson = await GetJsonSchema(uri, basicAuthUsername, basicAuthPassword, headerKeys, headerValues);
-
-                if (uri.IsFile && !uri.OriginalString.ToLower().StartsWith("http"))
+                if (saveJsonSchema)
                 {
-                    if (saveJsonSchema)
-                    {
-                        Log.Warn("Argument: saveJsonSchema is true, but you read a local json file, you already have it");
-                    }
+                    Log.Warn("Argument: saveJsonSchema is true, but you read a local json file, you already have it");
                 }
-                else if (saveJsonSchema)
-                {
-                    System.Threading.Thread.Sleep(10);
-                    File.WriteAllText(contextNamePath + ".json", schemaJson);
-                    Log.Success("Completed step: saving json schema");
-                }
+            }
+            else if (saveJsonSchema)
+            {
+                System.Threading.Thread.Sleep(10);
+                File.WriteAllText(contextNamePath + ".json", schemaJson);
+                Log.Success("Completed step: saving json schema");
+            }
 
-                return JsonSerializer.Deserialize<RootSchemaObject>(schemaJson, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
-            });
-        }
-        catch(Exception ex)
-        {
-            throw;
-        }
+            if (schemaJson.Contains("UnauthorizedException") || schemaJson.Contains("UnhandledException") || schemaJson.Contains("\"errors\" : [ {"))
+                throw new Exception("Response from endpoint " + uri + " was: " + schemaJson);
+
+            return JsonSerializer.Deserialize<RootSchemaObject>(schemaJson, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        });
     }
 
     static async Task<string> GetJsonSchema(Uri uri, string usr, string pwd, List<string> headerKeys, List<string> headerValues)

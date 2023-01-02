@@ -98,6 +98,7 @@ public class Program
         }
         catch (Exception ex)
         {
+            Log.Err(ex.Message);
             throw;
         }
     }
