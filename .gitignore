@@ -29,6 +29,7 @@ bld/
 
 # MSTest test Results
 [Tt]est[Rr]esult*/
+UnitTestOutput*/
 [Bb]uild[Ll]og.*
 
 # NUNIT

@@ -2,23 +2,28 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+
+using GraphQLinq.Scaffolding.Extensions;
+
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting;
+
 using Spectre.Console;
+
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace GraphQLinq.Scaffolding
 {
-    class GraphQLClassesGenerator
+    class Generator
     {
         List<string> usings = new() { "System", "System.Collections.Generic" };
 
-        private Dictionary<string, string> renamedClasses = new();
-        private readonly CodeGenerationOptions options;
+        Dictionary<string, string> renamedClasses = new();
+        GeneratorOptions options;
 
-        private static readonly Dictionary<string, (string Name, Type type)> TypeMapping = new(StringComparer.InvariantCultureIgnoreCase)
+        static Dictionary<string, (string Name, Type type)> TypeMapping = new(StringComparer.InvariantCultureIgnoreCase)
         {
             { "Int", new("int", typeof(int)) },
             { "Float", new("float", typeof(float)) },
@@ -32,7 +37,7 @@ namespace GraphQLinq.Scaffolding
             { "Uri", new("Uri", typeof(Uri)) }
         };
 
-        private static readonly List<string> BuiltInTypes = new()
+        static List<string> BuiltInTypes = new()
         {
             "ID",
             "Int",
@@ -41,9 +46,9 @@ namespace GraphQLinq.Scaffolding
             "Boolean"
         };
 
-        private static readonly AdhocWorkspace Workspace = new();
+        static AdhocWorkspace Workspace = new();
 
-        public GraphQLClassesGenerator(CodeGenerationOptions options)
+        public Generator(GeneratorOptions options)
         {
             this.options = options;
         }
@@ -61,6 +66,25 @@ namespace GraphQLinq.Scaffolding
             var enums = types.Where(type => type.Kind == TypeKind.Enum);
             var classes = types.Where(type => type.Kind == TypeKind.Object || type.Kind == TypeKind.InputObject || type.Kind == TypeKind.Union).OrderBy(type => type.Name);
             var interfaces = types.Where(type => type.Kind == TypeKind.Interface);
+
+            if (options.SingleOutput)
+            {
+                AnsiConsole.WriteLine("Scaffolding into one single file: " + options.OutputFileName + "...");
+
+                SingleFileClear();
+
+                usings.Add("System.Net.Http");
+                usings.Add("GraphQLinq");
+
+                foreach (var use in usings)
+                    WriteToSingleFile("using " + use + ";");
+
+                WriteToSingleFile("");
+
+                WriteToSingleFile("namespace " + options.Namespace + ";");
+
+                WriteToSingleFile("");
+            }
 
             AnsiConsole.WriteLine("Scaffolding enums ...");
             foreach (var enumInfo in enums)
@@ -98,25 +122,25 @@ namespace GraphQLinq.Scaffolding
             return $"{options.ContextName}Context";
         }
 
-
-        private SyntaxNode GenerateEnum(GraphqlType enumInfo)
+        SyntaxNode GenerateEnum(GraphqlType enumInfo)
         {
-            var topLevelDeclaration = RoslynUtilities.GetTopLevelNode(options.Namespace);
+            var topLevelDeclaration = GetTopLevelNode();
+
             var name = enumInfo.Name.NormalizeIfNeeded(options);
 
             var declaration = EnumDeclaration(name).AddModifiers(Token(SyntaxKind.PublicKeyword));
 
             foreach (var enumValue in enumInfo.EnumValues)
             {
-                declaration = declaration.AddMembers(EnumMemberDeclaration(Identifier(EscapeIdentifierName(enumValue.Name))));
+                declaration = declaration.AddMembers(EnumMemberDeclaration(Identifier(EscapeKeywordName(enumValue.Name))));
             }
 
             return topLevelDeclaration.AddMembers(declaration);
         }
 
-        private SyntaxNode GenerateClass(GraphqlType classInfo)
+        SyntaxNode GenerateClass(GraphqlType classInfo)
         {
-            var topLevelDeclaration = RoslynUtilities.GetTopLevelNode(options.Namespace);
+            var topLevelDeclaration = GetTopLevelNode();
 
             var semicolonToken = Token(SyntaxKind.SemicolonToken);
 
@@ -139,7 +163,10 @@ namespace GraphQLinq.Scaffolding
                     declaration = declaration.ReplaceToken(declaration.Identifier, Identifier($"{className}Type"));
                     renamedClasses.Add(className, $"{className}Type");
                 }
-
+                else
+                {
+                    fieldName = EscapeKeywordName(fieldName);
+                }
                 var (fieldTypeName, fieldType) = GetSharpTypeName(field.Type);
 
                 if (NeedsNullable(fieldType, field.Type))
@@ -159,9 +186,12 @@ namespace GraphQLinq.Scaffolding
                 declaration = declaration.AddMembers(property);
             }
 
-            foreach (var @using in usings)
+            if (!options.SingleOutput)
             {
-                topLevelDeclaration = topLevelDeclaration.AddUsings(UsingDirective(IdentifierName(@using)));
+                foreach (var @using in usings)
+                {
+                    topLevelDeclaration = topLevelDeclaration.AddUsings(UsingDirective(IdentifierName(@using)));
+                }
             }
 
             topLevelDeclaration = topLevelDeclaration.AddMembers(declaration);
@@ -169,9 +199,9 @@ namespace GraphQLinq.Scaffolding
             return topLevelDeclaration;
         }
 
-        private SyntaxNode GenerateInterface(GraphqlType interfaceInfo)
+        SyntaxNode GenerateInterface(GraphqlType interfaceInfo)
         {
-            var topLevelDeclaration = RoslynUtilities.GetTopLevelNode(options.Namespace);
+            var topLevelDeclaration = GetTopLevelNode();
 
             var semicolonToken = Token(SyntaxKind.SemicolonToken);
 
@@ -201,22 +231,25 @@ namespace GraphQLinq.Scaffolding
                 declaration = declaration.AddMembers(property);
             }
 
-            foreach (var @using in usings)
+            if (!options.SingleOutput)
             {
-                topLevelDeclaration = topLevelDeclaration.AddUsings(UsingDirective(IdentifierName(@using)));
+                foreach (var @using in usings)
+                {
+                    topLevelDeclaration = topLevelDeclaration.AddUsings(UsingDirective(IdentifierName(@using)));
+                }
             }
 
             return topLevelDeclaration.AddMembers(declaration);
         }
 
-        private SyntaxNode GenerateQueryExtensions(List<GraphqlType> classesWithArgFields)
+        SyntaxNode GenerateQueryExtensions(List<GraphqlType> classesWithArgFields)
         {
             var exceptionMessage = Literal("This method is not implemented. It exists solely for query purposes.");
             var argumentListSyntax = ArgumentList(SingletonSeparatedList(Argument(LiteralExpression(SyntaxKind.StringLiteralExpression, exceptionMessage))));
 
             var notImplemented = ThrowStatement(ObjectCreationExpression(IdentifierName("NotImplementedException"), argumentListSyntax, null));
 
-            var topLevelDeclaration = RoslynUtilities.GetTopLevelNode(options.Namespace);
+            var topLevelDeclaration = GetTopLevelNode();
 
             var declaration = ClassDeclaration("QueryExtensions")
                                             .AddModifiers(Token(SyntaxKind.PublicKeyword), Token(SyntaxKind.StaticKeyword));
@@ -232,7 +265,7 @@ namespace GraphQLinq.Scaffolding
                     var methodDeclaration = MethodDeclaration(ParseTypeName(fieldTypeName), fieldName)
                                             .AddModifiers(Token(SyntaxKind.PublicKeyword), Token(SyntaxKind.StaticKeyword));
 
-                    var identifierName = EscapeIdentifierName(@class.Name.ToCamelCase());
+                    var identifierName = EscapeKeywordName(@class.Name.ToCamelCase());
 
                     var thisParameter = Parameter(Identifier(identifierName))
                                              .WithType(ParseTypeName(@class.Name.NormalizeIfNeeded(options)))
@@ -257,9 +290,12 @@ namespace GraphQLinq.Scaffolding
                 }
             }
 
-            foreach (var @using in usings)
+            if (!options.SingleOutput)
             {
-                topLevelDeclaration = topLevelDeclaration.AddUsings(UsingDirective(IdentifierName(@using)));
+                foreach (var @using in usings)
+                {
+                    topLevelDeclaration = topLevelDeclaration.AddUsings(UsingDirective(IdentifierName(@using)));
+                }
             }
 
             topLevelDeclaration = topLevelDeclaration.AddMembers(declaration);
@@ -267,9 +303,12 @@ namespace GraphQLinq.Scaffolding
             return topLevelDeclaration;
         }
 
-        private SyntaxNode GenerateGraphContext(GraphqlType queryInfo, string endpointUrl)
+        SyntaxNode GenerateGraphContext(GraphqlType queryInfo, string endpointUrl)
         {
-            var topLevelDeclaration = RoslynUtilities.GetTopLevelNode(options.Namespace).AddUsings(UsingDirective(IdentifierName("GraphQLinq")));
+            var topLevelDeclaration = GetTopLevelNode();
+
+            if (!options.SingleOutput)
+                topLevelDeclaration = topLevelDeclaration.AddUsings(UsingDirective(IdentifierName("GraphQLinq")));
 
             var className = $"{options.ContextName}Context";
             var declaration = ClassDeclaration(className)
@@ -359,18 +398,33 @@ namespace GraphQLinq.Scaffolding
                 declaration = declaration.AddMembers(methodDeclaration);
             }
 
-            foreach (var @using in usings)
+            if (!options.SingleOutput)
             {
-                topLevelDeclaration = topLevelDeclaration.AddUsings(UsingDirective(IdentifierName(@using)));
+                foreach (var @using in usings)
+                {
+                    topLevelDeclaration = topLevelDeclaration.AddUsings(UsingDirective(IdentifierName(@using)));
+                }
+                topLevelDeclaration = topLevelDeclaration.AddUsings(UsingDirective(IdentifierName("System.Net.Http")));
             }
-            topLevelDeclaration = topLevelDeclaration.AddUsings(UsingDirective(IdentifierName("System.Net.Http")));
 
             topLevelDeclaration = topLevelDeclaration.AddMembers(declaration);
 
             return topLevelDeclaration;
         }
 
-        private static bool NeedsNullable(Type? systemType, FieldType type)
+        SyntaxNode GetTopLevelNode()
+        {
+            return RoslynUtilities.GetTopLevelNode(GetNamespace());
+        }
+
+        string GetNamespace()
+        {
+            if (options.SingleOutput) return "";
+
+            return options.Namespace;
+        }
+
+        bool NeedsNullable(Type? systemType, FieldType type)
         {
             if (systemType == null)
             {
@@ -380,24 +434,69 @@ namespace GraphQLinq.Scaffolding
             return type.Kind == TypeKind.Scalar && systemType.IsValueType;
         }
 
-
-        private void FormatAndWriteToFile(SyntaxNode syntax, string name)
+        void FormatAndWriteToFile(SyntaxNode syntax, string name)
         {
-            if (!Directory.Exists(options.OutputDirectory))
-            {
-                Directory.CreateDirectory(options.OutputDirectory);
-            }
-
             name = name.NormalizeIfNeeded(options);
 
+            if (options.SingleOutput)
+                WriteToSingleFile(syntax);
+            else
+                WriteToFile(syntax, name);
+        }
+
+        void WriteToSingleFile(SyntaxNode syntax)
+        {
+            var memoryStream = new MemoryStream();
+            var streamWriter = new StreamWriter(memoryStream);
+
+            Formatter.Format(syntax, Workspace).WriteTo(streamWriter);
+            streamWriter.Flush();
+
+            memoryStream.Seek(0, SeekOrigin.Begin);
+
+            using (var reader = new StreamReader(memoryStream))
+            {
+                var text = reader.ReadToEnd();
+                WriteToSingleFile(text);
+            }
+        }
+
+        void WriteToSingleFile(string text)
+        {
+            string fileName = GetSingleOutputFile();
+            File.AppendAllText(fileName, text + Environment.NewLine);
+        }
+
+        string GetSingleOutputFile()
+        {
+            var name = options.OutputFileName;
+            if (!name.EndsWith(".cs"))
+                name = name + ".cs";
+
+            return Path.Combine(options.OutputDirectory, name);
+        }
+
+        void SingleFileClear()
+        {
+            var name = options.OutputFileName;
+            if (!name.EndsWith(".cs"))
+                name = name + ".cs";
+
+            var fileName = Path.Combine(options.OutputDirectory, name);
+            File.WriteAllText(fileName, "");
+        }
+
+        void WriteToFile(SyntaxNode syntax, string name)
+        {
             var fileName = Path.Combine(options.OutputDirectory, name + ".cs");
+
             using (var streamWriter = File.CreateText(fileName))
             {
                 Formatter.Format(syntax, Workspace).WriteTo(streamWriter);
             }
         }
 
-        private (string typeName, Type? typeType) GetSharpTypeName(FieldType? fieldType, bool wrapWithGraphTypes = false)
+        (string typeName, Type? typeType) GetSharpTypeName(FieldType? fieldType, bool wrapWithGraphTypes = false)
         {
             if (fieldType == null)
             {
@@ -449,13 +548,12 @@ namespace GraphQLinq.Scaffolding
             return (typeName, resultType);
         }
 
-
-        private (string, Type?) GetMappedType(string name)
+        (string, Type?) GetMappedType(string name)
         {
             return TypeMapping.ContainsKey(name) ? TypeMapping[name] : new(name.NormalizeIfNeeded(options), null);
         }
 
-        private string EscapeIdentifierName(string name)
+        string EscapeKeywordName(string name)
         {
             return SyntaxFacts.GetKeywordKind(name) != SyntaxKind.None ? $"@{name}" : name;
         }
