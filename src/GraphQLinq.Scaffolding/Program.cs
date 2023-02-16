@@ -142,7 +142,7 @@ namespace GraphQLinq.Scaffolding
                 using var httpClient = new HttpClient();
                 if (!string.IsNullOrEmpty(bearerToken))
                 {
-                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", bearerToken);
+                    httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", bearerToken);
                 }
                 
                 using var responseMessage = await httpClient.PostAsJsonAsync(endpoint, new { query = IntrospectionQuery });
