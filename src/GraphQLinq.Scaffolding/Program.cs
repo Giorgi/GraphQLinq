@@ -140,7 +140,7 @@ namespace GraphQLinq.Scaffolding
             {
                 AnsiConsole.WriteLine("Running introspection query ...");
                 using var httpClient = new HttpClient();
-                if (!string.IsNullOrEmpty(bearerToken)
+                if (!string.IsNullOrEmpty(bearerToken))
                 {
                     client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", bearerToken);
                 }
