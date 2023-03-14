@@ -124,7 +124,7 @@ namespace GraphQLinq.Scaffolding
             await generate.InvokeAsync(args);
         }
 
-        private static async Task HandleGenerate(Uri endpoint, string output, string @namespace, string context, string bearerToken, IConsole console)
+        private static async Task HandleGenerate(Uri endpoint, string output, string @namespace, string context, string bearer, IConsole console)
         {
             //var webClient = new WebClient();
             //webClient.Headers.Add("Content-Type", "application/json");
@@ -140,9 +140,9 @@ namespace GraphQLinq.Scaffolding
             {
                 AnsiConsole.WriteLine("Running introspection query ...");
                 using var httpClient = new HttpClient();
-                if (!string.IsNullOrEmpty(bearerToken))
+                if (!string.IsNullOrEmpty(bearer))
                 {
-                    httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", bearerToken);
+                    httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", bearer);
                 }
                 
                 using var responseMessage = await httpClient.PostAsJsonAsync(endpoint, new { query = IntrospectionQuery });
