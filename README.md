@@ -16,6 +16,8 @@ LINQ to GraphQL - Strongly typed GraphQL queries with LINQ query syntax.
 
 ![Project Icon](docs/Images/Icon.png "GraphQLinq Project Icon")
 
+## This library is not maintained any more. For a similar LINQ style GraphQL syntax library check out [ZeroQL](https://github.com/byme8/ZeroQL/)
+
 - [About The Project](#about-the-project)
 - [Getting Started](#getting-started)
   - [Installing Scaffolding Tool](#installing-scaffolding-tool)
